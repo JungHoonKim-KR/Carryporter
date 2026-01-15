@@ -99,7 +99,6 @@
     - 긴급 버그 픽스
     - MR : `hotfix`→ `release`/ `hotfix`→ `release`
 
-## 논의할 부분
+## 노션 링크
+https://www.notion.so/Git-2e8e876ee20180bdb54cfdbc15115be6?source=copy_link
 
-1. release 뺄까?
-    - develop은 개발, release는 배포용으로 구분하는 건 굉장히 이상적이지만 우리 프로젝트 규모에 맞지 않음
