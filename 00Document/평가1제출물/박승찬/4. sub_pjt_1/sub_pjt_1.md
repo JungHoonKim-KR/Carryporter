@@ -1,4 +1,4 @@
-# [14th-ai1-AI 쇼핑 어시스턴트](https://lab.ssafy.com/sc_park99/14th-ai1)
+# [14th-ai-AI 쇼핑 어시스턴트](https://lab.ssafy.com/sc_park99/14th-ai1)
 
 ## 1. 프로젝트 개요
 
