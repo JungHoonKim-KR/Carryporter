@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: demoapp
+  profiles:
+    active: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+mqtt:
+  client:
+    id: demoapp-client
