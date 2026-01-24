@@ -38,3 +38,6 @@ out/
 
 ### Local Config ###
 application-local.yml
+application-test.yml
+.env
+docker-compose.yaml
