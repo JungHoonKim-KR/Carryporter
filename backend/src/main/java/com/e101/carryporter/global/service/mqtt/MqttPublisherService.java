@@ -2,6 +2,7 @@ package com.e101.carryporter.global.service.mqtt;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class MqttPublisherService {
 

@@ -38,8 +38,8 @@ class MissionRepositoryTest extends IntegrationTestSupport {
         User user = User.createUser("test@mm.com");
         userRepository.save(user);
 
-        Location startLocation = Location.createLocation("Gate A12", "탑승구 A12");
-        Location endLocation = Location.createLocation("Gate B5", "탑승구 B5");
+        Location startLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        Location endLocation = Location.createLocation("Gate B5", "탑승구 B5", 2.0, 3.0);
         locationRepository.save(startLocation);
         locationRepository.save(endLocation);
 
