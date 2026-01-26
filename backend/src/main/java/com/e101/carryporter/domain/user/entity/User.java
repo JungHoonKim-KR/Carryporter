@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.user.entity;
 
+import com.e101.carryporter.domain.admincredentials.entity.AdminCredential;
 import com.e101.carryporter.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -25,6 +26,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AdminCredential adminCredential;
+
     public static User createUser(String mmEmail) {
         return User.builder()
                 .mmEmail(mmEmail)
@@ -32,10 +36,38 @@ public class User extends BaseEntity {
                 .build();
     }
 
+    public static User createAdminUser(String mmEmail, String name, String password) {
+        User user = User.builder()
+                .mmEmail(mmEmail)
+                .role(Role.ADMIN)
+                .build();
+
+        AdminCredential adminCredential = AdminCredential.builder()
+                .user(user)
+                .name(name)
+                .password(password)
+                .build();
+
+        user.initAdminCredential(adminCredential);
+        return user;
+    }
+
+    public boolean isAdmin() {
+        return this.role.equals(Role.ADMIN);
+    }
+
     @Builder
     private User(String mmEmail, Role role) {
         this.mmEmail = mmEmail;
         this.role = role;
+    }
+
+    private void initAdminCredential(AdminCredential adminCredential) {
+        if (this.adminCredential != null) {
+            return;
+        }
+
+        this.adminCredential = adminCredential;
     }
 
 }
