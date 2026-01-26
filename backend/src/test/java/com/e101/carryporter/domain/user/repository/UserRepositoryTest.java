@@ -35,6 +35,29 @@ class UserRepositoryTest extends IntegrationTestSupport {
 
         // then
         assertThat(findUser.getMmEmail()).isEqualTo(user.getMmEmail());
+        assertThat(findUser.getAdminCredential()).isNull();
+        assertThat(findUser.isAdmin()).isFalse();
+    }
+
+    @DisplayName("관리자를 저장할 수 있다.")
+    @Test
+    void saveAdminUser() {
+        // given
+        User user = User.createAdminUser("test@mm.com", "test admin user", "hashed password");
+
+        // when
+        Long savedId = userRepository.save(user);
+        flushAndClear();
+
+        User findUser = userRepository.findById(savedId)
+                .orElseThrow();
+
+        // then
+        assertThat(findUser.getMmEmail()).isEqualTo(user.getMmEmail());
+        assertThat(findUser.isAdmin()).isTrue();
+        assertThat(findUser.getAdminCredential().getName()).isEqualTo("test admin user");
+        assertThat(findUser.getAdminCredential().getPassword()).isEqualTo("hashed password");
+
     }
 
     @DisplayName("존재하지 않는 사용자의 pk 로 조회시 빈 옵셔널이 반환된다")
