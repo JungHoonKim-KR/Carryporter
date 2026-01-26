@@ -27,8 +27,3 @@ mqtt:
     password: ${MQTT_PASS:1234}
   client:
     id: ${MQTT_CLIENT_ID:carryporter-client}
-
-robot:
-  station:
-    x:0.0
-    y:0.0
