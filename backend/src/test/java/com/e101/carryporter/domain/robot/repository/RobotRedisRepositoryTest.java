@@ -1,5 +1,7 @@
 package com.e101.carryporter.domain.robot.repository;
 
+import com.e101.carryporter.domain.robot.entity.RobotState;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +109,63 @@ class RobotRedisRepositoryTest extends IntegrationTestSupport {
 
         // when then
         robotRedisRepository.deleteMacMapping(macAddress);
+    }
+
+    @DisplayName("로봇의 상태 객체를 Redis Hash에 저장하고 조회할 수 있다.")
+    @Test
+    void saveAndGetRobotState() {
+        // given
+        Long robotId = 1L;
+        String mac = "AA:BB:CC:DD";
+        RobotState originalState = RobotState.of(mac, RobotStatus.IDLE, 100);
+
+        // when
+        robotRedisRepository.saveRobotState(robotId, originalState);
+        Optional<RobotState> savedStateOpt = robotRedisRepository.getRobotState(robotId);
+
+        // then
+        assertThat(savedStateOpt).isPresent();
+        RobotState savedState = savedStateOpt.get();
+        assertThat(savedState.getMacAddress()).isEqualTo(mac);
+        assertThat(savedState.getStatus()).isEqualTo(RobotStatus.IDLE);
+        assertThat(savedState.getBattery()).isEqualTo(100);
+    }
+
+    @DisplayName("존재하지 않는 로봇 ID로 상태 조회 시 빈 Optional을 반환한다.")
+    @Test
+    void getRobotStateWithNotExistId() {
+        // given
+        Long notExistId = 999L;
+
+        // when
+        Optional<RobotState> result = robotRedisRepository.getRobotState(notExistId);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @DisplayName("로봇 상태의 특정 필드만 업데이트할 수 있으며, 이때 업데이트 시간도 갱신된다.")
+    @Test
+    void updateRobotState() {
+        // given
+        Long robotId = 1L;
+        RobotState initialState = RobotState.of("AA:BB", RobotStatus.IDLE, 100);
+        robotRedisRepository.saveRobotState(robotId, initialState);
+
+        LocalDateTime beforeUpdate = initialState.getUpdateAt();
+
+        // when
+        // 배터리 잔량만 80으로 변경
+        robotRedisRepository.updateRobotState(robotId, "battery", 80);
+        Optional<RobotState> updatedStateOpt = robotRedisRepository.getRobotState(robotId);
+
+        // then
+        assertThat(updatedStateOpt).isPresent();
+        RobotState updatedState = updatedStateOpt.get();
+
+        assertThat(updatedState.getBattery()).isEqualTo(80); // 변경된 필드
+        assertThat(updatedState.getStatus()).isEqualTo(RobotStatus.IDLE); // 유지된 필드
+        assertThat(updatedState.getUpdateAt()).isAfter(beforeUpdate); // 갱신된 시간
     }
 
 }
