@@ -1,9 +1,10 @@
-package com.e101.carryporter.global.config;
+package com.e101.carryporter.global.config.mqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
@@ -13,6 +14,7 @@ import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.util.StringUtils;
 
+@Profile("!test")
 @Configuration
 public class MqttConfig {
 
