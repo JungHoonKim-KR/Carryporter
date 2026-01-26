@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ public class RobotRedisRepository {
 
     private static final String MAC_TO_PK_PREFIX = "robot:mac:";
     private static final String ROBOT_STATUS_PREFIX = "robot:status:";
-    private static final String AVAILABLE_ROBOTS_KEY= "robot:available";
+    private static final String AVAILABLE_ROBOTS_KEY = "robot:available";
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -64,6 +65,31 @@ public class RobotRedisRepository {
         redisTemplate.opsForHash().put(key, "updateAt", LocalDateTime.now());
     }
 
+    // 가용 로봇 대기열 추가 메서드
+    // 오래 대기 -> 우선순위 상승
+    // todo battery 고려 로직 필요
+    public void addAvailableRobot(Long robotId) {
+        redisTemplate.opsForZSet().add(AVAILABLE_ROBOTS_KEY, robotId, System.currentTimeMillis());
+    }
+
+    // 가용가능한 로봇중 가장 우선순위 높은 로봇 id 반환
+    public Optional<Long> popPriorityRobotId() {
+        ZSetOperations.TypedTuple<Object> result = redisTemplate.opsForZSet().popMin(AVAILABLE_ROBOTS_KEY);
+
+        return Optional.ofNullable(result)
+                .map(ZSetOperations.TypedTuple::getValue)
+                .map(v -> Long.valueOf(v.toString()));
+    }
+
+    // 로봇 방전등 응급 상황 대비 가용가능한 robot 집합에서 제거 하는 메서드
+    public void removeAvailableRobot(Long robotId) {
+        redisTemplate.opsForZSet().remove(AVAILABLE_ROBOTS_KEY, robotId);
+    }
+
+    // 특정 로봇이 대기열에 있는지 확인하는 메서드
+    public boolean isRobotAvailable(Long robotId) {
+        return redisTemplate.opsForZSet().score(AVAILABLE_ROBOTS_KEY, robotId) != null;
+    }
 
     // mac 주소 기반 매핑 정보 삭제 메서드
     public void deleteMacMapping(String macAddress) {

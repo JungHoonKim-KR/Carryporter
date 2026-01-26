@@ -168,4 +168,44 @@ class RobotRedisRepositoryTest extends IntegrationTestSupport {
         assertThat(updatedState.getUpdateAt()).isAfter(beforeUpdate); // 갱신된 시간
     }
 
+    @DisplayName("가용 로봇 대기열에 로봇을 추가하고, 가장 오래 기다린 로봇을 우선적으로 꺼낼 수 있다.")
+    @Test
+    void availableRobotQueue() throws InterruptedException {
+        // given
+        Long firstRobotId = 1L;
+        Long secondRobotId = 2L;
+
+        // 로봇 1 추가 후 10ms 대기 (시간 차이를 두기 위함)
+        robotRedisRepository.addAvailableRobot(firstRobotId);
+        Thread.sleep(10);
+        robotRedisRepository.addAvailableRobot(secondRobotId);
+
+        // when & then
+        Optional<Long> firstPop = robotRedisRepository.popPriorityRobotId();
+        assertThat(firstPop).isPresent();
+        assertThat(firstPop.get()).isEqualTo(firstRobotId);
+
+        Optional<Long> secondPop = robotRedisRepository.popPriorityRobotId();
+        assertThat(secondPop).isPresent();
+        assertThat(secondPop.get()).isEqualTo(secondRobotId);
+
+        Optional<Long> thirdPop = robotRedisRepository.popPriorityRobotId();
+        assertThat(thirdPop).isEmpty();
+    }
+
+    @DisplayName("대기열에 있는 특정 로봇을 삭제할 수 있다.")
+    @Test
+    void removeAvailableRobot() {
+        // given
+        Long robotId = 1L;
+        robotRedisRepository.addAvailableRobot(robotId);
+
+        // when
+        robotRedisRepository.removeAvailableRobot(robotId);
+        boolean isAvailable = robotRedisRepository.isRobotAvailable(robotId);
+
+        // then
+        assertThat(isAvailable).isFalse();
+    }
+
 }
