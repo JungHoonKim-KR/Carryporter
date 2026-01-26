@@ -1,0 +1,34 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: carryporter
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:demoapp}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:create}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+mqtt:
+  broker:
+    url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
+    username: ${MQTT_USER:admin}
+    password: ${MQTT_PASS:1234}
+  client:
+    id: ${MQTT_CLIENT_ID:carryporter-client}
+
+robot:
+  station:
+    x:0.0
+    y:0.0
