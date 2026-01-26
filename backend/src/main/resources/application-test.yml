@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: carryporter
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      # Testcontainers @ServiceConnection이 자동으로 설정
+
+mqtt:
+  broker:
+    # IntegrationTestSupport의 DynamicPropertySource가 동적으로 설정
+    url: tcp://localhost:1883
+    username: test
+    password: test
+  client:
+    id: carryporter-test-client

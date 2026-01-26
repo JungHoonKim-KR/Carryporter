@@ -35,6 +35,13 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables ###
 .env
 
-application-test.yml
+### macOS ###
+.DS_Store
+
+### Logs ###
+*.log
+logs/
