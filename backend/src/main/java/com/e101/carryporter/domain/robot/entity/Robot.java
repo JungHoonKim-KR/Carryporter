@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.robot.entity;
 
+import com.e101.carryporter.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "robots")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Robot {
+public class Robot extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +21,7 @@ public class Robot {
     @Column(unique = true, nullable = false)
     private String robotCode;
 
-    @Column(unique = true, nullable = true)
+    @Column(unique = true, nullable = false)
     private String macAddress;
 
     @Enumerated(EnumType.STRING)
