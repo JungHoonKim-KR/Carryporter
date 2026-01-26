@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.ticket.entity;
 
 import com.e101.carryporter.domain.user.entity.User;
+import com.e101.carryporter.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @Table(name = "tickets")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Ticket {
+public class Ticket extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ticket_id")
