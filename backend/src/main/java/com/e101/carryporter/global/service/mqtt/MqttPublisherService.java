@@ -1,0 +1,70 @@
+package com.e101.carryporter.global.service.mqtt;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class MqttPublisherService {
+
+    private final MqttPahoMessageHandler mqttOutbound;
+
+    /**
+     * MQTT 메시지 발행 (기본)
+     */
+    public void publish(String topic, String payload) {
+        Message<String> message = MessageBuilder.withPayload(payload)
+                .setHeader(MqttHeaders.TOPIC, topic)
+                .build();
+        mqttOutbound.handleMessage(message);
+        log.info("MQTT 메시지 발행 - topic: {}, payload: {}", topic, payload);
+    }
+
+    /**
+     * 로봇에게 명령 전송 (공통)
+     * 사용법: sendCommand("AA:BB:CC...", "deliver", "{\"destX\":10, \"destY\":20}");
+     */
+    public void sendCommand(String mac, String action, String jsonPayload) {
+        String topic = String.format("robot/%s/command/%s", mac, action);
+        publish(topic, jsonPayload);
+    }
+
+    /**
+     * 배송 명령 전송
+     * @param mac 로봇 MAC 주소
+     * @param destX 목적지 X 좌표
+     * @param destY 목적지 Y 좌표
+     */
+    public void sendDeliverCommand(String mac, double destX, double destY) {
+        String payload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
+        sendCommand(mac, "deliver", payload);
+        log.info("배송 명령 전송 - MAC: {}, 목적지: ({}, {})", mac, destX, destY);
+    }
+
+    /**
+     * 복귀 명령 전송
+     * @param mac 로봇 MAC 주소
+     * @param homeX 복귀 장소 X 좌표
+     * @param homeY 복귀 장소 Y 좌표
+     */
+    public void sendReturnCommand(String mac, double homeX, double homeY) {
+        String payload = String.format("{\"homeX\":%.2f,\"homeY\":%.2f}", homeX, homeY);
+        sendCommand(mac, "return", payload);
+        log.info("복귀 명령 전송 - MAC: {}, 복귀지: ({}, {})", mac, homeX, homeY);
+    }
+
+    /**
+     * 긴급 정지 명령 전송
+     * @param mac 로봇 MAC 주소
+     */
+    public void sendStopCommand(String mac) {
+        sendCommand(mac, "stop", "{}");
+        log.info("긴급 정지 명령 전송 - MAC: {}", mac);
+    }
+}

@@ -55,6 +55,8 @@ dependencies {
     testImplementation 'org.testcontainers:mysql'
     testImplementation 'com.redis:testcontainers-redis:2.2.2'
 
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
 }
 
 tasks.named('test') {
