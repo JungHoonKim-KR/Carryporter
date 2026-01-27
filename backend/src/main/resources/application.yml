@@ -22,8 +22,8 @@ spring:
 
 # JWT 설정
 jwt:
-  secret: c3ByaW5nLWJvb3Qtc2VjdXJpdHktand0LXR1dG9yaWFsLWppd29vbi1zcHJpbmctYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWwK
-  expiration_time: 86400000
+  secret: ${JWT_SECRET:c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=}
+  expiration_time: ${JWT_EXPIRATION_TIME:86400000}
 
 mqtt:
   broker:

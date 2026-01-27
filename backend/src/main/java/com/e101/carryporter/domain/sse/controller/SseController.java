@@ -19,7 +19,7 @@ public class SseController {
     public SseEmitter subscribe(
             // [변경 전] @RequestAttribute String userId -> jwt 구현 전 필터가 주는 값 대신 해둠(임시!!!)
             // [변경 후] 테스트용으로 URL 파라미터로 받습니다.
-            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "userId") Long userId,
 
             // role은 안 넣으면 기본값 "ROLE_USER"로 들어가게 설정
             @RequestParam(value = "role", defaultValue = "ROLE_USER") String role,
@@ -35,7 +35,7 @@ public class SseController {
     // 테스트용: 내가 원하는 사람한테 알림 쏴보기
 // 호출 URL: POST http://localhost:8080/api/sse/send?userId=user1&message=Hello
     @PostMapping("/send")
-    public void sendTestMessage(@RequestParam String userId, @RequestParam String message) {
+    public void sendTestMessage(@RequestParam Long userId, @RequestParam String message) {
         // SseEventName을 쓰거나, 테스트니까 그냥 문자열로 보냄
         sseService.sendToUser(userId, SseEventName.REQUEST_RECEIVED, message);
     }

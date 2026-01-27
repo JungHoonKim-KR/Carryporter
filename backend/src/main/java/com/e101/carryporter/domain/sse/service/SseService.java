@@ -17,19 +17,21 @@ public class SseService {
 
     private final SseEmitterRepository emitterRepository;
 
-    // 연결 유지 시간: 60분 (기본값보다 길게 설정)
+    // 연결 유지 시간: 60분
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
 
     /**
      * 클라이언트 연결 (구독)
-     * @param id   사용자 ID 또는 관리자 ID
+     * @param id   사용자 ID (PK: Long)
      * @param role "ROLE_USER" or "ROLE_ADMIN"
      */
-    public SseEmitter subscribe(String id, String role) {
+    // ✅ 변경: id 타입을 String -> Long으로 변경
+    public SseEmitter subscribe(Long id, String role) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        // 1. 연결 종료/에러/타임아웃 시 저장소에서 제거 (Memory Leak 방지)
+        // 1. 저장소 저장 및 콜백 설정
         if ("ROLE_ADMIN".equals(role)) {
+            // ✅ Repository 메서드들도 Long을 받도록 수정되었다고 가정
             emitter.onCompletion(() -> emitterRepository.deleteAdmin(id));
             emitter.onTimeout(() -> emitterRepository.deleteAdmin(id));
             emitterRepository.saveAdmin(id, emitter);
@@ -39,8 +41,7 @@ public class SseService {
             emitterRepository.saveUser(id, emitter);
         }
 
-        // 2. 503 Service Unavailable 방지용 더미 데이터 전송
-        // 연결되자마자 아무 데이터도 안 보내면 프록시 서버에서 타임아웃 낼 수 있음
+        // 2. 더미 데이터 전송 (503 방지)
         sendToClient(emitter, id, SseEventName.CONNECT.getValue(), "Connected! [Role: " + role + "]");
 
         return emitter;
@@ -49,7 +50,7 @@ public class SseService {
     /**
      * [USER] 특정 사용자 1명에게 알림 전송
      */
-    public void sendToUser(String userId, SseEventName eventName, Object data) {
+    public void sendToUser(Long userId, SseEventName eventName, Object data) {
         SseEmitter emitter = emitterRepository.findUser(userId);
         if (emitter != null) {
             sendToClient(emitter, userId, eventName.getValue(), data);
@@ -60,7 +61,8 @@ public class SseService {
      * [ADMIN] 현재 접속 중인 모든 관리자에게 알림 전송 (Broadcast)
      */
     public void broadcastToAdmins(SseEventName eventName, Object data) {
-        Map<String, SseEmitter> admins = emitterRepository.findAllAdmins();
+        Map<Long, SseEmitter> admins = emitterRepository.findAllAdmins();
+
         admins.forEach((id, emitter) -> {
             sendToClient(emitter, id, eventName.getValue(), data);
         });
@@ -69,16 +71,16 @@ public class SseService {
     /**
      * 실제 전송 로직 (내부 사용)
      */
-    private void sendToClient(SseEmitter emitter, String id, String eventName, Object data) {
+    private void sendToClient(SseEmitter emitter, Long id, String eventName, Object data) {
         try {
             emitter.send(SseEmitter.event()
-                    .id(id)
+                    .id(String.valueOf(id)) // ★ 주의: SSE 프로토콜의 ID는 String이어야 하므로 여기서만 변환
                     .name(eventName)
                     .data(data));
         } catch (IOException e) {
-            // 전송 실패 시 연결이 끊긴 것으로 간주하고 정리
-            emitterRepository.deleteUser(id);     // User 삭제 시도
-            emitterRepository.deleteAdmin(id);    // Admin 삭제 시도 (어차피 없으면 무시됨)
+            // 전송 실패 시 정리
+            emitterRepository.deleteUser(id);
+            emitterRepository.deleteAdmin(id);
             emitter.completeWithError(e);
         }
     }

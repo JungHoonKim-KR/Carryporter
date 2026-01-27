@@ -27,7 +27,7 @@ class SseServiceTest {
     @DisplayName("구독: 일반 유저는 saveUser()가 호출되어야 한다")
     void subscribeUser() {
         // given
-        String userId = "user1";
+        Long userId = 1L;
         String role = "ROLE_USER";
 
         // when
@@ -42,7 +42,7 @@ class SseServiceTest {
     @DisplayName("구독: 관리자는 saveAdmin()이 호출되어야 한다")
     void subscribeAdmin() {
         // given
-        String adminId = "admin1";
+        Long adminId = 1L;
         String role = "ROLE_ADMIN";
 
         // when

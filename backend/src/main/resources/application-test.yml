@@ -20,3 +20,7 @@ mqtt:
     password: test
   client:
     id: carryporter-test-client
+
+jwt:
+  secret: c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=
+  expiration_time: 86400000
