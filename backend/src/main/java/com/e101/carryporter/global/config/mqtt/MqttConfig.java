@@ -89,6 +89,7 @@ public class MqttConfig {
         String[] serverURIs = mqttClientFactory.getConnectionOptions().getServerURIs();
         String url = serverURIs != null && serverURIs.length > 0 ? serverURIs[0] : null;
 
+        // 위의 채널들 다 구독
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
                 url, clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
 
