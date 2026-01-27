@@ -20,6 +20,11 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+# JWT 설정
+jwt:
+  secret: c3ByaW5nLWJvb3Qtc2VjdXJpdHktand0LXR1dG9yaWFsLWppd29vbi1zcHJpbmctYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWwK
+  expiration_time: 86400000
+
 mqtt:
   broker:
     url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}

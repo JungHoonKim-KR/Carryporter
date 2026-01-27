@@ -73,6 +73,37 @@ class UserRepositoryTest extends IntegrationTestSupport {
         assertThat(userOpt).isEmpty();
     }
 
+    @DisplayName("이메일로 사용자를 조회할 수 있다.")
+    @Test
+    void findByMmEmail() {
+        // given
+        String email = "find@carryporter.com";
+        User user = User.createUser(email); // 기존 팩토리 메서드 활용
+        userRepository.save(user);
+
+        flushAndClear(); // ★ 기존 스타일 유지: DB에 강제 반영하고 1차 캐시 비우기
+
+        // when
+        Optional<User> foundUser = userRepository.findByMmEmail(email);
+
+        // then
+        assertThat(foundUser).isPresent(); // 데이터가 있어야 함
+        assertThat(foundUser.get().getMmEmail()).isEqualTo(email); // 이메일 일치 확인
+    }
+
+    @DisplayName("존재하지 않는 이메일로 조회시 빈 값이 반환된다.")
+    @Test
+    void findByNotExistEmail() {
+        // given
+        String notExistEmail = "unknown@carryporter.com";
+
+        // when
+        Optional<User> result = userRepository.findByMmEmail(notExistEmail);
+
+        // then
+        assertThat(result).isEmpty(); // 없어야 정상
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
