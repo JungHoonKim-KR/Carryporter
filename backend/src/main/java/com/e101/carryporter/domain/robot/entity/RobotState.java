@@ -14,22 +14,22 @@ public class RobotState {
     private String macAddress;
     private RobotStatus status;
     private int battery;
-    private LocalDateTime updateAt;
+    private LocalDateTime updatedAt;
 
     public static RobotState of(String macAddress, RobotStatus status, int battery) {
         return RobotState.builder()
                 .macAddress(macAddress)
                 .status(status)
                 .battery(battery)
-                .updateAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
     @Builder
-    private RobotState(String macAddress, RobotStatus status, int battery, LocalDateTime updateAt) {
+    private RobotState(String macAddress, RobotStatus status, int battery, LocalDateTime updatedAt) {
         this.macAddress = macAddress;
         this.status = status;
         this.battery = battery;
-        this.updateAt = updateAt;
+        this.updatedAt = updatedAt;
     }
 }

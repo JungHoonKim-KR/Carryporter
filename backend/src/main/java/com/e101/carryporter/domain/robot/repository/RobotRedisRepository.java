@@ -1,18 +1,25 @@
 package com.e101.carryporter.domain.robot.repository;
 
 import com.e101.carryporter.domain.robot.entity.RobotState;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Repository
+@Slf4j
 @RequiredArgsConstructor
 public class RobotRedisRepository {
 
@@ -22,6 +29,8 @@ public class RobotRedisRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final RedisScript<Long> updateRobotStateScript;
+    private final RedisScript<Long> assignRobotScript;
 
     // mac - pk 저장소에 mac 과 pk 매핑 정보 저장 메서드
     public void saveMacMapping(String macAddress, Long robotId) {
@@ -38,52 +47,65 @@ public class RobotRedisRepository {
     public void saveRobotState(Long robotId, RobotState robotState) {
 
         String key = getRobotStateKey(robotId);
-        Map<String, Object> stateMap = objectMapper.convertValue(robotState, new TypeReference<Map<String, Object>>() {
-        });
 
-        redisTemplate.opsForHash().putAll(key, stateMap);
+        try {
+            Map<String, Object> stateMap = objectMapper.convertValue(robotState, new TypeReference<Map<String, Object>>() {});
+            redisTemplate.opsForHash().putAll(key, stateMap);
+            log.debug("로봇 상태 저장: robot id = {}", robotId);
+        } catch (Exception e) {
+            log.error("로봇 상태 저장 실패: robot id = {}, 예외 = {}", robotId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     // 로봇 상태 조회 메서드
     public Optional<RobotState> getRobotState(Long robotId) {
         String key = getRobotStateKey(robotId);
 
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        try {
+            Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
 
-        if (entries.isEmpty()) {
+            if (entries.isEmpty()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(objectMapper.convertValue(entries, RobotState.class));
+        } catch (Exception e) {
+            log.error("로봇 상태 조회 실패: robot id = {}, 이유: {}", robotId, e.getMessage(), e);
             return Optional.empty();
         }
-
-        return Optional.of(objectMapper.convertValue(entries, RobotState.class));
     }
 
     // 로봇 상태 업데이트 메서드
-    public void updateRobotState(Long robotId, String fieldName, Object value) {
-        String key = getRobotStateKey(robotId);
+    public void updateRobotState(Long robotId, RobotStatus status, Integer battery) {
+        Long result = redisTemplate.execute(
+                updateRobotStateScript,
+                List.of(getRobotStateKey(robotId), AVAILABLE_ROBOTS_KEY),
+                robotId,
+                status.name(),
+                battery,
+                LocalDateTime.now().toString()
+        );
 
-        redisTemplate.opsForHash().put(key, fieldName, value);
-        redisTemplate.opsForHash().put(key, "updateAt", LocalDateTime.now());
-    }
-
-    // 가용 로봇 대기열 추가 메서드
-    // 오래 대기 -> 우선순위 상승
-    // todo battery 고려 로직 필요
-    public void addAvailableRobot(Long robotId) {
-        redisTemplate.opsForZSet().add(AVAILABLE_ROBOTS_KEY, robotId, System.currentTimeMillis());
+        log.debug("로봇 상태 업데이트: robotId={}, status={}, battery={}, result={}",
+                robotId, status, battery, result);
     }
 
     // 가용가능한 로봇중 가장 우선순위 높은 로봇 id 반환
-    public Optional<Long> popPriorityRobotId() {
-        ZSetOperations.TypedTuple<Object> result = redisTemplate.opsForZSet().popMin(AVAILABLE_ROBOTS_KEY);
+    public Optional<Long> assignRobot() {
+        Long robotId = redisTemplate.execute(
+                assignRobotScript,
+                List.of(AVAILABLE_ROBOTS_KEY),
+                LocalDateTime.now().toString()
+        );
 
-        return Optional.ofNullable(result)
-                .map(ZSetOperations.TypedTuple::getValue)
-                .map(v -> Long.valueOf(v.toString()));
-    }
+        if (robotId != null) {
+            log.info("로봇 할당 성공: robotId = {} (RESERVERD)", robotId);
+        } else {
+            log.warn("가용 로봇 없음");
+        }
 
-    // 로봇 방전등 응급 상황 대비 가용가능한 robot 집합에서 제거 하는 메서드
-    public void removeAvailableRobot(Long robotId) {
-        redisTemplate.opsForZSet().remove(AVAILABLE_ROBOTS_KEY, robotId);
+        return Optional.ofNullable(robotId);
     }
 
     // 특정 로봇이 대기열에 있는지 확인하는 메서드
