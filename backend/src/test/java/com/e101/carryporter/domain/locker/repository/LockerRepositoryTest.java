@@ -36,7 +36,7 @@ class LockerRepositoryTest extends IntegrationTestSupport {
 
         // then
         assertThat(findLocker.getLockerCode()).isEqualTo(locker.getLockerCode());
-        assertThat(findLocker.getStatus()).isEqualTo(LockerStatus.AVAILABLE);
+        assertThat(findLocker.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
     }
 
     @DisplayName("존재하지 않는 라커의 pk 로 조회시 빈 옵셔널이 반환된다")

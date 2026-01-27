@@ -22,18 +22,18 @@ public class Locker extends BaseEntity {
     private String lockerCode;
 
     @Enumerated(EnumType.STRING)
-    private LockerStatus status;
+    private LockerStatus lockerStatus;
 
     public static Locker createLocker(String lockerCode) {
         return Locker.builder()
                 .lockerCode(lockerCode)
-                .status(LockerStatus.AVAILABLE)
+                .lockerStatus(LockerStatus.AVAILABLE)
                 .build();
     }
 
     @Builder
-    private Locker(String lockerCode, LockerStatus status) {
+    private Locker(String lockerCode, LockerStatus lockerStatus) {
         this.lockerCode = lockerCode;
-        this.status = status;
+        this.lockerStatus = lockerStatus;
     }
 }

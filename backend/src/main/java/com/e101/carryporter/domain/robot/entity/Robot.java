@@ -25,20 +25,20 @@ public class Robot extends BaseEntity {
     private String macAddress;
 
     @Enumerated(EnumType.STRING)
-    private RobotStatus status;
+    private RobotStatus robotStatus;
 
     public static Robot createRobot(String robotCode, String macAddress) {
         return Robot.builder()
                 .robotCode(robotCode)
                 .macAddress(macAddress)
-                .status(RobotStatus.IDLE)
+                .robotStatus(RobotStatus.IDLE)
                 .build();
     }
 
     @Builder
-    private Robot(String robotCode, String macAddress, RobotStatus status) {
+    private Robot(String robotCode, String macAddress, RobotStatus robotStatus) {
         this.robotCode = robotCode;
         this.macAddress = macAddress;
-        this.status = status;
+        this.robotStatus = robotStatus;
     }
 }

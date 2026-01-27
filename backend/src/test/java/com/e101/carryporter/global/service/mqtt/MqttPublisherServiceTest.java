@@ -46,14 +46,15 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
         Location destination = Location.builder()
                 .locationName("목적지")
                 .description("목적지")
-                .x(2.0).y(3.5)
+                .positionX(2.0)
+                .positionY(3.5)
                 .build();
         // when
-        mqttPublisherService.sendDeliverCommand(mac, destination.getX(), destination.getY());
+        mqttPublisherService.sendDeliverCommand(mac, destination.getPositionX(), destination.getPositionY());
 
         // then
         String expectedTopic = "robot/" + mac + "/command/deliver";
-        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destination.getX(), destination.getY());
+        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destination.getPositionX(), destination.getPositionY());
 
         printCapturedMessage("배송 명령", expectedTopic, expectedPayload);
     }
@@ -66,15 +67,16 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
         Location station = Location.builder()
                 .locationName("스테이션")
                 .description("충전소")
-                .x(0.0).y(0.0)
+                .positionX(0.0)
+                .positionY(0.0)
                 .build();
 
         // when
-        mqttPublisherService.sendReturnCommand(mac, station.getX(), station.getY());
+        mqttPublisherService.sendReturnCommand(mac, station.getPositionX(), station.getPositionY());
 
         // then
         String expectedTopic = "robot/" + mac + "/command/return";
-        String expectedPayload = String.format("{\"homeX\":%.2f,\"homeY\":%.2f}", station.getX(), station.getY());
+        String expectedPayload = String.format("{\"homeX\":%.2f,\"homeY\":%.2f}", station.getPositionX(), station.getPositionY());
 
         printCapturedMessage("복귀 명령", expectedTopic, expectedPayload);
     }

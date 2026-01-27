@@ -25,25 +25,25 @@ public class Location extends BaseEntity {
     private String description;
 
     @Column(nullable = false)
-    private Double x;
+    private Double positionX;
 
     @Column(nullable = false)
-    private Double y;
+    private Double positionY;
 
-    public static Location createLocation(String locationName, String description, Double x, Double y) {
+    public static Location createLocation(String locationName, String description, Double positionX, Double positionY) {
         return Location.builder()
                 .locationName(locationName)
                 .description(description)
-                .x(x)
-                .y(y)
+                .positionX(positionX)
+                .positionY(positionY)
                 .build();
     }
 
     @Builder
-    private Location(String locationName, String description, Double x, Double y) {
+    private Location(String locationName, String description, Double positionX, Double positionY) {
         this.locationName = locationName;
         this.description = description;
-        this.x = x;
-        this.y = y;
+        this.positionX = positionX;
+        this.positionY = positionY;
     }
 }
