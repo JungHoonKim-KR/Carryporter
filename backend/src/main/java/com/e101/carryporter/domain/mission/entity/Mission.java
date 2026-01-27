@@ -36,12 +36,8 @@ public class Mission extends BaseEntity {
     private User admin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name ="start_location_id", nullable = false)
-    private Location startLocation;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name ="end_location_id", nullable = false)
-    private Location endLocation;
+    @JoinColumn(name ="call_location_id", nullable = false)
+    private Location callLocation;
 
     private Double finalWeight;
 
@@ -62,20 +58,18 @@ public class Mission extends BaseEntity {
     private LocalDateTime finishedAt;
 
     // 새로운 미션 생성
-    public static Mission createMission(User user, Location startLocation, Location endLocation) {
+    public static Mission createMission(User user, Location callLocation) {
         return Mission.builder()
                 .user(user)
-                .startLocation(startLocation)
-                .endLocation(endLocation)
+                .callLocation(callLocation)
                 .missionStatus(MissionStatus.REQUESTED)
                 .build();
     }
 
     @Builder
-    private Mission(User user, Location startLocation, Location endLocation, MissionStatus missionStatus) {
+    private Mission(User user, Location callLocation, MissionStatus missionStatus) {
         this.user = user;
-        this.startLocation = startLocation;
-        this.endLocation = endLocation;
+        this.callLocation = callLocation;
         this.missionStatus = missionStatus;
     }
 

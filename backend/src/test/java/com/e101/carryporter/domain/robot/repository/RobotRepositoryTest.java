@@ -37,7 +37,7 @@ class RobotRepositoryTest extends IntegrationTestSupport {
         // then
         assertThat(findRobot.getRobotCode()).isEqualTo(robot.getRobotCode());
         assertThat(findRobot.getMacAddress()).isEqualTo(robot.getMacAddress());
-        assertThat(findRobot.getStatus()).isEqualTo(RobotStatus.IDLE);
+        assertThat(findRobot.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
     }
 
     @DisplayName("존재하지 않는 로봇의 pk 로 조회시 빈 옵셔널이 반환된다")
