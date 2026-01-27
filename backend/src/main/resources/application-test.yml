@@ -1,6 +1,8 @@
 spring:
   application:
     name: carryporter
+  main:
+    allow-bean-definition-overriding: true
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -15,9 +17,9 @@ spring:
 mqtt:
   broker:
     # IntegrationTestSupport의 DynamicPropertySource가 동적으로 설정
-    url: tcp://localhost:1883
-    username: test
-    password: test
+    url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
+    username:
+    password:
   client:
     id: carryporter-test-client
 

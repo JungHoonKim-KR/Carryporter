@@ -13,7 +13,9 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.MountableFile;
 
 
 @ActiveProfiles("test")
@@ -36,8 +38,13 @@ public class IntegrationTestSupport {
     static RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7.0"));
 
     // MQTT Container
-    static GenericContainer<?> mosquitto =  new GenericContainer<>(DockerImageName.parse("eclipse-mosquitto:2.0"))
-            .withExposedPorts(MOSQUITTO_PORT);
+    static GenericContainer<?> mosquitto = new GenericContainer<>(DockerImageName.parse("eclipse-mosquitto:2.0"))
+            .withExposedPorts(MOSQUITTO_PORT)
+            .withCopyFileToContainer(
+                    MountableFile.forClasspathResource("mosquitto/mosquitto.conf"),
+                    "/mosquitto/config/mosquitto.conf"
+            )
+            .waitingFor(Wait.forListeningPort());
 
     static {
         mysql.start();

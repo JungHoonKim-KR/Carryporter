@@ -4,7 +4,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
@@ -14,7 +14,6 @@ import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.util.StringUtils;
 
-@Profile("!test")
 @Configuration
 public class MqttConfig {
 
@@ -75,6 +74,7 @@ public class MqttConfig {
     // ==================== Inbound (메시지 구독: 로봇 → 서버) ====================
 
     @Bean
+    @ConditionalOnMissingBean(name = "mqttInputChannel")
     public MessageChannel mqttInputChannel() {
         return new DirectChannel();
     }
@@ -84,8 +84,14 @@ public class MqttConfig {
             MqttPahoClientFactory mqttClientFactory,
             MessageChannel mqttInputChannel) {
 
+        // Spring Integration MQTT 6.x에서는 URL을 명시적으로 전달하는 생성자 사용 필요
+        // clientId만 전달하는 생성자는 내부 URL이 null이 되어 연결되지 않음
+        String[] serverURIs = mqttClientFactory.getConnectionOptions().getServerURIs();
+        String url = serverURIs != null && serverURIs.length > 0 ? serverURIs[0] : null;
+
+        // 위의 채널들 다 구독
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
-                clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
+                url, clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
 
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
