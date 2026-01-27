@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
+  }
+}
