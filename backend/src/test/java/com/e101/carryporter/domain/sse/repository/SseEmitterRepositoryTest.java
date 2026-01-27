@@ -16,7 +16,7 @@ class SseEmitterRepositoryTest {
     @DisplayName("일반 유저 저장 및 조회 테스트")
     void saveAndFindUser() {
         // given
-        String userId = "user1";
+        Long userId = 1L;
         SseEmitter emitter = new SseEmitter();
 
         // when
@@ -31,7 +31,7 @@ class SseEmitterRepositoryTest {
     @DisplayName("일반 유저 삭제 테스트")
     void deleteUser() {
         // given
-        String userId = "user1";
+        Long userId = 1L;
         SseEmitter emitter = new SseEmitter();
         repository.saveUser(userId, emitter);
 
@@ -46,13 +46,13 @@ class SseEmitterRepositoryTest {
     @DisplayName("관리자 저장 및 전체 조회 테스트")
     void saveAndFindAdmin() {
         // given
-        String admin1 = "admin1";
-        String admin2 = "admin2";
+        Long admin1 = 1L;
+        Long admin2 = 2L;
         repository.saveAdmin(admin1, new SseEmitter());
         repository.saveAdmin(admin2, new SseEmitter());
 
         // when
-        Map<String, SseEmitter> admins = repository.findAllAdmins();
+        Map<Long, SseEmitter> admins = repository.findAllAdmins();
 
         // then
         Assertions.assertEquals(2, admins.size()); // 2명이 들어가 있어야 함
