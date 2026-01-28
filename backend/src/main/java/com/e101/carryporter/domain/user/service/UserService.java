@@ -1,4 +1,4 @@
-package com.e101.carryporter.domain.user.user;
+package com.e101.carryporter.domain.user.service;
 
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.exception.UserErrorCode;
