@@ -38,12 +38,10 @@ class MissionRepositoryTest extends IntegrationTestSupport {
         User user = User.createUser("test@mm.com");
         userRepository.save(user);
 
-        Location startLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
-        Location endLocation = Location.createLocation("Gate B5", "탑승구 B5", 2.0, 3.0);
-        locationRepository.save(startLocation);
-        locationRepository.save(endLocation);
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        locationRepository.save(callLocation);
 
-        Mission mission = Mission.createMission(user, startLocation, endLocation);
+        Mission mission = Mission.createMission(user, callLocation);
 
         // when
         Long savedId = missionRepository.save(mission);
@@ -54,8 +52,7 @@ class MissionRepositoryTest extends IntegrationTestSupport {
 
         // then
         assertThat(findMission.getUser().getId()).isEqualTo(user.getId());
-        assertThat(findMission.getStartLocation().getId()).isEqualTo(startLocation.getId());
-        assertThat(findMission.getEndLocation().getId()).isEqualTo(endLocation.getId());
+        assertThat(findMission.getCallLocation().getId()).isEqualTo(callLocation.getId());
         assertThat(findMission.getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
     }
 
