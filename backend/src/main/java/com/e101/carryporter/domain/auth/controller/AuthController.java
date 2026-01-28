@@ -1,9 +1,9 @@
 package com.e101.carryporter.domain.auth.controller;
 
-import com.e101.carryporter.domain.auth.requestdto.AuthRequestDto;
-import com.e101.carryporter.domain.auth.requestdto.VerifyCodeRequestDto;
-import com.e101.carryporter.domain.auth.responsedto.AuthResponseDto;
-import com.e101.carryporter.domain.auth.responsedto.TokenResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.request.AuthRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.request.VerifyCodeRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class AuthController {
      */
     @PostMapping("/request")
     public ResponseEntity<AuthResponseDto> requestAuth(@Valid @RequestBody AuthRequestDto requestDto) {
-        AuthResponseDto response = authService.requestAuth(requestDto.toCommand());
+        AuthResponseDto response = authService.requestAuth(requestDto.toServiceRequestDto());
         return ResponseEntity.ok(response);
     }
 
@@ -31,7 +31,7 @@ public class AuthController {
      */
     @PostMapping("/verify")
     public ResponseEntity<TokenResponseDto> verifyAuth(@Valid @RequestBody VerifyCodeRequestDto requestDto) {
-        TokenResponseDto tokenResponse = authService.verifyAuth(requestDto.toCommand());
+        TokenResponseDto tokenResponse = authService.verifyAuth(requestDto.toServiceRequestDto());
         return ResponseEntity.ok(tokenResponse);
     }
 

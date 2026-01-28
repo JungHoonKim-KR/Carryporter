@@ -1,10 +1,10 @@
 package com.e101.carryporter.domain.auth.service;
 
-import com.e101.carryporter.domain.auth.dto.service.RequestAuthCommand;
-import com.e101.carryporter.domain.auth.dto.service.VerifyAuthCommand;
+import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
+import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceRequestDto;
 import com.e101.carryporter.domain.auth.repository.EmailCodeRedisRepository;
-import com.e101.carryporter.domain.auth.responsedto.AuthResponseDto;
-import com.e101.carryporter.domain.auth.responsedto.TokenResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class AuthServiceTest extends IntegrationTestSupport {
     void requestAuthIntegrationTest() {
         // given
         String email = "test@ssafy.com";
-        RequestAuthCommand command = new RequestAuthCommand(email, 1234);
+        AuthServiceReqeustDto command = new AuthServiceReqeustDto(email, 1234);
 
         // when
         AuthResponseDto response = authService.requestAuth(command);
@@ -51,7 +51,7 @@ class AuthServiceTest extends IntegrationTestSupport {
         // AuthService 로직상 필요한 임시비밀번호도 저장되어 있어야 함
         // (AuthService 수정본에서 TempPasswordRedisRepository도 주입받아 사용하세요)
 
-        VerifyAuthCommand command = new VerifyAuthCommand(email, code);
+        VerifyCodeServiceRequestDto command = new VerifyCodeServiceRequestDto(email, code);
 
         // when
         TokenResponseDto response = authService.verifyAuth(command);

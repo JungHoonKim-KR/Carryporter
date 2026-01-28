@@ -1,6 +1,5 @@
 package com.e101.carryporter.domain.sse.service;
 
-import com.e101.carryporter.domain.sse.dto.SseEventName;
 import com.e101.carryporter.domain.sse.repository.SseEmitterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,37 +47,33 @@ public class SseService {
     }
 
     /**
-     * [USER] 특정 사용자 1명에게 알림 전송
+     * [USER] 특정 사용자에게 알림 전송
+     * @param eventName MissionStatus.name() 값이 들어오게 됩니다.
      */
-    public void sendToUser(Long userId, SseEventName eventName, Object data) {
+    public void sendToUser(Long userId, String eventName, Object data) {
         SseEmitter emitter = emitterRepository.findUser(userId);
         if (emitter != null) {
-            sendToClient(emitter, userId, eventName.getValue(), data);
+            sendToClient(emitter, userId, eventName, data);
         }
     }
 
     /**
-     * [ADMIN] 현재 접속 중인 모든 관리자에게 알림 전송 (Broadcast)
+     * [ADMIN] 모든 관리자에게 알림 전송
      */
-    public void broadcastToAdmins(SseEventName eventName, Object data) {
+    public void broadcastToAdmins(String eventName, Object data) {
         Map<Long, SseEmitter> admins = emitterRepository.findAllAdmins();
-
         admins.forEach((id, emitter) -> {
-            sendToClient(emitter, id, eventName.getValue(), data);
+            sendToClient(emitter, id, eventName, data);
         });
     }
 
-    /**
-     * 실제 전송 로직 (내부 사용)
-     */
     private void sendToClient(SseEmitter emitter, Long id, String eventName, Object data) {
         try {
             emitter.send(SseEmitter.event()
-                    .id(String.valueOf(id)) // ★ 주의: SSE 프로토콜의 ID는 String이어야 하므로 여기서만 변환
-                    .name(eventName)
+                    .id(String.valueOf(id))
+                    .name(eventName) // "MATCHING", "IN_PROGRESS" 등의 문자열이 그대로 들어감
                     .data(data));
         } catch (IOException e) {
-            // 전송 실패 시 정리
             emitterRepository.deleteUser(id);
             emitterRepository.deleteAdmin(id);
             emitter.completeWithError(e);

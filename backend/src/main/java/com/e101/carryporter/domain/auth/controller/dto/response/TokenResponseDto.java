@@ -1,4 +1,4 @@
-package com.e101.carryporter.domain.auth.responsedto;
+package com.e101.carryporter.domain.auth.controller.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

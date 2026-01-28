@@ -1,6 +1,6 @@
 package com.e101.carryporter.domain.auth.controller;
 
-import com.e101.carryporter.domain.auth.requestdto.AuthRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.request.AuthRequestDto;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

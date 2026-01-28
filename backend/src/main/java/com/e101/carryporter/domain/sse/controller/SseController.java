@@ -1,8 +1,6 @@
 package com.e101.carryporter.domain.sse.controller;
-import com.e101.carryporter.domain.sse.dto.SseEventName;
 import com.e101.carryporter.domain.sse.service.SseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -37,6 +35,6 @@ public class SseController {
     @PostMapping("/send")
     public void sendTestMessage(@RequestParam Long userId, @RequestParam String message) {
         // SseEventName을 쓰거나, 테스트니까 그냥 문자열로 보냄
-        sseService.sendToUser(userId, SseEventName.REQUEST_RECEIVED, message);
+        sseService.sendToUser(userId, "FINISHED", message);
     }
 }

@@ -1,10 +1,10 @@
 package com.e101.carryporter.domain.auth.service;
 
-import com.e101.carryporter.domain.auth.dto.service.RequestAuthCommand;
-import com.e101.carryporter.domain.auth.dto.service.VerifyAuthCommand;
+import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
+import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceRequestDto;
 import com.e101.carryporter.domain.auth.repository.*;
-import com.e101.carryporter.domain.auth.responsedto.AuthResponseDto;
-import com.e101.carryporter.domain.auth.responsedto.TokenResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.utils.JwtUtils;
@@ -34,7 +34,7 @@ public class AuthService {
     /**
      * 3-1. 인증번호 요청 (Command DTO 사용)
      */
-    public AuthResponseDto requestAuth(RequestAuthCommand command) {
+    public AuthResponseDto requestAuth(AuthServiceReqeustDto command) {
         String email = command.email();
         Integer password = command.password();
 
@@ -56,7 +56,7 @@ public class AuthService {
     /**
      * 3-2. 인증 및 토큰 발급 (Access + Refresh 동시 반환)
      */
-    public TokenResponseDto verifyAuth(VerifyAuthCommand command) {
+    public TokenResponseDto verifyAuth(VerifyCodeServiceRequestDto command) {
         String email = command.email();
         Integer inputCode = command.code();
 
