@@ -116,7 +116,7 @@ pipeline {
                 expression { env.BUILD_BACKEND == 'true' }
             }
             steps {
-                dir('backend/carryporter') {
+                dir('backend') {
                     sh '''
                         set -e
                         echo "Building Spring Boot application..."
@@ -132,7 +132,7 @@ pipeline {
                 expression { env.BUILD_BACKEND == 'true' }
             }
             steps {
-                dir('backend/carryporter') {
+                dir('backend') {
                     script {
                         // ✅ 수정됨: Credentials 적용 (Secret file)
                         withCredentials([file(credentialsId: 'backend-env-file', variable: 'SECRET_ENV_PATH')]) {
