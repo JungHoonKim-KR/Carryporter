@@ -59,21 +59,11 @@ public class SseNotificationHandler {
     @Async
     @EventListener
     public void handleLocked(MissionLockedEvent event) {
-        // 1. 마지막 작별 인사 전송
+        // 프론트엔드에서 "LOCKED"라는 이벤트를 받으면 -> 연결을 끊어줘야 함
         sseService.sendToUser(
                 event.userId(),
-                "LOCKED",
+                "LOCKED", // 이 이벤트 이름이 중요합니다.
                 "이용해 주셔서 감사합니다. 안녕히 가세요!"
         );
-
-        // 2. 잠시 후 연결 끊기 (바로 끊으면 메시지 전송 전에 끊길 수도 있으니 주의)
-        // 보통은 클라이언트가 "LOCKED"를 받고 스스로 연결을 끊게 하는 것이 가장 좋지만,
-        // 서버에서 확실하게 끊어주려면 아래 코드를 사용합니다.
-        try {
-            Thread.sleep(1000); // 1초 정도 여유를 줌 (선택사항)
-            sseService.complete(event.userId()); //연결 종료!
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 }
