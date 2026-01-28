@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.auth.requestdto.VerifyCodeRequestDto;
 import com.e101.carryporter.domain.auth.responsedto.AuthResponseDto;
 import com.e101.carryporter.domain.auth.responsedto.TokenResponseDto;
 import com.e101.carryporter.domain.auth.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +21,8 @@ public class AuthController {
      * 1단계: 인증번호 요청
      */
     @PostMapping("/request")
-    public ResponseEntity<AuthResponseDto> requestAuth(@RequestBody AuthRequestDto requestDto) {
-        AuthResponseDto response = authService.requestAuth(requestDto);
+    public ResponseEntity<AuthResponseDto> requestAuth(@Valid @RequestBody AuthRequestDto requestDto) {
+        AuthResponseDto response = authService.requestAuth(requestDto.toCommand());
         return ResponseEntity.ok(response);
     }
 
@@ -29,8 +30,8 @@ public class AuthController {
      * 2단계: 인증번호 검증 및 토큰 발급
      */
     @PostMapping("/verify")
-    public ResponseEntity<TokenResponseDto> verifyAuth(@RequestBody VerifyCodeRequestDto requestDto) {
-        TokenResponseDto tokenResponse = authService.verifyAuth(requestDto);
+    public ResponseEntity<TokenResponseDto> verifyAuth(@Valid @RequestBody VerifyCodeRequestDto requestDto) {
+        TokenResponseDto tokenResponse = authService.verifyAuth(requestDto.toCommand());
         return ResponseEntity.ok(tokenResponse);
     }
 
