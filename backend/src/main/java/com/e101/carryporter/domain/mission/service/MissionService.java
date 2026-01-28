@@ -12,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class MissionService {
 
@@ -23,6 +25,7 @@ public class MissionService {
     private final LocationService locationService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public Long createMission(Long userId, CreateMissionServiceRequestDto request) {
 
         // 사용자 와 호출 위치 조회
