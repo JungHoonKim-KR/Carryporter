@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.auth.service;
 
+import com.e101.carryporter.domain.auth.repository.TempPasswordRedisRepository;
 import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceRequestDto;
 import com.e101.carryporter.domain.auth.repository.EmailCodeRedisRepository;
@@ -20,6 +21,9 @@ class AuthServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private EmailCodeRedisRepository emailCodeRepository;
+
+    @Autowired
+    private TempPasswordRedisRepository tempPasswordRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -46,10 +50,13 @@ class AuthServiceTest extends IntegrationTestSupport {
         // given
         String email = "verify@ssafy.com";
         Integer code = 99;
-        // 테스트를 위해 미리 Redis에 데이터 세팅 (실제 레포지토리 사용)
+        Integer tempPassword = 1234; // 서비스 로직에서 요구하는 임시 비번
+
+        // 1. 인증번호 저장
         emailCodeRepository.save(email, code);
-        // AuthService 로직상 필요한 임시비밀번호도 저장되어 있어야 함
-        // (AuthService 수정본에서 TempPasswordRedisRepository도 주입받아 사용하세요)
+
+        // 2. ✅ 아까 빠뜨린 부분: 임시 비밀번호도 Redis에 같이 있어야 함!
+        tempPasswordRepository.save(email, tempPassword);
 
         VerifyCodeServiceRequestDto command = new VerifyCodeServiceRequestDto(email, code);
 
@@ -59,8 +66,6 @@ class AuthServiceTest extends IntegrationTestSupport {
         // then
         assertThat(response.getAccessToken()).isNotBlank();
         assertThat(response.getRefreshToken()).isNotBlank();
-
-        // 실제 DB에 유저가 생성되었는지 확인 (@Transactional 롤백 확인 가능)
         assertThat(userRepository.findByMmEmail(email)).isPresent();
     }
 }
