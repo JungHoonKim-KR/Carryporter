@@ -4,15 +4,18 @@ import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotAvailableQueueRepository;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 
@@ -24,9 +27,9 @@ public class RobotAssignmentHandler {
     private final RobotAvailableQueueRepository robotAvailableQueueRepository;
     private final MissionRepository missionRepository;
     private final RobotRepository robotRepository;
-
+    private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     @Async
-    @Transactional
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionCreatedEvent(MissionCreatedEvent event) {
         log.info("미션 생성 이벤트 수신: missionId={}", event.missionId());
@@ -45,16 +48,23 @@ public class RobotAssignmentHandler {
             Long robotId = robotIdOpt.get();
             log.info("로봇 할당 받음: missionId={}, robotId={}", event.missionId(), robotId);
 
-            // Mission 조회
-            Mission mission = missionRepository.findById(event.missionId())
-                    .orElseThrow(() -> new IllegalArgumentException("미션을 찾을 수 없습니다: " + event.missionId()));
+            // 트랜잭션 내에서 Mission에 Robot 할당
+            transactionTemplate.execute(status -> {
+                // Mission 조회
+                Mission mission = missionRepository.findById(event.missionId())
+                        .orElseThrow(() -> new IllegalArgumentException("미션을 찾을 수 없습니다: " + event.missionId()));
 
-            // Robot 조회
-            Robot robot = robotRepository.findById(robotId)
-                    .orElseThrow(() -> new IllegalArgumentException("로봇을 찾을 수 없습니다: " + robotId));
+                // Robot 조회
+                Robot robot = robotRepository.findById(robotId)
+                        .orElseThrow(() -> new IllegalArgumentException("로봇을 찾을 수 없습니다: " + robotId));
 
-            // 로봇 할당
-            mission.assignRobot(robot);
+                // 로봇 할당
+                mission.assignRobot(robot);
+                robot.updateStatus(RobotStatus.RESERVED);
+
+                eventPublisher.publishEvent(new RobotAssignedEvent(mission.getId(),  robotId, mission.getUser().getId()));
+                return null;
+            });
 
             log.info("로봇 할당 완료: missionId={}, robotId={}", event.missionId(), robotId);
 

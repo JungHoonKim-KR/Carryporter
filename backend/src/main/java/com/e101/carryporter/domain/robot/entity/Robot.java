@@ -41,4 +41,9 @@ public class Robot extends BaseEntity {
         this.macAddress = macAddress;
         this.robotStatus = robotStatus;
     }
+
+    // 로봇 상태 변경
+    public void updateStatus(RobotStatus robotStatus) {
+        this.robotStatus = robotStatus;
+    }
 }
