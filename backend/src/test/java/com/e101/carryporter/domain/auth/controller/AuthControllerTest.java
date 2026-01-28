@@ -65,6 +65,9 @@ class AuthControllerTest extends WebMvcTestSupport {
                             return request;
                         }))
 
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 }
