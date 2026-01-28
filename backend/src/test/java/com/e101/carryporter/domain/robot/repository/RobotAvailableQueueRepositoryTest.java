@@ -12,10 +12,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -333,16 +332,20 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             assertThat(fourth).isEmpty();
         }
 
-        @DisplayName("빈 대기열에서 할당 시도 시 빈 Optional을 반환한다")
+        @DisplayName("빈 대기열에서 할당 시도 시 타임아웃 후 빈 Optional을 반환한다")
         @Test
-        void assignEmptyQueue() {
+        void assignEmptyQueueTimeout() {
             // given (빈 대기열)
+            long startTime = System.currentTimeMillis();
 
-            // when
-            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+            // when - 1초 타임아웃으로 시도
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId(1, TimeUnit.SECONDS);
+            long elapsedTime = System.currentTimeMillis() - startTime;
 
-            // then
+            // then - 빈 Optional 반환 및 약 1초 경과
             assertThat(result).isEmpty();
+            assertThat(elapsedTime).isGreaterThanOrEqualTo(1000L);
+            assertThat(elapsedTime).isLessThan(1500L); // 여유있게 1.5초 이내
         }
 
         @DisplayName("할당 후 battery 값은 유지된다")
@@ -361,6 +364,84 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             Optional<RobotState> state = robotStateRepository.findById(robotId);
             assertThat(state).isPresent();
             assertThat(state.get().getBattery()).isEqualTo(initialBattery);
+        }
+
+        @DisplayName("BRPOP: 로봇이 나중에 추가되면 blocking 대기 후 할당받는다")
+        @Test
+        void assignBlockingUntilRobotAvailable() throws Exception {
+            // given
+            Long robotId = 1L;
+            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.OFFLINE, 100));
+
+            // when - 별도 스레드에서 할당 시도 (blocking)
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            Future<Optional<Long>> future = executorService.submit(() ->
+                    robotAvailableQueueRepository.acquireRobotId(5, TimeUnit.SECONDS)
+            );
+
+            // 할당 요청이 blocking 상태로 대기 중임을 확인하기 위한 짧은 대기
+            Thread.sleep(500);
+            assertThat(future.isDone()).isFalse();
+
+            // when - 로봇을 IDLE 상태로 추가 (큐에 추가됨)
+            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
+
+            // then - blocking이 해제되고 로봇이 할당됨
+            Optional<Long> result = future.get(3, TimeUnit.SECONDS);
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo(robotId);
+
+            // 상태가 RESERVED로 변경됨
+            Optional<RobotState> state = robotStateRepository.findById(robotId);
+            assertThat(state).isPresent();
+            assertThat(state.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+
+            executorService.shutdown();
+        }
+
+        @DisplayName("BRPOP: 여러 스레드가 대기 중일 때 로봇이 추가되면 순서대로 할당받는다")
+        @Test
+        void assignBlockingMultipleThreads() throws InterruptedException {
+            // given - 3개의 스레드가 동시에 할당 대기
+            int threadCount = 3;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch startLatch = new CountDownLatch(threadCount);
+            CountDownLatch completeLatch = new CountDownLatch(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            for (int i = 0; i < threadCount; i++) {
+                executorService.execute(() -> {
+                    startLatch.countDown();
+                    try {
+                        startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+                        Optional<Long> assigned = robotAvailableQueueRepository.acquireRobotId(5, TimeUnit.SECONDS);
+                        if (assigned.isPresent()) {
+                            successCount.incrementAndGet();
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        completeLatch.countDown();
+                    }
+                });
+            }
+
+            // 모든 스레드가 blocking 대기 중임을 확인
+            Thread.sleep(500);
+
+            // when - 3대의 로봇을 순차적으로 추가
+            for (int i = 1; i <= threadCount; i++) {
+                Long robotId = (long) i;
+                robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:0" + i, RobotStatus.IDLE, 100));
+                robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
+                Thread.sleep(100); // 약간의 지연
+            }
+
+            // then - 모든 스레드가 로봇을 할당받음
+            completeLatch.await(10, TimeUnit.SECONDS);
+            assertThat(successCount.get()).isEqualTo(threadCount);
+
+            executorService.shutdown();
         }
     }
 
@@ -529,7 +610,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
                 Thread.sleep(5);
             }
 
-            // when - 10개의 스레드가 동시에 할당 요청
+            // when - 10개의 스레드가 동시에 할당 요청 (타임아웃 1초)
             int threadCount = 10;
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
             CountDownLatch latch = new CountDownLatch(threadCount);
@@ -539,7 +620,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             for (int i = 0; i < threadCount; i++) {
                 executorService.execute(() -> {
                     try {
-                        Optional<Long> assigned = robotAvailableQueueRepository.acquireRobotId();
+                        Optional<Long> assigned = robotAvailableQueueRepository.acquireRobotId(1, TimeUnit.SECONDS);
                         if (assigned.isPresent()) {
                             successCount.incrementAndGet();
                         } else {
@@ -554,7 +635,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             latch.await();
             executorService.shutdown();
 
-            // then - 5대만 할당 성공, 5개 요청은 실패
+            // then - 5대만 할당 성공, 5개 요청은 타임아웃으로 실패
             assertThat(successCount.get()).isEqualTo(robotCount);
             assertThat(failCount.get()).isEqualTo(threadCount - robotCount);
 

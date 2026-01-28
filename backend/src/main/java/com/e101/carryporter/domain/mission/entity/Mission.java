@@ -73,4 +73,11 @@ public class Mission extends BaseEntity {
         this.missionStatus = missionStatus;
     }
 
+    // 로봇 할당
+    public void assignRobot(Robot robot) {
+        this.robot = robot;
+        this.assignedAt = LocalDateTime.now();
+        this.missionStatus = MissionStatus.ASSIGNED;
+    }
+
 }

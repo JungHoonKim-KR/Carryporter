@@ -11,10 +11,10 @@ public class RobotRedisScriptConfig {
     @Bean
     public RedisScript<Long> updateRobotStateScript() {
         String script = """
-                
+
                 local hashKey = KEYS[1]
-                local availableKey = KEYS[2]
-                
+                local queueKey = KEYS[2]
+
                 local robotId = ARGV[1]
                 local status = ARGV[2]
                 local battery = ARGV[3]
@@ -27,11 +27,11 @@ public class RobotRedisScriptConfig {
                 )
 
                 if status == '"IDLE"' or status == '"RETURNED"' then
-                    local time = redis.call('TIME')
-                    local score = time[1] * 1000000 + time[2]
-                    redis.call('ZADD', availableKey, score, robotId)
+                    -- List에 추가 (중복 방지를 위해 먼저 제거 후 추가)
+                    redis.call('LREM', queueKey, 0, robotId)
+                    redis.call('LPUSH', queueKey, robotId)
                 else
-                    redis.call('ZREM', availableKey, robotId)
+                    redis.call('LREM', queueKey, 0, robotId)
                 end
 
                 return 1
@@ -47,27 +47,18 @@ public class RobotRedisScriptConfig {
     @Bean
     public RedisScript<Long> assignRobotScript() {
         String script = """
-            local availableKey = KEYS[1]
-            local timestamp = ARGV[1]
-            
-            -- 가장 오래 대기한 로봇 (IDLE or RETURNED)
-            local result = redis.call('ZPOPMIN', availableKey, 1)
-            
-            if #result == 0 then
-                return nil
-            end
-            
-            local robotId = result[1]
-            local hashKey = 'robot:status:' .. robotId
-            
-            
+            local hashKey = KEYS[1]
+
+            local robotId = ARGV[1]
+            local timestamp = ARGV[2]
+
             -- 상태를 RESERVED로 변경
             redis.call('HSET', hashKey,
                 'status', '"RESERVED"',
                 'updatedAt', timestamp
             )
-            
-            return tonumber(robotId)
+
+            return 1
             """;
 
         DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
