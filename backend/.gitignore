@@ -16,7 +16,6 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
-
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -37,7 +36,7 @@ out/
 .vscode/
 
 ### Environment Variables ###
-.env
+.backend.env
 
 ### macOS ###
 .DS_Store
