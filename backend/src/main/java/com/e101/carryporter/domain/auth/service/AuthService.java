@@ -50,7 +50,7 @@ public class AuthService {
         mattermostClient.sendMessage(email, "CarryPorter 인증번호: [" + authCode + "]");
 
         long expiresIn = emailCodeRepository.getExpireSeconds();
-        return new AuthResponseDto("SUCCESS", "인증번호가 전송되었습니다.", expiresIn);
+        return new AuthResponseDto("SUCCESS", "인증번호가 전송되었습니다.", authCode, expiresIn);
     }
 
     /**

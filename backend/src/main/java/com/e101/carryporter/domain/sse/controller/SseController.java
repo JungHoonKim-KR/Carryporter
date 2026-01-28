@@ -7,7 +7,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("sse")
+@RequestMapping("/api/sse")
 @RequiredArgsConstructor
 public class SseController {
 

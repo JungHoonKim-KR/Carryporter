@@ -8,5 +8,6 @@ import lombok.Getter;
 public class AuthResponseDto {
     private String status;
     private String message;
+    private Integer code;
     private long expiresIn;
 }
