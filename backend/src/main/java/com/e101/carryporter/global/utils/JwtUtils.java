@@ -16,15 +16,19 @@ public class JwtUtils {
 
     private final Key key;
     private final long accessTokenExpTime;
+    private final long refreshTokenExpTime; // [1. 추가] Refresh Token 만료 시간 변수
 
     // application.properties에서 값 가져오기
     public JwtUtils(
             @Value("${jwt.secret}") String secretKey,
-            @Value("${jwt.expiration_time:86400000}") long accessTokenExpTime // 기본값 24시간
+            @Value("${jwt.expiration_time:86400000}") long accessTokenExpTime, // 기본값 24시간
+            @Value("${jwt.refresh_expiration_time:604800000}") long refreshTokenExpTime // [추가] 7일 (기본값)
+
     ) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpTime = accessTokenExpTime;
+        this.refreshTokenExpTime = refreshTokenExpTime;
     }
 
     /**
@@ -40,6 +44,20 @@ public class JwtUtils {
                 .setIssuedAt(new Date(System.currentTimeMillis())) // 발행 시간
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpTime)) // 만료 시간
                 .signWith(key, SignatureAlgorithm.HS256) // 암호화 알고리즘
+                .compact();
+    }
+
+    /**
+     * [3. 추가] Refresh Token 생성
+     * 보통 Refresh Token에는 많은 정보를 담지 않고, 만료 기간만 길게 잡습니다.
+     */
+    public String createRefreshToken(Long userId) {
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId)) // 주인을 userId로 설정
+                .claim("userId", userId)      // 혹시 모르니 claim에도 넣음
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpTime)) // ★ 긴 시간 적용
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -85,5 +103,13 @@ public class JwtUtils {
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
+    }
+
+    /**
+     * [추가] 외부에서 만료 시간을 조회할 수 있게 해주는 메서드
+     * 프론트엔드에는 보통 '초(Second)' 단위로 주니까 / 1000 해서 반환
+     */
+    public long getAccessTokenValidityInSeconds() {
+        return accessTokenExpTime / 1000;
     }
 }

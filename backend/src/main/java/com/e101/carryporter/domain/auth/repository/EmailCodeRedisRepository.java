@@ -58,4 +58,11 @@ public class EmailCodeRedisRepository {
     private String getEmailCodeKey(String email) {
         return EMAIL_CODE_PREFIX + email;
     }
+    /**
+     * [추가] 외부(Service)에서 만료 시간을 초 단위로 조회할 수 있게 해주는 메서드
+     * 5분 -> 300초 변환해서 반환
+     */
+    public long getExpireSeconds() {
+        return TimeUnit.MINUTES.toSeconds(TTL_MINUTES);
+    }
 }

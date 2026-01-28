@@ -1,4 +1,4 @@
-package com.e101.carryporter.domain.admincredentials.entity;
+package com.e101.carryporter.domain.admin.entity;
 
 
 import com.e101.carryporter.domain.user.entity.User;

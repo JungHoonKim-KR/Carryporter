@@ -1,15 +1,13 @@
 package com.e101.carryporter.domain.sse.controller;
-import com.e101.carryporter.domain.sse.dto.SseEventName;
 import com.e101.carryporter.domain.sse.service.SseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/api/sse")
+@RequestMapping("sse")
 @RequiredArgsConstructor
 public class SseController {
 
@@ -32,11 +30,11 @@ public class SseController {
         return sseService.subscribe(userId, role);
     }
 
-    // 테스트용: 내가 원하는 사람한테 알림 쏴보기
-// 호출 URL: POST http://localhost:8080/api/sse/send?userId=user1&message=Hello
-    @PostMapping("/send")
-    public void sendTestMessage(@RequestParam Long userId, @RequestParam String message) {
-        // SseEventName을 쓰거나, 테스트니까 그냥 문자열로 보냄
-        sseService.sendToUser(userId, SseEventName.REQUEST_RECEIVED, message);
-    }
+//    // 테스트용: 내가 원하는 사람한테 알림 쏴보기
+//// 호출 URL: POST http://localhost:8080/api/sse/send?userId=user1&message=Hello
+//    @PostMapping("/send")
+//    public void sendTestMessage(@RequestParam Long userId, @RequestParam String message) {
+//        // SseEventName을 쓰거나, 테스트니까 그냥 문자열로 보냄
+//        sseService.sendToUser(userId, "FINISHED", message);
+//    }
 }
