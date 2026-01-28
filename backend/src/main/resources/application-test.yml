@@ -25,4 +25,9 @@ mqtt:
 
 jwt:
   secret: c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=
-  expiration_time: 86400000
+  expiration_time: 86400000 #변경 예정
+  refresh_expiration_time: ${JWT_REFRESH_EXPIRATION_TIME:86400000} # [수정] Refresh Token: 24시간 (1일)
+
+mattermost:
+  enabled: true  #true로 하면 테스트에서도 mm이 가고, false로 하면 mm이 가지 않음
+  webhook-url: ${TEST_MM_WEBHOOK_URL:https://meeting.ssafy.com/hooks/r8ufow86m3yuxqbz8p759cgkye}
