@@ -19,21 +19,25 @@ public class LoginFailCountRedisRepository {
     private final RedisTemplate<String, Object> redisTemplate;
 
     // 로그인 실패 횟수 증가 메서드 (TTL 1시간)
-    public void increment(Long userId) {
+    public Long increment(Long userId) {
         String key = getLoginFailKey(userId);
 
         try {
             Long count = redisTemplate.opsForValue().increment(key);
 
-            // 처음 실패해서 숫자가 1이 된 그 순간에만 만료 시간(1시간) 설정
+            // 처음 실패(1)일 때만 만료 시간 설정
             if (count != null && count == 1) {
                 redisTemplate.expire(key, TTL_HOURS, TimeUnit.HOURS);
             }
 
             log.debug("로그인 실패 횟수 증가 userId = {}, count = {}", userId, count);
+
+            return count;
+
         } catch (Exception e) {
             log.error("사용자 인증 실패 카운트 증가 실패: userId = {}", userId, e);
-            // 조용히 넘어가고 다음번에 다시 카운트 -> 로그인 시도 횟수는 보조기능 -> 예외던지면 로그인 프로세스 멈춰버림
+            // Redis 죽었을 때 로직을 멈출 순 없으니, 0을 리턴해서 "실패 횟수 없음" 취급하고 통과시킴
+            return 0L;
         }
     }
 

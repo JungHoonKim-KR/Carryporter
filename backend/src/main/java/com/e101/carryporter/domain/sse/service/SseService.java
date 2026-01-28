@@ -86,4 +86,17 @@ public class SseService {
             emitter.completeWithError(e);
         }
     }
+
+    /**
+     * [USER] 사용자 연결 종료 (미션 완료 시 호출)
+     */
+    public void complete(Long userId) {
+        SseEmitter emitter = emitterRepository.findUser(userId);
+        if (emitter != null) {
+            // 1. 정상 종료 신호 보내기
+            emitter.complete();
+            // 2. 저장소에서 제거 (onCompletion이 호출되겠지만, 확실한 처리를 위해)
+            emitterRepository.deleteUser(userId);
+        }
+    }
 }
