@@ -1,27 +1,26 @@
 package com.e101.carryporter.domain.auth.controller;
 
 import com.e101.carryporter.domain.auth.controller.dto.request.AuthRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
+import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
 import com.e101.carryporter.support.IntegrationTestSupport;
+import com.e101.carryporter.support.WebMvcTestSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc // MockMvc 주입을 위해 필수!
-class AuthControllerTest extends IntegrationTestSupport {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+class AuthControllerTest extends WebMvcTestSupport {
 
     @Test
     @DisplayName("올바른 이메일과 비밀번호로 요청 시 200 OK 응답을 받는다.")
@@ -29,8 +28,12 @@ class AuthControllerTest extends IntegrationTestSupport {
         // given
         AuthRequestDto requestDto = new AuthRequestDto("correct@ssafy.com", 1234);
 
+        // stubbing (service 부터 mocking 해서 명시적으로 어떤 걸 반환할지 작성해줘야 합니다()
+        given(authService.requestAuth(any(AuthServiceReqeustDto.class)))
+                .willReturn(new AuthResponseDto("SUCCESS", "인증번호가 전송되었습니다.", 82, 123));
+
         // when & then
-        System.out.println("상태: "+  status());
+
         mockMvc.perform(post("/auth/request")
                         .content(objectMapper.writeValueAsString(requestDto))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -40,7 +43,11 @@ class AuthControllerTest extends IntegrationTestSupport {
                         }))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.message").value("인증번호가 전송되었습니다."))
+                .andExpect(jsonPath("$.code").value(82))
+                .andExpect(jsonPath("$.expiresIn").value(123));
+
     }
 
     @Test
