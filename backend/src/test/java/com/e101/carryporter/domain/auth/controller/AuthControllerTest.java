@@ -30,9 +30,15 @@ class AuthControllerTest extends IntegrationTestSupport {
         AuthRequestDto requestDto = new AuthRequestDto("correct@ssafy.com", 1234);
 
         // when & then
+        System.out.println("상태: "+  status());
         mockMvc.perform(post("/auth/request")
                         .content(objectMapper.writeValueAsString(requestDto))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setServletPath("/auth/request");
+                            return request;
+                        }))
+
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"));
     }
@@ -46,7 +52,12 @@ class AuthControllerTest extends IntegrationTestSupport {
         // when & then
         mockMvc.perform(post("/auth/request")
                         .content(objectMapper.writeValueAsString(requestDto))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setServletPath("/auth/request");
+                            return request;
+                        }))
+
                 .andExpect(status().isBadRequest());
     }
 }
