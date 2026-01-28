@@ -1,6 +1,6 @@
 package com.e101.carryporter.domain.user.entity;
 
-import com.e101.carryporter.domain.admincredentials.entity.AdminCredential;
+import com.e101.carryporter.domain.admin.entity.AdminCredential;
 import com.e101.carryporter.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
