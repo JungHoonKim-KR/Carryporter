@@ -1,4 +1,8 @@
 package com.e101.carryporter.domain.user.event;
 
-public record UserAuthSuccessEvent() {
+public record UserAuthSuccessEvent(
+        Long missionId,
+        Long userId,
+        String robotMac
+) {
 }
