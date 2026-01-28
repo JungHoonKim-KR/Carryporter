@@ -22,20 +22,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
 
-    // 검사를 건너뛸 URL 목록 (로그인, 인증번호 요청 등)
+    // 검사를 건너뛸 URL 목록 (context-path 이후의 경로)
     private static final List<String> WHITELIST = Arrays.asList(
             "/auth/request", // 인증번호 요청
-            "/auth/verify"         // 로그인
+            "/auth/verify",   // 로그인
+            "/api/auth/request",
+            "/api/auth/verify"
+
     );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String requestURI = request.getRequestURI();
+        String requestURI = request.getServletPath();
 
-        // 1. 화이트리스트에 있는 주소는 검사 안 하고 통과
-        // (단순 포함 여부 확인, 더 정교하게 하려면 startsWith 등 사용)
+        log.info("request uri = {}", requestURI);
+
+        // 1. 화이트리스트에 있는 주소는 검사 안 하고 통과 (context-path 제외된 경로로 비교)
         if (isWhitelisted(requestURI)) {
+            log.info("화이트리스트 통과");
             filterChain.doFilter(request, response);
             return;
         }
