@@ -50,13 +50,10 @@ public class MqttPublisherService {
     /**
      * 복귀 명령 전송
      * @param mac 로봇 MAC 주소
-     * @param homeX 복귀 장소 X 좌표
-     * @param homeY 복귀 장소 Y 좌표
      */
-    public void sendReturnCommand(String mac, double homeX, double homeY) {
-        String payload = String.format("{\"homeX\":%.2f,\"homeY\":%.2f}", homeX, homeY);
-        sendCommand(mac, "return", payload);
-        log.info("복귀 명령 전송 - MAC: {}, 복귀지: ({}, {})", mac, homeX, homeY);
+    public void sendReturnCommand(String mac) {
+        sendCommand(mac, "return", "{}");
+        log.info("복귀 명령 전송 - MAC: {}", mac);
     }
 
     /**
