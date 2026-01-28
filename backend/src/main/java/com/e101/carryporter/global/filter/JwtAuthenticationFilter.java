@@ -24,8 +24,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 검사를 건너뛸 URL 목록 (로그인, 인증번호 요청 등)
     private static final List<String> WHITELIST = Arrays.asList(
-            "/api/auth/request", // 인증번호 요청
-            "/api/auth/verify"         // 로그인
+            "/auth/request", // 인증번호 요청
+            "/auth/verify"         // 로그인
     );
 
     @Override

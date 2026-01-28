@@ -30,7 +30,7 @@ class AuthControllerTest extends IntegrationTestSupport {
         AuthRequestDto requestDto = new AuthRequestDto("correct@ssafy.com", 1234);
 
         // when & then
-        mockMvc.perform(post("/api/auth/request")
+        mockMvc.perform(post("/auth/request")
                         .content(objectMapper.writeValueAsString(requestDto))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -44,7 +44,7 @@ class AuthControllerTest extends IntegrationTestSupport {
         AuthRequestDto requestDto = new AuthRequestDto("wrong-email-format", 1234);
 
         // when & then
-        mockMvc.perform(post("/api/auth/request")
+        mockMvc.perform(post("/auth/request")
                         .content(objectMapper.writeValueAsString(requestDto))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
