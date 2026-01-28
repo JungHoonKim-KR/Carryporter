@@ -72,7 +72,7 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
                 .build();
 
         // when
-        mqttPublisherService.sendReturnCommand(mac, station.getPositionX(), station.getPositionY());
+        mqttPublisherService.sendReturnCommand(mac);
 
         // then
         String expectedTopic = "robot/" + mac + "/command/return";

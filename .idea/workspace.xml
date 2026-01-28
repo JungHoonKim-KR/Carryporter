@@ -4,18 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] MQTT pub 구현">
-      <change afterPath="$PROJECT_DIR$/.idea/S14P11E101.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/easycode.ignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules/SSETest.main.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules/carryporter.main.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="MR 템플릿 위치 변경">
+      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitlab/merge_request_templates/Default.md" beforeDir="false" afterPath="$PROJECT_DIR$/.gitlab/merge_request_templates/Default.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminLockRequestEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminLockRequestEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminUnlockRequestEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminUnlockRequestEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionAbortedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionAbortedEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionLockedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionLockedEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/SseNotificationHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/SseNotificationHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthFailedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthFailedEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthSuccessEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthSuccessEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +37,9 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
+        <task path="$PROJECT_DIR$/backend">
+          <activation />
+        </task>
         <projects_view>
           <tree_state>
             <expand>
@@ -54,26 +64,26 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitLabMergeRequestFiltersHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPENED",
-    "assignee": {
-      "type": "org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAssigneeFilterValue",
-      "username": "kik1232198",
-      "fullname": "김정훈"
+  <component name="GitLabMergeRequestFiltersHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPENED&quot;,
+    &quot;assignee&quot;: {
+      &quot;type&quot;: &quot;org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAssigneeFilterValue&quot;,
+      &quot;username&quot;: &quot;kik1232198&quot;,
+      &quot;fullname&quot;: &quot;김정훈&quot;
     }
   }
-}]]></component>
-  <component name="GitLabMergeRequestsSettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "first": "https://lab.ssafy.com/s14-webmobile3-sub1/S14P11E101.git",
-    "second": "f96d2da2-5c6c-4ec9-a4ec-763cb2694119"
+}</component>
+  <component name="GitLabMergeRequestsSettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;first&quot;: &quot;https://lab.ssafy.com/s14-webmobile3-sub1/S14P11E101.git&quot;,
+    &quot;second&quot;: &quot;f96d2da2-5c6c-4ec9-a4ec-763cb2694119&quot;
   }
-}]]></component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -90,6 +100,8 @@
   "keyToString": {
     "Gradle.Build backend.executor": "Run",
     "Gradle.CarryporterApplicationTests.executor": "Run",
+    "Gradle.MqttCommandHandlerIntegrationTest.executor": "Run",
+    "Gradle.MqttCommandHandlerTest.executor": "Run",
     "Gradle.MqttPublisherServiceTest.executor": "Run",
     "Gradle.UserRepositoryTest.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -105,7 +117,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CarryporterApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "feature/backend/mqtt",
+    "git-widget-placeholder": "Merging feature/backend/mqttHandler",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
@@ -124,10 +136,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\SSAFY\projects\S14P11E101\.gitlab\merge_request_templates" />
       <recent name="C:\Users\SSAFY\projects\S14P11E101\backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.MqttPublisherServiceTest">
+  <component name="RunManager" selected="Gradle.MqttCommandHandlerIntegrationTest">
     <configuration name="CarryporterApplicationTests" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -142,6 +155,60 @@
             <option value=":test" />
             <option value="--tests" />
             <option value="&quot;com.e101.carryporter.CarryporterApplicationTests&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="MqttCommandHandlerIntegrationTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;com.e101.carryporter.global.listener.MqttCommandHandlerIntegrationTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="MqttCommandHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;com.e101.carryporter.global.listener.MqttCommandHandlerTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -218,6 +285,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.MqttCommandHandlerIntegrationTest" />
+        <item itemvalue="Gradle.MqttCommandHandlerTest" />
         <item itemvalue="Gradle.MqttPublisherServiceTest" />
         <item itemvalue="Gradle.UserRepositoryTest" />
         <item itemvalue="Gradle.CarryporterApplicationTests" />
@@ -241,6 +310,7 @@
       <updated>1769405978732</updated>
       <workItem from="1769405980639" duration="42000" />
       <workItem from="1769413706201" duration="11142000" />
+      <workItem from="1769588173564" duration="14727000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
@@ -250,7 +320,79 @@
       <option name="project" value="LOCAL" />
       <updated>1769432098911</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="[Infra] api 경로 변경">
+      <option name="closed" value="true" />
+      <created>1769588313658</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1769588313658</updated>
+    </task>
+    <task id="LOCAL-00003" summary="[Infra] gitignore 추가">
+      <option name="closed" value="true" />
+      <created>1769588556671</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1769588556671</updated>
+    </task>
+    <task id="LOCAL-00004" summary="[BE] mqttHandler 추가">
+      <option name="closed" value="true" />
+      <created>1769607777544</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1769607777544</updated>
+    </task>
+    <task id="LOCAL-00005" summary="[BE] mqttHandler 추가">
+      <option name="closed" value="true" />
+      <created>1769607944059</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1769607944059</updated>
+    </task>
+    <task id="LOCAL-00006" summary="[BE] 기타 파일 제거">
+      <option name="closed" value="true" />
+      <created>1769608086129</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1769608086129</updated>
+    </task>
+    <task id="LOCAL-00007" summary="MR 템플릿 추가(테스트)">
+      <option name="closed" value="true" />
+      <created>1769608175823</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1769608175823</updated>
+    </task>
+    <task id="LOCAL-00008" summary="MR 템플릿 추가(테스트)">
+      <option name="closed" value="true" />
+      <created>1769608233465</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1769608233465</updated>
+    </task>
+    <task id="LOCAL-00009" summary="MR 템플릿 위치 변경">
+      <option name="closed" value="true" />
+      <created>1769608437671</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1769608437671</updated>
+    </task>
+    <task id="LOCAL-00010" summary="MR 템플릿 위치 변경">
+      <option name="closed" value="true" />
+      <created>1769608766636</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1769608766636</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,6 +400,12 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[BE] MQTT pub 구현" />
-    <option name="LAST_COMMIT_MESSAGE" value="[BE] MQTT pub 구현" />
+    <MESSAGE value="[Infra] api 경로 변경" />
+    <MESSAGE value="[Infra] gitignore 추가" />
+    <MESSAGE value="[BE] mqttHandler 추가" />
+    <MESSAGE value="[BE] 기타 파일 제거" />
+    <MESSAGE value="MR 템플릿 추가(테스트)" />
+    <MESSAGE value="MR 템플릿 위치 변경" />
+    <option name="LAST_COMMIT_MESSAGE" value="MR 템플릿 위치 변경" />
   </component>
 </project>

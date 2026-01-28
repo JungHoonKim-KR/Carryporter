@@ -44,3 +44,4 @@ out/
 ### Logs ###
 *.log
 logs/
+/docs/
