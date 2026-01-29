@@ -30,7 +30,7 @@ class MissionControllerTest extends WebMvcTestSupport {
 
         // when & then
         mockMvc.perform(post("/missions")
-                        .param("userId", userId.toString())
+                        .requestAttr("userId", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
@@ -50,7 +50,7 @@ class MissionControllerTest extends WebMvcTestSupport {
 
         // when & then
         mockMvc.perform(post("/missions")
-                        .param("userId", userId.toString())
+                        .requestAttr("userId", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
@@ -73,7 +73,7 @@ class MissionControllerTest extends WebMvcTestSupport {
 
         // when & then
         mockMvc.perform(post("/missions")
-                        .param("userId", userId.toString())
+                        .requestAttr("userId", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
