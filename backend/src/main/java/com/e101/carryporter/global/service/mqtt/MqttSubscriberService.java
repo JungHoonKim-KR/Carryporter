@@ -1,10 +1,14 @@
 package com.e101.carryporter.global.service.mqtt;
 
+import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,6 +16,7 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -21,6 +26,7 @@ public class MqttSubscriberService {
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final RobotRepository robotRepository;
+    private final MissionRepository missionRepository;
 
     /**
      * MQTT 메시지 수신 처리 (mqttInputChannel로 들어오는 모든 메시지)
@@ -110,15 +116,39 @@ public class MqttSubscriberService {
      * 도착 알림 처리
      * Topic: robot/{MAC}/arrived
      * Payload: {"missionId": 101}
+     * RobotArrivalEvent를 발행하려면 userId와 robotCode가 필요
      */
+    @Transactional(readOnly = true) // DB 조회를 위해 트랜잭션 필요
     private void handleArrived(String mac, String payload) {
         log.info("로봇 도착 알림 - MAC: {}", mac);
         try {
             JsonNode node = objectMapper.readTree(payload);
             long missionId = node.has("missionId") ? node.get("missionId").asLong() : -1;
 
+            if(missionId == -1) {
+                log.error("payload에 missionId가 없습니다. MAC : {}", mac);
+                return;
+            }
+
             log.info("로봇 도착 - MAC: {}, missionId: {}", mac, missionId);
             // TODO: 도착 알림 비즈니스 로직 구현
+            //DB 미션 정보 조회
+            Mission mission = missionRepository.findById(missionId)
+                    .orElseThrow(()-> new EntityNotFoundException("Mission not found: " + missionId));
+            //보안 검증: 요청 온 MAC 주소가 실제 미션의 로봇과 일치하는지?
+            if (!mission.getRobot().getMacAddress().equals(mac)) {
+                log.warn("MAC 주소 불일치! 요청: {}, 미션로봇: {}", mac, mission.getRobot().getMacAddress());
+                return;
+            }
+
+            // 2. 이벤트 발행 -> MissionStatusHandler(DB변경) & UserSseHandler(알림) 가 동작함
+            log.info("로봇 도착 이벤트 발행 - missionId: {}, userId: {}", missionId, mission.getUser().getId());
+
+            eventPublisher.publishEvent(new RobotArrivalEvent(
+                    mission.getId(),
+                    mission.getUser().getId(),
+                    mission.getRobot().getRobotCode()
+            ));
             // missionService.handleArrived(missionId);
         } catch (Exception e) {
             log.error("도착 알림 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());

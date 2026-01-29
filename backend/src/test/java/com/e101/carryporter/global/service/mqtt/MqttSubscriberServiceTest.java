@@ -1,8 +1,16 @@
 package com.e101.carryporter.global.service.mqtt;
 
+import com.e101.carryporter.domain.location.entity.Location;
+import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
+import com.e101.carryporter.domain.user.entity.Role;
+import com.e101.carryporter.domain.user.entity.User;
+import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +32,15 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private RobotRepository robotRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private MissionRepository missionRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
 
     @Autowired
     private EntityManager em;
@@ -65,22 +82,51 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
         printReceivedMessage("상태 보고", topic, payload);
     }
-
     @Test
-    @DisplayName("로봇 도착 알림 메시지 수신 처리 테스트")
+    @DisplayName("로봇 도착 알림 메시지 수신 시 RobotArrivalEvent가 발행된다")
     void handleArrived() {
-        // given
         String mac = "AA:BB:CC:DD:EE:FF";
+
+        // given
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("test code", mac);
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        locationRepository.save(callLocation);
+
+        // 1. 미션 생성 (이 상태에서는 Robot이 없음)
+        Mission mission = Mission.createMission(user, callLocation);
+
+
+
+        missionRepository.save(mission);
+
+        flushAndClear(); // DB 반영
+
+        // 2. MQTT 메시지 생성
         String topic = "robot/" + mac + "/arrived";
-        String payload = "{\"missionId\":101}";
+        String payload = "{\"missionId\":" + mission.getId() + "}";
 
         Message<String> message = createMessage(topic, payload);
 
-        // when & then
-        assertThatCode(() -> mqttSubscriberService.handleMessage(message))
-                .doesNotThrowAnyException();
+        // when
+        mqttSubscriberService.handleMessage(message);
 
-        printReceivedMessage("도착 알림", topic, payload);
+        // then
+        long publishedCount = events.stream(RobotArrivalEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        RobotArrivalEvent publishedEvent = events.stream(RobotArrivalEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
+        assertThat(publishedEvent.userId()).isEqualTo(user.getId());
+
+        printReceivedMessage("도착 알림 (Event 발행 성공)", topic, payload);
     }
 
     @Test
