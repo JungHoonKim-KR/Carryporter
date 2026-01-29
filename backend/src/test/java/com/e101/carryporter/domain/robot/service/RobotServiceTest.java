@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
@@ -188,6 +189,52 @@ class RobotServiceTest extends IntegrationTestSupport {
         assertThat(publishedEvent.destX()).isEqualTo(callLocation.getPositionX());
         assertThat(publishedEvent.destY()).isEqualTo(callLocation.getPositionY());
 
+    }
+
+    @DisplayName("관리자 최종 점검 완료 시 MissionFinalizedEvent가 발행된다.")
+    @Test
+    void finalizeMission() {
+        // given
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("test code", "aa:bb:cc");
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        locationRepository.save(callLocation);
+
+        Mission mission = Mission.createMission(user, callLocation);
+        missionRepository.save(mission);
+
+        flushAndClear();
+
+        // when
+        robotService.finalizeMission(mission.getId(), robot.getId());
+
+        // then
+        long publishedCount = events.stream(MissionFinalizedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        MissionFinalizedEvent publishedEvent = events.stream(MissionFinalizedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
+        assertThat(publishedEvent.robotId()).isEqualTo(robot.getId());
+    }
+
+    @DisplayName("존재하지 않는 로봇으로 finalizeMission 호출 시 예외가 발생한다.")
+    @Test
+    void finalizeMissionWithNotExistsRobot() {
+        // given
+        Long missionId = 1L;
+        Long notExistsRobotId = 9999L;
+
+        // when then
+        assertThatThrownBy(() -> robotService.finalizeMission(missionId, notExistsRobotId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("해당 로봇을 찾을 수 없습니다.");
     }
 
     private void flushAndClear() {

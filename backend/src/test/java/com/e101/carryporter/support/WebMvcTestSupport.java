@@ -10,6 +10,7 @@ import com.e101.carryporter.domain.sse.controller.SseController;
 import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.domain.user.service.UserService;
+import com.e101.carryporter.global.filter.AuthorizationFilter;
 import com.e101.carryporter.global.filter.CorsFilter;
 import com.e101.carryporter.global.filter.JwtAuthenticationFilter;
 import com.e101.carryporter.global.utils.JwtUtils;
@@ -57,8 +58,15 @@ public abstract class WebMvcTestSupport {
 //    protected JwtUtils jwtUtils;
 
     @MockitoBean
+
+    protected JwtUtils jwtUtils;
+
+    @MockitoBean
+    protected AuthorizationFilter authorizationFilter;
+
     protected UserRepository userRepository;
 
     @MockitoBean
     protected SseService sseService;
+
 }

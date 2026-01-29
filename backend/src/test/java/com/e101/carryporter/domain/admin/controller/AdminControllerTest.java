@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.admin.controller;
 
 import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
@@ -262,11 +263,82 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
+    @Test
+    @DisplayName("미션 최종 완료 API 호출 시 204 No Content를 반환한다")
+    void finalizeMission() throws Exception {
+        // given
+        Long missionId = 1L;
+        FinalizeRequestDto requestDto = createFinalizeRequestDto(1L);
+
+        willDoNothing()
+                .given(robotService)
+                .finalizeMission(anyLong(), anyLong());
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+                        .with(request -> {
+                            request.setServletPath("/admin/missions/" + missionId + "/finalize");
+                            return request;
+                        }))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("미션 최종 완료 API 호출 시 robotId가 null이면 400 Bad Request를 반환한다")
+    void finalize_WithNullRobotId_ReturnsBadRequest() throws Exception {
+        // given
+        Long missionId = 1L;
+        FinalizeRequestDto requestDto = createFinalizeRequestDto(null);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+                        .with(request -> {
+                            request.setServletPath("/admin/missions/" + missionId + "/finalize");
+                            return request;
+                        }))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @DisplayName("미션 최종 완료 API 호출 시 robotId가 음수이면 400 Bad Request를 반환한다")
+    void finalize_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
+        // given
+        Long missionId = 1L;
+        FinalizeRequestDto requestDto = createFinalizeRequestDto(-1L);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+                        .with(request -> {
+                            request.setServletPath("/admin/missions/" + missionId + "/finalize");
+                            return request;
+                        }))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
     private UnlockRobotRequestDto createUnlockRobotRequestDto(Long robotId) {
         return new UnlockRobotRequestDto(robotId);
     }
 
     private DispatchRequestDto createMoveRequestDto(Long robotId, Long callLocationId) {
         return new DispatchRequestDto(robotId, callLocationId);
+    }
+
+    private FinalizeRequestDto createFinalizeRequestDto(Long robotId) {
+        return new FinalizeRequestDto(robotId);
     }
 }

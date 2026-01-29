@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.admin.controller;
 
+import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.LockRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
@@ -39,6 +40,14 @@ public class AdminController {
         log.debug("관리자 권한 이동 요청 robot id = {}", requestDto.getRobotId());
 
         robotService.move(requestDto.toServiceRequestDto(missionId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/missions/{missionId}/finalize")
+    public ResponseEntity<Void> finalize(@RequestBody @Valid FinalizeRequestDto requestDto, @PathVariable Long missionId) {
+        log.debug("관리자 최종 점검 완료 - missionId: {}, robotId: {}", missionId, requestDto.getRobotId());
+
+        robotService.finalizeMission(missionId, requestDto.getRobotId());
         return ResponseEntity.noContent().build();
     }
 

@@ -4,6 +4,7 @@ import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
+import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
@@ -46,5 +47,14 @@ public class RobotService {
         Long missionId = requestDto.getMissionId();
 
         eventPublisher.publishEvent(new MissionStartedEvent(missionId, macAddress, callLocation.getPositionX(), callLocation.getPositionY()));
+    }
+
+    /**
+     * 관리자 최종 점검 완료 → 로봇 상태를 IDLE로 변경
+     */
+    @Transactional
+    public void finalizeMission(Long missionId, Long robotId) {
+        findById(robotId); // 로봇 존재 확인
+        eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
     }
 }
