@@ -163,31 +163,56 @@ pipeline {
                 }
             }
         }
-        stage('Docker Build & Deploy Frontend (React + Nginx)') {
+        stage('Build & Deploy Frontend (Blue-Green)') {
             when {
                 expression { env.BUILD_FRONTEND == 'true' }
             }
             steps {
                 sh '''
                     set -e
-                    echo "Building Nginx + React Docker image (full rebuild)..."
-                    docker build --no-cache -t ${NGINX_IMAGE} -f frontend/nginx/Dockerfile .
+                    echo "=== Frontend Blue-Green Deployment ==="
 
-                    echo "Deploying Nginx..."
-                    docker stop ${NGINX_CONTAINER} 2>/dev/null || true
-                    docker rm ${NGINX_CONTAINER} 2>/dev/null || true
+                    # 디렉토리 초기화 (최초 실행 시)
+                    mkdir -p /home/ubuntu/frontend/dist-blue
+                    mkdir -p /home/ubuntu/frontend/dist-green
 
-                    docker run -d \
-                        --name ${NGINX_CONTAINER} \
-                        --network ${DOCKER_NETWORK} \
-                        --restart unless-stopped \
-                        -p 80:80 \
-                        -p 443:443 \
-                        -v /etc/letsencrypt:/etc/letsencrypt:ro \
-                        ${NGINX_IMAGE}
+                    # 현재 활성 색상 확인 (없으면 blue가 기본)
+                    if [ -f /home/ubuntu/frontend/active_color ]; then
+                        CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color)
+                    else
+                        CURRENT_COLOR="blue"
+                        echo "blue" > /home/ubuntu/frontend/active_color
+                    fi
 
-                    sleep 5
-                    docker ps | grep ${NGINX_CONTAINER}
+                    # 배포 대상 색상 결정
+                    if [ "$CURRENT_COLOR" = "blue" ]; then
+                        TARGET_COLOR="green"
+                    else
+                        TARGET_COLOR="blue"
+                    fi
+
+                    echo "Current: $CURRENT_COLOR -> Target: $TARGET_COLOR"
+
+                    # 1. React 빌드
+                    echo "Building React application..."
+                    docker build --no-cache -t frontend-builder -f frontend/nginx/Dockerfile .
+
+                    # 2. 빌드 결과물을 대상 디렉토리에 복사
+                    echo "Copying build output to dist-$TARGET_COLOR..."
+                    docker run --rm -v /home/ubuntu/frontend/dist-$TARGET_COLOR:/output frontend-builder sh -c "cp -r /tmp/dist/* /output/"
+
+                    # 3. nginx.conf의 root 경로 변경
+                    echo "Switching nginx to $TARGET_COLOR..."
+                    sed -i "s|/home/ubuntu/frontend/dist-$CURRENT_COLOR|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
+
+                    # 4. nginx reload (무중단)
+                    echo "Reloading nginx..."
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
+
+                    # 5. 활성 색상 업데이트
+                    echo "$TARGET_COLOR" > /home/ubuntu/frontend/active_color
+
+                    echo "=== Frontend deployed to $TARGET_COLOR (zero downtime) ==="
                 '''
             }
         }
@@ -199,24 +224,24 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    echo "Updating Nginx config only (React cached)..."
-                    docker build -t ${NGINX_IMAGE} -f frontend/nginx/Dockerfile .
+                    echo "Updating Nginx config..."
 
-                    echo "Deploying Nginx..."
-                    docker stop ${NGINX_CONTAINER} 2>/dev/null || true
-                    docker rm ${NGINX_CONTAINER} 2>/dev/null || true
+                    # nginx.conf 복사
+                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
 
-                    docker run -d \
-                        --name ${NGINX_CONTAINER} \
-                        --network ${DOCKER_NETWORK} \
-                        --restart unless-stopped \
-                        -p 80:80 \
-                        -p 443:443 \
-                        -v /etc/letsencrypt:/etc/letsencrypt:ro \
-                        ${NGINX_IMAGE}
+                    # 현재 활성 색상으로 경로 설정
+                    if [ -f /home/ubuntu/frontend/active_color ]; then
+                        CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color)
+                    else
+                        CURRENT_COLOR="blue"
+                    fi
 
-                    sleep 5
-                    docker ps | grep ${NGINX_CONTAINER}
+                    sed -i "s|/home/ubuntu/frontend/dist-blue|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
+
+                    # nginx reload
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
+
+                    echo "Nginx config updated"
                 '''
             }
         }
