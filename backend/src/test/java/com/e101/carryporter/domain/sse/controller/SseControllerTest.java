@@ -40,7 +40,7 @@ class SseControllerTest {
                 .willReturn(new SseEmitter());
 
         // when & then
-        mockMvc.perform(get("/api/sse/subscribe")
+        mockMvc.perform(get("/sse/subscribe")
                         .param("userId", "1")
                         .param("role", "ROLE_USER") // ★ Role 파라미터 필수!
                         .accept(MediaType.TEXT_EVENT_STREAM))
