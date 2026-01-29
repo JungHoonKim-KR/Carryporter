@@ -1,5 +1,6 @@
 package com.e101.carryporter.global.utils;
 
+import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,8 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-class JwtUtilsTest {
+class JwtUtilsTest extends IntegrationTestSupport {
 
     @Autowired
     private JwtUtils jwtUtils; // 스프링이 만들어준 객체를 가져다 씀 (application.yml 설정 적용됨)

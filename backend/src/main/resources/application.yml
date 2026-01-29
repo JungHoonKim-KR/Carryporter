@@ -1,3 +1,6 @@
+# ===========================================
+# 공통 설정 (모든 프로파일 공통)
+# ===========================================
 server:
   servlet:
     context-path: ${CONTEXT_PATH:/api}
@@ -7,6 +10,25 @@ spring:
     active: local
   application:
     name: carryporter
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=}
+  expiration_time: ${JWT_EXPIRATION_TIME:86400000} #변경예정
+  refresh_expiration_time: ${JWT_REFRESH_EXPIRATION_TIME:86400000} # [수정] Refresh Token: 24시간 (1일)
+
+logging:
+  level:
+    com.e101.carryporter: debug
+
+---
+# ===========================================
+# local 프로파일 전용 설정
+# ===========================================
+spring:
+  config:
+    activate:
+      on-profile: local
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:demoapp}
     username: ${DB_USER:root}
@@ -24,12 +46,6 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-# JWT 설정
-jwt:
-  secret: ${JWT_SECRET:c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=}
-  expiration_time: ${JWT_EXPIRATION_TIME:86400000} #변경예정
-  refresh_expiration_time: ${JWT_REFRESH_EXPIRATION_TIME:86400000} # [수정] Refresh Token: 24시간 (1일)
-
 mqtt:
   broker:
     url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
@@ -41,7 +57,3 @@ mqtt:
 mattermost:
   enabled: true  # 알림 발송 여부
   webhook-url: ${MM_WEBHOOK_URL:https://meeting.ssafy.com/hooks/r8ufow86m3yuxqbz8p759cgkye}
-
-logging:
-  level:
-    com.e101.carryporter: debug
