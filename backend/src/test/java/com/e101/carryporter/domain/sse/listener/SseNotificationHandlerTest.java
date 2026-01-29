@@ -29,12 +29,13 @@ class SseNotificationHandlerTest {
     private final Long USER_ID = 100L;
     private final Long MISSION_ID = 1L;
     private final String MAC_ADDRESS = "AA:BB:CC:DD:EE";
+    private final String ROBOT_CODE = "robot-code";
 
     @Test
     @DisplayName("로봇 도착 이벤트를 받으면 SSE로 'ARRIVED' 메시지를 전송해야 한다")
     void handleRobotArrival() {
         // given
-        RobotArrivalEvent event = new RobotArrivalEvent(MISSION_ID, USER_ID);
+        RobotArrivalEvent event = new RobotArrivalEvent(MISSION_ID, USER_ID, ROBOT_CODE);
 
         // when
         sseNotificationHandler.handleRobotArrivalEvent(event);
@@ -73,7 +74,7 @@ class SseNotificationHandlerTest {
         MissionAbortedEvent event = new MissionAbortedEvent(MISSION_ID, USER_ID, MAC_ADDRESS, "비밀번호 3회 오류");
 
         // when
-        sseNotificationHandler.handleMissionAborted(event);
+        sseNotificationHandler.handleMissionAbortedEvent(event);
 
         // then
         verify(sseService).sendToUser(
