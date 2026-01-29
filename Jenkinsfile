@@ -181,7 +181,9 @@ pipeline {
                         --name ${NGINX_CONTAINER} \
                         --network ${DOCKER_NETWORK} \
                         --restart unless-stopped \
-                        -p 8050:80 \
+                        -p 80:80 \
+                        -p 443:443 \
+                        -v /etc/letsencrypt:/etc/letsencrypt:ro \
                         ${NGINX_IMAGE}
 
                     sleep 5
