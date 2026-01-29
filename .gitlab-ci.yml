@@ -1,0 +1,67 @@
+stages:
+  - notify
+
+# MR이 생성되거나 업데이트 될 때 알림
+notify_mr:
+  stage: notify
+  image: curlimages/curl
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - |
+      curl -i -X POST -H 'Content-Type: application/json' -d '{
+        "username": "GitLab Bot",
+        "icon_url": "https://gitlab.com/assets/gitlab_logo-7ae504fe4f68fdebb3c2034e36621930cd36ea87924c11ff65dbcb8ed50dca58.png",
+        "attachments": [
+          {
+            "color": "#28a745",
+            "pretext": "📢 **MR Generated!!!!**",
+            "title": "'"$CI_MERGE_REQUEST_TITLE"'",
+            "title_link": "'"$CI_MERGE_REQUEST_PROJECT_URL"/-/merge_requests/"$CI_MERGE_REQUEST_IID"'",
+            "text": "서둘러서 코드 리뷰 해주세요~! 수정 필요할 경우 작성자 태그해주세요!!",
+            "fields": [
+              {
+                "short": true,
+                "title": "✏️ Author",
+                "value": "'"$GITLAB_USER_NAME"'"
+              },
+              {
+                "short": true,
+                "title": "🎯 Target Branch",
+                "value": "'"$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"'"
+              }
+            ]
+          }
+        ]
+      }' $MATTERMOST_WEBHOOK_URL
+
+# Merge가 성공했을 때 알림 (develop 브랜치 기준)
+notify_merge_success:
+  stage: notify
+  image: curlimages/curl
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "push"
+  script:
+    - |
+      curl -i -X POST -H 'Content-Type: application/json' -d '{
+        "username": "GitLab Bot",
+        "attachments": [
+          {
+            "color": "#0052CC",
+            "title": "🚀 Successfully Merged",
+            "text": "새로운 코드가 **'"$CI_COMMIT_BRANCH"'**에 반영되었습니다.",
+            "fields": [
+              {
+                "short": true,
+                "title": "Commiter",
+                "value": "'"$GITLAB_USER_NAME"'"
+              },
+              {
+                "short": true,
+                "title": "Commit Msg",
+                "value": "'"$CI_COMMIT_MESSAGE"'"
+              }
+            ]
+          }
+        ]
+      }' $MATTERMOST_WEBHOOK_URL
