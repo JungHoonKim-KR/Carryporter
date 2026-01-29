@@ -1,4 +1,29 @@
-# Logs
+# ========================================
+#  CARRY PORTER Frontend - .gitignore
+# ========================================
+
+# ===== Dependencies =====
+node_modules
+.pnpm-store
+
+# ===== Build Output =====
+dist
+dist-ssr
+build
+*.local
+
+# ===== Environment Variables =====
+# 중요: 환경변수 파일은 절대 커밋하지 마세요!
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# ===== Logs =====
 logs
 *.log
 npm-debug.log*
@@ -7,18 +32,55 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# ===== Editor & IDE =====
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# ===== AI Tools & Extensions =====
+.claude/
+.cursor/
+.mcp.json
+CLAUDE.md
+
+# ===== OS Files =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== TypeScript =====
+*.tsbuildinfo
+
+# ===== Testing =====
+coverage
+.nyc_output
+
+# ===== Linting & Formatting =====
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# ===== Figma Design Reference =====
+# 디자인 참조용 폴더 (배포 불필요)
+figma_design/
+
+# ===== Temporary Files =====
+*.tmp
+*.temp
+.cache
+.parcel-cache
+
+# ===== Misc =====
+@/
+*.tgz

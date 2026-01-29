@@ -11,7 +11,7 @@ interface ButtonProps {
   className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const Button = ({
   children,
   onClick,
   type = 'button',
@@ -20,7 +20,7 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   disabled = false,
   className = '',
-}) => {
+}: ButtonProps) => {
   // 기본 스타일
   const baseStyles = 'font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
 

@@ -17,9 +17,12 @@ CARRY PORTER는 공항에서 교통 약자가 자율주행 로봇을 통해 짐�
 ### 주요 기능
 
 - ✅ **2단계 간편 인증** (Mattermost 기반)
-- ⏳ **실시간 로봇 추적** (SSE)
-- ⏳ **OCR 티켓 스캔**
-- ⏳ **짐 보관 관리**
+- ✅ **실시간 로봇 추적** (SSE)
+- ✅ **OCR 티켓 스캔**
+- ✅ **로봇 호출 및 미션 관리**
+- ✅ **보관/반납 플로우**
+- ✅ **Tailwind CSS v4 반응형 UI**
+- ✅ **shadcn/ui 컴포넌트 시스템**
 - ⏳ **관리자 대시보드**
 
 ---
@@ -270,29 +273,32 @@ This project is licensed under the MIT License.
 
 ## 📌 체크리스트
 
-### 완료된 기능
+### 완료된 기능 ✅
 - ✅ 프로젝트 초기화 (Vite + React + TypeScript)
-- ✅ Tailwind CSS v4 설정
-- ✅ 인증 스토어 (Zustand)
-- ✅ API 레이어 (Axios + Interceptor)
-- ✅ 공통 컴포넌트 (Button, Input, Checkbox)
-- ✅ 로그인 페이지
-- ✅ PIN 인증 페이지
+- ✅ Tailwind CSS v4 + shadcn/ui 설정
+- ✅ 인증 시스템 (Zustand + JWT)
+- ✅ API 레이어 (Axios + Interceptor + Proxy)
+- ✅ 로그인/PIN 인증
 - ✅ Protected Route
-- ✅ 반응형 레이아웃
+- ✅ 홈 화면
+- ✅ 티켓 스캔 기능 (OCR)
+- ✅ 로봇 호출 기능 (미션 생성)
+- ✅ 실시간 추적 (SSE)
+- ✅ 보관/반납 플로우
+- ✅ 4자리 PIN 인증 모달
+- ✅ 무게 측정 애니메이션
 
-### 진행 중
-- ⏳ 홈 화면 기능 추가
-- ⏳ 티켓 스캔 기능
-- ⏳ 로봇 호출 기능
+### 진행 중 ⏳
+- ⏳ 관리자 대시보드
+- ⏳ 프로덕션 배포 설정
 
-### 계획
-- 📋 실시간 추적 (SSE)
-- 📋 관리자 대시보드
+### 계획 📋
+- 📋 E2E 테스트 (Playwright)
+- 📋 성능 최적화
 - 📋 PWA 지원
-- 📋 테스트 작성
 - 📋 CI/CD 구축
 
 ---
 
-**최종 업데이트**: 2026년 1월 25일
+**최종 업데이트**: 2026년 1월 29일
+**구현 진행률**: 90% (미션 시스템 완료)

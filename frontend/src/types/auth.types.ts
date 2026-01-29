@@ -6,26 +6,32 @@ export interface User {
   role: 'USER' | 'ADMIN';
 }
 
-// 로그인 요청 (Mattermost 이메일 + 비밀번호)
+// 1단계: 인증번호 발송 요청
+export interface SendCodeRequest {
+  email: string;              // Mattermost 이메일
+  password: number;           // 4자리 비밀번호 (로봇 인증용)
+}
+
+// 1단계: 인증번호 발송 응답
+export interface SendCodeResponse {
+  status: string;             // "SUCCESS"
+  message: string;            // "인증번호가 전송되었습니다."
+  expiresIn: number;          // 만료 시간 (초)
+  code: number;                // CODE 번호 (예: 35)
+}
+
+// 2단계: CODE 인증 요청
 export interface LoginRequest {
-  email: string;
-  password: string;
-  passwordConfirm: string;
-  agreeTerms: boolean;
-  agreePrivacy: boolean;
+  email: string;              // Mattermost 이메일
+  code: number;                // 선택한 CODE 번호
 }
 
-// 로그인 응답 (verificationId와 PIN 번호들)
+// 2단계: CODE 인증 응답 (토큰 발급)
 export interface LoginResponse {
-  verificationId: string;
-  expiresAt: string;
-  pins: string[]; // ["35", "17", "93"] 같은 3개 번호
-}
-
-// PIN 인증 요청
-export interface VerifyPinRequest {
-  verificationId: string;
-  pin: string;
+  accessToken: string;        // JWT 액세스 토큰
+  refreshToken: string;       // 리프레시 토큰
+  tokenType: string;          // "Bearer"
+  expiresIn: number;          // 토큰 만료 시간 (초)
 }
 
 // 인증 성공 응답 (토큰 + 사용자 정보)
@@ -33,12 +39,6 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
-}
-
-// 관리자 로그인 요청
-export interface AdminLoginRequest {
-  username: string;
-  password: string;
 }
 
 // API 에러 응답

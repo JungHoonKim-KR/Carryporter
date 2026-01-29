@@ -1,7 +1,60 @@
 @import "tailwindcss";
 
+/* ========================================
+   CARRY PORTER - Toss 스타일 디자인 시스템
+   ======================================== */
+
+/* ===== 커스텀 폰트 @font-face ===== */
+@font-face {
+  font-family: 'Beckman';
+  src: url('./assets/fonts/beckman-free.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Custom theme configuration */
 @theme {
+  /* ===== Toss 블루 계열 (메인 브랜드 컬러) ===== */
+  --color-toss-blue: #0064FF;
+  --color-toss-blue-light: #4DA3FF;
+  --color-toss-blue-dark: #0052CC;
+  --color-toss-blue-50: #E8F3FF;
+  --color-toss-blue-100: #C9E2FF;
+  --color-toss-blue-200: #90C2FF;
+  --color-toss-blue-300: #5AA3FF;
+  --color-toss-blue-400: #3B8CFF;
+  --color-toss-blue-500: #0064FF;
+  --color-toss-blue-600: #0052CC;
+  --color-toss-blue-700: #003D99;
+  --color-toss-blue-800: #002966;
+  --color-toss-blue-900: #001433;
+
+  /* ===== 세컨더리 컬러 (다양한 상태 표현) ===== */
+  --color-toss-green: #00C853;
+  --color-toss-green-light: #69F0AE;
+  --color-toss-orange: #FF6D00;
+  --color-toss-orange-light: #FFAB40;
+  --color-toss-purple: #7C4DFF;
+  --color-toss-purple-light: #B388FF;
+  --color-toss-red: #FF3D00;
+  --color-toss-red-light: #FF8A80;
+  --color-toss-yellow: #FFD600;
+  --color-toss-yellow-light: #FFFF00;
+
+  /* ===== 그레이 스케일 (Toss 스타일) ===== */
+  --color-gray-50: #FAFAFA;
+  --color-gray-100: #F5F5F5;
+  --color-gray-200: #EEEEEE;
+  --color-gray-300: #E0E0E0;
+  --color-gray-400: #BDBDBD;
+  --color-gray-500: #9E9E9E;
+  --color-gray-600: #757575;
+  --color-gray-700: #616161;
+  --color-gray-800: #424242;
+  --color-gray-900: #212121;
+
+  /* ===== Primary 색상 (기존 호환성) ===== */
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;
@@ -12,16 +65,393 @@
   --color-primary-700: #1d4ed8;
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
+
+  /* ===== shadcn/ui 색상 변수 ===== */
+  --color-background: 0 0% 100%;
+  --color-foreground: 222.2 84% 4.9%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 222.2 84% 4.9%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 222.2 84% 4.9%;
+  --color-primary: 221.2 83.2% 53.3%;
+  --color-primary-foreground: 210 40% 98%;
+  --color-secondary: 210 40% 96.1%;
+  --color-secondary-foreground: 222.2 47.4% 11.2%;
+  --color-muted: 210 40% 96.1%;
+  --color-muted-foreground: 215.4 16.3% 46.9%;
+  --color-accent: 210 40% 96.1%;
+  --color-accent-foreground: 222.2 47.4% 11.2%;
+  --color-destructive: 0 84.2% 60.2%;
+  --color-destructive-foreground: 210 40% 98%;
+  --color-border: 214.3 31.8% 91.4%;
+  --color-input: 214.3 31.8% 91.4%;
+  --color-ring: 221.2 83.2% 53.3%;
+  --radius-lg: 0.5rem;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
+
+  /* ===== 커스텀 섀도우 ===== */
+  --shadow-toss-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-toss-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-toss-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-toss-xl: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  --shadow-toss-glow: 0 0 20px rgba(0, 100, 255, 0.3);
+
+  /* ===== 애니메이션 ===== */
+  --animate-duration-fast: 150ms;
+  --animate-duration-normal: 300ms;
+  --animate-duration-slow: 500ms;
+  --animate-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== 커스텀 유틸리티 클래스 ===== */
+
+/* Toss 스타일 그라데이션 배경 */
+.bg-toss-gradient {
+  background: linear-gradient(180deg, #0064FF 0%, #4DA3FF 100%);
+}
+
+.bg-toss-gradient-radial {
+  background: radial-gradient(ellipse at top, #4DA3FF 0%, #0064FF 100%);
+}
+
+/* 글래스모피즘 효과 */
+.glass {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-blue {
+  background: rgba(0, 100, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Toss 스타일 카드 */
+.card-toss {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-toss:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Toss 스타일 버튼 */
+.btn-toss {
+  background: #0064FF;
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 16px 24px;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 100, 255, 0.3);
+}
+
+.btn-toss:hover {
+  background: #0052CC;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 100, 255, 0.4);
+}
+
+.btn-toss:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 100, 255, 0.2);
+}
+
+.btn-toss-outline {
+  background: transparent;
+  color: #0064FF;
+  border: 2px solid #0064FF;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 14px 22px;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-toss-outline:hover {
+  background: rgba(0, 100, 255, 0.1);
+}
+
+/* ===== 애니메이션 키프레임 ===== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes scan-line {
+  0% { top: 10%; }
+  50% { top: 80%; }
+  100% { top: 10%; }
+}
+
+/* 애니메이션 유틸리티 클래스 */
+.animate-fade-in {
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 400ms ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 300ms ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-bounce-soft {
+  animation: bounce-soft 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+/* ===== 스크롤바 스타일 ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
 /* Custom base styles */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #FAFAFA;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* 포커스 스타일 */
+:focus-visible {
+  outline: 2px solid #0064FF;
+  outline-offset: 2px;
+}
+
+/* ===== iOS 26 스타일 (Glassmorphism + Neumorphism) ===== */
+
+/* Glassmorphism 카드 */
+.card-glass-ios {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glass-ios:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Neumorphism 카드 (iOS 스타일) */
+.card-neumorphism {
+  background: linear-gradient(145deg, #ffffff, #f7f9fc);
+  box-shadow:
+    12px 12px 24px rgba(174, 186, 206, 0.15),
+    -12px -12px 24px rgba(255, 255, 255, 0.9);
+  border-radius: 28px;
+  transition: all 300ms ease;
+}
+
+.card-neumorphism:active {
+  box-shadow:
+    inset 6px 6px 12px rgba(174, 186, 206, 0.2),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+}
+
+/* iOS 스타일 버튼 */
+.btn-ios {
+  background: linear-gradient(135deg, #0064FF 0%, #4DA3FF 100%);
+  box-shadow:
+    0 8px 24px rgba(0, 100, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  color: white;
+  font-weight: 600;
+  padding: 16px 32px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-ios:hover {
+  box-shadow:
+    0 12px 32px rgba(0, 100, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-ios:active {
+  box-shadow:
+    0 4px 16px rgba(0, 100, 255, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(0) scale(0.98);
+}
+
+/* Neumorphism 버튼 (부드러운 버전) */
+.btn-neumorphism {
+  background: linear-gradient(145deg, #ffffff, #f0f4f8);
+  box-shadow:
+    8px 8px 20px rgba(174, 186, 206, 0.2),
+    -8px -8px 20px rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  color: #0064FF;
+  font-weight: 600;
+  padding: 16px 32px;
+  transition: all 250ms ease;
+}
+
+.btn-neumorphism:hover {
+  box-shadow:
+    10px 10px 24px rgba(174, 186, 206, 0.25),
+    -10px -10px 24px rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.btn-neumorphism:active {
+  box-shadow:
+    inset 4px 4px 10px rgba(174, 186, 206, 0.2),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.8);
+  transform: translateY(0);
+}
+
+/* 무게 카운트업 애니메이션 */
+@keyframes weight-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.weight-counter {
+  animation: weight-pulse 1s ease-in-out;
+}
+
+/* 모바일 Safe Area */
+@supports (padding: env(safe-area-inset-top)) {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* iOS Safari 하단 네비게이션 바 대응 */
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* 터치 피드백 개선 */
+.touch-feedback {
+  -webkit-tap-highlight-color: rgba(0, 100, 255, 0.1);
+  touch-action: manipulation;
+}
+
+/* 버튼 터치 영역 확대 (최소 44x44px) */
+.btn-touch-optimized {
+  min-height: 44px;
+  min-width: 44px;
 }

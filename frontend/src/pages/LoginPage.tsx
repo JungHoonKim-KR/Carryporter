@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import AuthLayout from '../components/layouts/AuthLayout';
 import Input from '../components/common/Input';
 import Checkbox from '../components/common/Checkbox';
-import Button from '../components/common/Button';
-import { loginSchema } from '../utils/validation';
-import type { LoginFormData } from '../utils/validation';
-import { login } from '../api/auth.api';
+import { Button } from '@/components/ui/button';
+import { sendCodeSchema, type SendCodeFormData } from '../utils/validation';
+import { sendCode } from '../api/auth.api';
 
-const LoginPage: React.FC = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -19,36 +18,37 @@ const LoginPage: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SendCodeFormData>({
+    resolver: zodResolver(sendCodeSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: SendCodeFormData) => {
     try {
       setIsLoading(true);
       setApiError('');
 
-      // API 호출
-      const response = await login({
+      // 인증번호 발송 API 호출
+      const response = await sendCode({
         email: data.email,
-        password: data.password,
-        passwordConfirm: data.passwordConfirm,
-        agreeTerms: data.agreeTerms,
-        agreePrivacy: data.agreePrivacy,
+        password: parseInt(data.password, 10), // string을 number로 변환
       });
 
-      // PIN 인증 페이지로 이동 (verificationId와 pins 전달)
+      console.log('=== 1단계 인증번호 발송 성공 ===');
+      console.log('응답 데이터:', response);
+      console.log('받은 CODE:', response.code, '(type:', typeof response.code, ')');
+
+      // CODE 선택 페이지로 이동 (email, code 전달)
       navigate('/login/verify', {
         state: {
-          verificationId: response.verificationId,
-          pins: response.pins,
-          expiresAt: response.expiresAt,
+          email: data.email,
+          code: response.code, // 실제 CODE 번호 (예: 35)
         },
+        replace: true, // 히스토리 스택을 대체하여 뒤로가기 방지
       });
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Send code error:', error);
       setApiError(
-        error.response?.data?.message || '로그인에 실패했습니다. 다시 시도해주세요.'
+        error.response?.data?.message || '인증번호 발송에 실패했습니다. 다시 시도해주세요.'
       );
     } finally {
       setIsLoading(false);
@@ -57,13 +57,15 @@ const LoginPage: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-lg shadow-xl p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">로그인</h2>
+      {/* 카드 컨테이너 */}
+      <div className="bg-white rounded-3xl shadow-2xl p-10">
+        {/* 제목 */}
+        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-left">로그인</h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Mattermost 이메일 */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* MM 이메일 */}
           <Input
-            label="mm 이메일"
+            label="MM 이메일"
             type="email"
             placeholder="example@email.com"
             error={errors.email?.message}
@@ -77,9 +79,9 @@ const LoginPage: React.FC = () => {
             type="password"
             placeholder="숫자 4자리 입력"
             error={errors.password?.message}
-            helperText="숫자 4자리를 입력하여 주세요."
             {...register('password')}
             required
+            maxLength={4}
           />
 
           {/* 비밀번호 확인 */}
@@ -90,10 +92,11 @@ const LoginPage: React.FC = () => {
             error={errors.passwordConfirm?.message}
             {...register('passwordConfirm')}
             required
+            maxLength={4}
           />
 
-          {/* 약관 동의 */}
-          <div className="space-y-3 pt-2">
+          {/* 약관 동의 박스 */}
+          <div className="bg-gray-100 rounded-lg p-4 space-y-3">
             <Checkbox
               label="회수되지 않은 짐은 7일간 보관되는 것에 동의합니다."
               error={errors.agreeTerms?.message}
@@ -102,7 +105,7 @@ const LoginPage: React.FC = () => {
             />
 
             <Checkbox
-              label="서비스 이용약관 및 개인정보 처리 방침에 동의합니다"
+              label="서비스 이용약관 및 개인정보 처리 방침에 동의합니다."
               error={errors.agreePrivacy?.message}
               {...register('agreePrivacy')}
               required
@@ -119,12 +122,11 @@ const LoginPage: React.FC = () => {
           {/* 로그인 버튼 */}
           <Button
             type="submit"
-            fullWidth
             size="lg"
             disabled={isLoading}
-            className="mt-6"
+            className="w-full mt-6"
           >
-            {isLoading ? '로그인 중...' : '로그인'}
+            {isLoading ? '전송 중...' : '로그인'}
           </Button>
         </form>
       </div>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// 로그인 폼 검증 스키마
-export const loginSchema = z.object({
+// 인증번호 발송 폼 검증 스키마
+export const sendCodeSchema = z.object({
   email: z
     .string()
     .min(1, '이메일을 입력해주세요')
@@ -9,7 +9,8 @@ export const loginSchema = z.object({
 
   password: z
     .string()
-    .min(4, '비밀번호는 최소 4자 이상이어야 합니다'),
+    .length(4, '비밀번호는 정확히 4자리여야 합니다')
+    .regex(/^\d{4}$/, '비밀번호는 숫자 4자리여야 합니다'),
 
   passwordConfirm: z
     .string()
@@ -18,30 +19,18 @@ export const loginSchema = z.object({
   agreeTerms: z
     .boolean()
     .refine((val) => val === true, {
-      message: '서비스 이용약관에 동의해주세요',
+      message: '보관 정책에 동의해주세요',
     }),
 
   agreePrivacy: z
     .boolean()
     .refine((val) => val === true, {
-      message: '개인정보 처리방침에 동의해주세요',
+      message: '서비스 이용약관에 동의해주세요',
     }),
 }).refine((data) => data.password === data.passwordConfirm, {
   message: '비밀번호가 일치하지 않습니다',
   path: ['passwordConfirm'],
 });
 
-// 관리자 로그인 폼 검증 스키마
-export const adminLoginSchema = z.object({
-  username: z
-    .string()
-    .min(1, '사용자명을 입력해주세요'),
-
-  password: z
-    .string()
-    .min(1, '비밀번호를 입력해주세요'),
-});
-
 // 타입 추출
-export type LoginFormData = z.infer<typeof loginSchema>;
-export type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
+export type SendCodeFormData = z.infer<typeof sendCodeSchema>;

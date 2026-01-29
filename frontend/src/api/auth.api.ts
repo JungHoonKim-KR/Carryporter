@@ -1,31 +1,43 @@
 import apiClient from './axios';
 import type {
+  SendCodeRequest,
+  SendCodeResponse,
   LoginRequest,
   LoginResponse,
-  VerifyPinRequest,
-  AuthResponse,
-  AdminLoginRequest,
 } from '../types/auth.types';
 
-// 일반 사용자 로그인 (1단계: 이메일 + 비밀번호)
+// 1단계: 인증번호 발송 (이메일 + 비밀번호)
+export const sendCode = async (data: SendCodeRequest): Promise<SendCodeResponse> => {
+  const response = await apiClient.post<SendCodeResponse>('/api/auth/request', data);
+  return response.data;
+};
+
+// 2단계: CODE 인증 (이메일 + 선택한 CODE)
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
-  const response = await apiClient.post<LoginResponse>('/api/auth/login', data);
+  const response = await apiClient.post<LoginResponse>('/api/auth/verify', data);
   return response.data;
 };
 
-// PIN 인증 (2단계: PIN 번호 선택)
-export const verifyPin = async (data: VerifyPinRequest): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/api/auth/verify', data);
-  return response.data;
-};
+// 토큰 재발급
+export const reissue = async (): Promise<{ accessToken: string }> => {
+  // localStorage에서 refreshToken 조회
+  const refreshToken = localStorage.getItem('refreshToken');
 
-// 로그아웃
-export const logout = async (): Promise<void> => {
-  await apiClient.post('/api/auth/logout');
-};
+  if (!refreshToken) {
+    throw new Error('Refresh token not found');
+  }
 
-// 관리자 로그인
-export const adminLogin = async (data: AdminLoginRequest): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/api/admin/auth/login', data);
-  return response.data;
+  const response = await apiClient.post<{ accessToken: string; tokenType: string; expiresIn: number }>(
+    '/api/auth/reissue',
+    null,
+    {
+      headers: {
+        'Authorization-Refresh': `Bearer ${refreshToken}`,
+      },
+    }
+  );
+
+  return {
+    accessToken: response.data.accessToken,
+  };
 };
