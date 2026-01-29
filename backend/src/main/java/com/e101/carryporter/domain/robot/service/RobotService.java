@@ -2,9 +2,13 @@ package com.e101.carryporter.domain.robot.service;
 
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
+import com.e101.carryporter.domain.location.entity.Location;
+import com.e101.carryporter.domain.location.service.LocationService;
+import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
+import com.e101.carryporter.domain.robot.service.dto.request.MoveServiceRequestDto;
 import com.e101.carryporter.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RobotService {
 
+    private final LocationService locationService;
     private final RobotRepository robotRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -32,5 +37,14 @@ public class RobotService {
     public void unlockByAdmin(Long missionId, Long robotId) {
         Robot robot = findById(robotId);
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
+    }
+
+    public void move(MoveServiceRequestDto requestDto) {
+
+        String macAddress = findById(requestDto.getRobotId()).getMacAddress();
+        Location callLocation = locationService.findById(requestDto.getCallLocationId());
+        Long missionId = requestDto.getMissionId();
+
+        eventPublisher.publishEvent(new MissionStartedEvent(missionId, macAddress, callLocation.getPositionX(), callLocation.getPositionY()));
     }
 }

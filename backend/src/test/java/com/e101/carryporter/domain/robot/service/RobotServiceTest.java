@@ -5,9 +5,11 @@ import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
+import com.e101.carryporter.domain.robot.service.dto.request.MoveServiceRequestDto;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.exception.BusinessException;
@@ -141,6 +143,50 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
+
+    }
+
+    @DisplayName("관리자 권한 이동 요청이 들어올 경우 MissionStartedEvent 가 발행된다.")
+    @Test
+    void move() {
+        // given
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("test code", "aa:bb:cc");
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        locationRepository.save(callLocation);
+
+        Mission mission = Mission.createMission(user, callLocation);
+        missionRepository.save(mission);
+
+        flushAndClear();
+
+        MoveServiceRequestDto request = MoveServiceRequestDto.builder()
+                .robotId(robot.getId())
+                .missionId(mission.getId())
+                .callLocationId(callLocation.getId())
+                .build();
+
+        robotService.move(request);
+
+        // when
+        System.out.println("robot id " + robot.getId());
+
+        // then
+        long publishedCount = events.stream(MissionStartedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        MissionStartedEvent publishedEvent = events.stream(MissionStartedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
+        assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
+        assertThat(publishedEvent.destX()).isEqualTo(callLocation.getPositionX());
+        assertThat(publishedEvent.destY()).isEqualTo(callLocation.getPositionY());
 
     }
 
