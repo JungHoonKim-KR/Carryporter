@@ -5,13 +5,20 @@ import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceReq
 import com.e101.carryporter.domain.auth.repository.*;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.auth.service.dto.request.VerifyPasswordServiceRequestDto;
+import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
+import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.user.entity.User;
+import com.e101.carryporter.domain.user.event.UserAuthFailedEvent;
+import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.utils.JwtUtils;
 import com.e101.carryporter.global.utils.MattermostClient;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -22,14 +29,17 @@ import java.security.SecureRandom;
 @Transactional
 public class AuthService {
 
-    private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
     private final MattermostClient mattermostClient;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private final UserRepository userRepository;
 
     private final EmailCodeRedisRepository emailCodeRepository;
     private final TempPasswordRedisRepository tempPasswordRepository;
     private final UserPasswordRedisRepository userPasswordRepository;
     private final RefreshTokenRedisRepository refreshTokenRepository;
+    private final MissionRepository missionRepository;
 
     /**
      * 3-1. 인증번호 요청 (Command DTO 사용)
@@ -136,5 +146,51 @@ public class AuthService {
                 .grantType("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenValidityInSeconds())
                 .build();
+    }
+
+    /**
+     * 모바일에서 입력한 비밀번호 검증 후 로봇 문열림
+     */
+
+    public void verifyPassword(VerifyPasswordServiceRequestDto command){
+        //미션 조회
+        Mission mission = missionRepository.findById(command.missionId())
+                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 미션입니다."));
+
+        //소유권 검증 (요청자 == 미션주인?)
+
+        //미션 상태 검증(로봇 도착 여부)
+        if(mission.getMissionStatus() != MissionStatus.ARRIVED){
+            throw new IllegalStateException("인증 가능한 상태가 아닙니다.(로봇 미도착 또는 이미 완료)");
+        }
+
+        //redis 비밀번호 조회(userId 사용)
+        Integer savedPassword = userPasswordRepository.get(command.userId())
+                .orElseThrow(()-> new IllegalArgumentException("인증 시간이 만료되었습니다."));
+        String robotMacAddress = mission.getRobot().getMacAddress();
+
+        //비밀번호 일치 확인
+        if(String.valueOf(savedPassword).equals(String.valueOf(command.password()))){
+            log.warn("인증 성공: userId={}, missionId={}", command.userId(), command.userId());
+
+            //성공 이벤트 발행->Mqtt로봇 문을 연다
+            eventPublisher.publishEvent(new UserAuthSuccessEvent(
+                    command.missionId(),
+                    command.userId(),
+                    robotMacAddress
+            ));
+            }else{
+            log.warn("인증 실패(비밀번호 불일치): userId={}, missionId={}", command.userId(), command.userId());
+
+            //실패 이벤트 발행 -> failureCountHandler 카운트 증가
+            eventPublisher.publishEvent(new UserAuthFailedEvent(
+                    command.missionId(),
+                    command.userId(),
+                    robotMacAddress
+            ));
+
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+
+        }
     }
 }

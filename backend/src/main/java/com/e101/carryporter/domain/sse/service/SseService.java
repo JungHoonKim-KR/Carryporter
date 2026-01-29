@@ -48,16 +48,6 @@ public class SseService {
         return emitter;
     }
 
-    /**
-     * [USER] 특정 사용자에게 알림 전송
-     * @param eventName MissionStatus.name() 값이 들어오게 됩니다.
-     */
-    public void sendToUser(Long userId, String eventName, Object data) {
-        SseEmitter emitter = emitterRepository.findUser(userId);
-        if (emitter != null) {
-            sendToClient(emitter, userId, eventName, data);
-        }
-    }
 
     /**
      * [ADMIN] 모든 관리자에게 알림 전송
@@ -71,6 +61,19 @@ public class SseService {
     }
 
     /**
+     * [USER] 특정 사용자에게 알림 전송
+     */
+    public void sendToUser(Long userId, String eventName, Object data) {
+        SseEmitter emitter = emitterRepository.findUser(userId);
+        if (emitter != null) {
+            log.debug("[SSE-SERVICE] 사용자 전송 시도 | ID: {} | Event: {}", userId, eventName);
+            sendToClient(emitter, userId, eventName, data);
+        } else {
+            log.warn("[SSE-SERVICE] 전송 실패 (구독 중인 유저 없음) | ID: {}", userId);
+        }
+    }
+
+    /**
      * 실제 전송 로직
      */
     private void sendToClient(SseEmitter emitter, Long id, String eventName, Object data) {
@@ -78,12 +81,16 @@ public class SseService {
             emitter.send(SseEmitter.event()
                     .id(String.valueOf(id))
                     .name(eventName)
-                    .data(data));
+                    .data(data)); // ✨ 여기서 Object(Map 등)가 JSON 문자열로 자동 변환됨
+
         } catch (IOException e) {
-            // 전송 실패 시 정리 (User/Admin 둘 다 시도하여 존재하는 쪽 삭제)
+            log.error("[SSE-SERVICE] 전송 중 입출력 에러 발생 | ID: {} | Error: {}", id, e.getMessage());
+            // 연결이 유효하지 않으므로 삭제
             emitterRepository.deleteUser(id);
             emitterRepository.deleteAdmin(id);
             emitter.completeWithError(e);
+        } catch (Exception e) {
+            log.error("[SSE-SERVICE] 알 수 없는 전송 에러 | ID: {}", id, e);
         }
     }
 }
