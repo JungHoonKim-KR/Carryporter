@@ -23,7 +23,7 @@ class SseNotificationHandlerTest {
     private SseService sseService; // 가짜(Mock) SSE 서비스
 
     @InjectMocks
-    private SseNotificationHandler sseNotificationHandler; // 테스트 대상 (가짜 서비스를 주입받음)
+    private UserSseNotificationHandler sseNotificationHandler; // 테스트 대상 (가짜 서비스를 주입받음)
 
     // 테스트용 상수
     private final Long USER_ID = 100L;
@@ -37,7 +37,7 @@ class SseNotificationHandlerTest {
         RobotArrivalEvent event = new RobotArrivalEvent(MISSION_ID, USER_ID);
 
         // when
-        sseNotificationHandler.robotArrivalHandle(event);
+        sseNotificationHandler.handleRobotArrivalEvent(event);
 
         // then
         // sseService.sendToUser 메서드가 정확한 파라미터로 호출되었는지 검증
@@ -55,7 +55,7 @@ class SseNotificationHandlerTest {
         UserAuthSuccessEvent event = new UserAuthSuccessEvent(MISSION_ID, USER_ID, MAC_ADDRESS);
 
         // when
-        sseNotificationHandler.userAuthSuccessHandle(event);
+        sseNotificationHandler.handleUserAuthSuccessEvent(event);
 
         // then
         verify(sseService).sendToUser(
@@ -73,7 +73,7 @@ class SseNotificationHandlerTest {
         MissionAbortedEvent event = new MissionAbortedEvent(MISSION_ID, USER_ID, MAC_ADDRESS, "비밀번호 3회 오류");
 
         // when
-        sseNotificationHandler.missionAbortedHandle(event);
+        sseNotificationHandler.handleMissionAborted(event);
 
         // then
         verify(sseService).sendToUser(
@@ -92,7 +92,7 @@ class SseNotificationHandlerTest {
         MissionLockedEvent event = new MissionLockedEvent(MISSION_ID, USER_ID, MAC_ADDRESS);
 
         // when
-        sseNotificationHandler.handleLocked(event);
+        sseNotificationHandler.handleMissionLockedEvent(event);
 
         // then
         verify(sseService).sendToUser(
