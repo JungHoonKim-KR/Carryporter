@@ -7,6 +7,7 @@ import com.e101.carryporter.domain.auth.repository.EmailCodeRedisRepository;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.user.repository.UserRepository;
+import com.e101.carryporter.global.utils.JwtUtils;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuthServiceTest extends IntegrationTestSupport {
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @Autowired
     private AuthService authService;
@@ -67,5 +71,39 @@ class AuthServiceTest extends IntegrationTestSupport {
         assertThat(response.getAccessToken()).isNotBlank();
         assertThat(response.getRefreshToken()).isNotBlank();
         assertThat(userRepository.findByMmEmail(email)).isPresent();
+    }
+
+    @Test
+    @DisplayName("이미 가입된 유저가 다시 인증하면 새로운 유저를 생성하지 않고 기존 유저 정보를 사용한다.")
+    void verifyAuthWithExistingUserTest() {
+        // given
+        String email = "existing@ssafy.com";
+        Integer code1 = 123;
+        Integer code2 = 456;
+        Integer tempPassword = 1111;
+
+        // 1. 첫 번째 인증 진행 (유저 생성)
+        emailCodeRepository.save(email, code1);
+        tempPasswordRepository.save(email, tempPassword);
+        TokenResponseDto firstResponse = authService.verifyAuth(new VerifyCodeServiceRequestDto(email, code1));
+
+        // 첫 번째 인증으로 생성된 userId 추출
+        Long firstUserId = jwtUtils.getUserIdFromToken(firstResponse.getAccessToken());
+
+        // 2. 두 번째 인증 진행 (기존 유저 재사용 확인용)
+        emailCodeRepository.save(email, code2);
+        tempPasswordRepository.save(email, tempPassword);
+        VerifyCodeServiceRequestDto secondCommand = new VerifyCodeServiceRequestDto(email, code2);
+
+        // when
+        TokenResponseDto secondResponse = authService.verifyAuth(secondCommand);
+
+        // then
+        // [핵심] UserRepository를 쓰지 않고 토큰 정보로만 검증
+        Long secondUserId = jwtUtils.getUserIdFromToken(secondResponse.getAccessToken());
+
+        // 두 번의 인증 결과로 나온 userId가 동일하다면, 내부적으로 중복 생성되지 않았음을 증명함
+        assertThat(secondUserId).isEqualTo(firstUserId);
+        assertThat(secondResponse.getAccessToken()).isNotBlank();
     }
 }
