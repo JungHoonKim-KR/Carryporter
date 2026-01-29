@@ -88,6 +88,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         String mac = "AA:BB:CC:DD:EE:FF";
 
         // given
+        // 1. 기초 데이터 세팅 (User, Robot, Location)
         User user = User.createUser("test@mm.com");
         userRepository.save(user);
 
@@ -97,16 +98,19 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
         locationRepository.save(callLocation);
 
-        // 1. 미션 생성 (이 상태에서는 Robot이 없음)
+        // 2. 미션 생성
         Mission mission = Mission.createMission(user, callLocation);
 
-
+        // ✨ [핵심] 방금 만드신 메서드로 로봇을 배정합니다!
+        // 내부에서 this.robot = robot; 이 실행되므로 NPE가 해결됩니다.
+        mission.assignRobot(robot);
 
         missionRepository.save(mission);
 
-        flushAndClear(); // DB 반영
+        // 영속성 컨텍스트 비우기 (DB에 반영하여 실제 조회 환경과 맞춤)
+        flushAndClear();
 
-        // 2. MQTT 메시지 생성
+        // 3. MQTT 메시지 생성 (DB에 저장된 missionId 사용)
         String topic = "robot/" + mac + "/arrived";
         String payload = "{\"missionId\":" + mission.getId() + "}";
 
@@ -116,15 +120,19 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         mqttSubscriberService.handleMessage(message);
 
         // then
+        // 1. 이벤트가 1개 발생했는지 확인
         long publishedCount = events.stream(RobotArrivalEvent.class).count();
         assertThat(publishedCount).isEqualTo(1);
 
+        // 2. 발생한 이벤트 내용 검증
         RobotArrivalEvent publishedEvent = events.stream(RobotArrivalEvent.class)
                 .findFirst()
                 .orElseThrow();
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.userId()).isEqualTo(user.getId());
+        // 필요하다면 로봇 코드 검증
+        // assertThat(publishedEvent.robotCode()).isEqualTo(robot.getRobotCode());
 
         printReceivedMessage("도착 알림 (Event 발행 성공)", topic, payload);
     }
