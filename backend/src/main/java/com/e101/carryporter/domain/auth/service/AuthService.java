@@ -82,9 +82,18 @@ public class AuthService {
         Integer tempPassword = tempPasswordRepository.get(email)
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_002:인증 시간이 만료되었습니다."));
 
-        // 3. 유저 생성 및 정식 비밀번호 저장
-        User user = User.createUser(email);
-        Long savedId = userRepository.save(user);
+        //3. 유저가 있으면 가져오고, 없으면 생성해서 DB에 저장
+        // findByMmEmail로 먼저 조회합니다.
+        User user = userRepository.findByMmEmail(email)
+                .orElseGet(() -> {
+                    // 존재하지 않을 때만 새로 만들고 저장합니다.
+                    User newUser = User.createUser(email);
+                    userRepository.save(newUser);
+                    return newUser;
+                });
+
+        Long savedId = user.getId();
+
         userPasswordRepository.save(savedId, tempPassword);
 
         // 4. 토큰 발급 (Access & Refresh 둘 다 생성)
