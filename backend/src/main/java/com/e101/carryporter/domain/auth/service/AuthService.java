@@ -100,7 +100,7 @@ public class AuthService {
         return TokenResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken) // 추가됨
-                .tokenType("Bearer")
+                .grantType("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenValidityInSeconds())
                 .build();
     }
@@ -126,10 +126,14 @@ public class AuthService {
 
         String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId());
 
+        String newRefreshToken = jwtUtils.createRefreshToken(user.getId());
+
+        refreshTokenRepository.save(user.getId(), newRefreshToken);
+
         return TokenResponseDto.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken) // 기존 리프레시 토큰 유지
-                .tokenType("Bearer")
+                .grantType("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenValidityInSeconds())
                 .build();
     }

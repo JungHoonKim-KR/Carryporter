@@ -76,7 +76,7 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
 
         // then
         String expectedTopic = "robot/" + mac + "/command/return";
-        String expectedPayload = "{}";
+        String expectedPayload ="{}";
         printCapturedMessage("복귀 명령", expectedTopic, expectedPayload);
     }
 
