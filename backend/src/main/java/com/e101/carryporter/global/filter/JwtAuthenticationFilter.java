@@ -26,8 +26,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final List<String> WHITELIST = Arrays.asList(
             "/auth/request", // 인증번호 요청
             "/auth/verify",   // 로그인
+            "/auth/reissue",
             "/api/auth/request",
-            "/api/auth/verify"
+            "/api/auth/verify",
+            "/api/auth/reissue"
+
 
     );
 
