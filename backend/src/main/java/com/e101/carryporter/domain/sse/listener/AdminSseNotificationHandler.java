@@ -10,43 +10,63 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AdminSseNotificationHandler {
     private final SseService sseService;
 
-    /**
-     * 관리자에게 매칭 완료 + 전재 알림 발송
-     * RobotAssignedEvent
-     * @param event 로봇 매칭 완료 시
-     */
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleRobotAssignedEvent(RobotAssignedEvent event){
-        sseService.broadcastToAdmins("RobotAssignedEvent", "로봇이 배정 되었습니다. 박스를 적재해주세요.");
-    }
 
-    /**
-     * 관리자 알림
-     * MissionStartedEvent
-     * @param event 관리자 이동 승인 호출 api 발생 시
-     */
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleMissionStartedEvent(MissionStartedEvent event){
-        sseService.broadcastToAdmins("MissionStartedEvent", "로봇이 출발했습니다.");
+        /**
+         * 1. 로봇 배정 완료 알림 (관리자 전체 공지)
+         */
+        @Async
+        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+        public void handleRobotAssignedEvent(RobotAssignedEvent event) {
+            broadcast(event.getClass().getSimpleName(), "로봇 배정이 완료되었습니다.", event.robotCode());
+        }
 
-    }
+        /**
+         * 2. 미션 시작 알림 (관리자 전체 공지)
+         */
+        @Async
+        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+        public void handleMissionStartedEvent(MissionStartedEvent event) {
+            broadcast(event.getClass().getSimpleName(), "로봇이 출발했습니다.", event.robotCode());
+        }
 
-//    /** 이벤트가 없어서 모두 주석 해놨어용
-//     * 로봇 관리소 도착
-//     * RobotReturnedEvent
-//     * @param event
-//     */
+        /** 이벤트가 없어서 모두 주석 해놨어용
+         * 로봇 관리소 도착
+         * RobotReturnedEvent
+         * @param event
+         */
 //    @Async
 //    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
 //    public void handleRobotReturnedEvent(RobotReturnedEvent event){
-//        sseService.broadcastToAdmins("RobotReturnedEvent", "로봇이 복귀했습니다.");
-//    }
-}
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("msg", "로봇이 복귀했습니다.");
+//        data.put("robotCode", event.robotCode());
+//        sseService.broadcastToAdmins("RobotReturnedEvent", data);
+//    } 구현할 때 저한테 말씀해주시면 바로 구현 해드리겠습니당!!
+
+        /**
+         * [공통] 관리자 전체 브로드캐스트 전송 로직
+         */
+        private void broadcast(String eventName, String msg, String robotCode) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("msg", msg);
+            data.put("robotCode", robotCode);
+            data.put("timestamp", java.time.LocalDateTime.now());
+
+            log.info("[SSE-ADMIN] 브로드캐스트 | 이벤트: {} | 로봇: {} | 내용: {}", eventName, robotCode, msg);
+
+            // 모든 관리자에게 알림 전송
+            sseService.broadcastToAdmins(eventName, data);
+        }
+    }
+
+
+

@@ -14,83 +14,90 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class UserSseNotificationHandler {
+
     private final SseService sseService;
 
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleRobotAssignedEvent(RobotAssignedEvent event){
-        log.info("[SSE] 로봇 배정 완료 -> 사용자 화면 전환필요 ");
-//        sseService.sendToUser(); // 여기에 userId, event, data 넣어서 보내면 됩니당
-    }
-
     /**
-     * 관리자 알림
-     * MissionStartedEvent
-     * @param event 관리자 이동 승인 호출 api 발생 시
+     * 1. 로봇 배정 완료 (로봇 매칭 시)
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleMissionStartedEvent(MissionStartedEvent event){
-//        sseService.sendToUser(event.userId, "MissionStartedEvent", "로봇이 출발했습니다.");
-
+    public void handleRobotAssignedEvent(RobotAssignedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "로봇 배정이 완료되었습니다.", event.robotCode());
     }
 
     /**
-     * 로봇 도착 이벤트 듣기
+     * 2. 미션 시작 (로봇 출발 시)
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleRobotArrivalEvent(RobotArrivalEvent event){
-
-        sseService.sendToUser(event.userId(), "ARRIVED", "로봇이 도착했습니다.");
+    public void handleMissionStartedEvent(MissionStartedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "로봇이 출발했습니다.", event.robotCode());
     }
 
     /**
-     * 비밀번호 인증 성공 이벤트 듣기
+     * 3. 로봇 도착 (사용자 위치 도달 시)
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleUserAuthSuccessEvent(UserAuthSuccessEvent event){
-        sseService.sendToUser(event.userId(), "UNLOCKED", "인증 성공! 문이 열립니다.");
+    public void handleRobotArrivalEvent(RobotArrivalEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "로봇이 도착했습니다. 수하물을 확인하고 잠금을 해제하세요.", event.robotCode());
     }
 
     /**
-     * 미션 중단 (실패 3회 등) 처리
-     * - 상황: 비밀번호 3회 틀려서 로봇이 강제 복귀함
-     * - 행동: 사용자 화면에 "실패했습니다" 띄우고 홈으로 보내야 함
+     * 4. 비밀번호 인증 성공
      */
-    @Async // 알림은 비동기로 빠르게 처리
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleMissionAborted(MissionAbortedEvent event) {
-        // 프론트엔드에서 "ABORTED"라는 이벤트를 받으면 -> "인증 횟수 초과! 로봇이 복귀합니다." 라는 팝업을 띄우도록 약속
-        sseService.sendToUser(
-                event.userId(),
-                "ABORTED",
-                "인증 실패 횟수를 초과하여 미션이 중단되었습니다."
-        );
+    public void handleUserAuthSuccessEvent(UserAuthSuccessEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "인증 성공! 문이 열립니다.", null);
     }
 
     /**
-     * 미션 잠금 (최종 완료) 처리
-     * - 상황: 사용자가 짐을 꺼내고/넣고 문을 잠금
-     * - 행동: "이용해 주셔서 감사합니다" 보여주고 종료
+     * 5. 미션 중단 (인증 실패 횟수 초과 등)
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleMissionAbortedEvent(MissionAbortedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "인증 실패 횟수를 초과하여 미션이 중단되었습니다.", null);
+    }
+
+    /**
+     * 6. 미션 종료 및 잠금 (최종 완료)
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void handleMissionLockedEvent(MissionLockedEvent event) {
-        // 프론트엔드에서 "LOCKED"라는 이벤트를 받으면 -> 연결을 끊어줘야 함
-        sseService.sendToUser(
-                event.userId(),
-                "LOCKED", // 이 이벤트 이름이 중요합니다.
-                "이용해 주셔서 감사합니다. 안녕히 가세요!"
-        );
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "이용해 주셔서 감사합니다. 안녕히 가세요!", null);
     }
 
+    /**
+     * [공통] SSE 알림 전송 및 로그 출력 로직
+     */
+    private void sendNotification(Long userId, String eventName, String msg, String robotCode) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("msg", msg);
+        data.put("timestamp", LocalDateTime.now());
 
+        if (robotCode != null) {
+            data.put("robotCode", robotCode);
+        }
 
-
+        log.info("[SSE-USER] 전송 | 대상: {} | 이벤트: {} | 내용: {}", userId, eventName, msg);
+        sseService.sendToUser(userId, eventName, data);
+    }
 }

@@ -44,7 +44,7 @@ public class RobotService {
         String macAddress = findById(requestDto.getRobotId()).getMacAddress();
         Location callLocation = locationService.findById(requestDto.getCallLocationId());
         Long missionId = requestDto.getMissionId();
-
+        //로봇코드
         eventPublisher.publishEvent(new MissionStartedEvent(missionId, macAddress, callLocation.getPositionX(), callLocation.getPositionY()));
     }
 }

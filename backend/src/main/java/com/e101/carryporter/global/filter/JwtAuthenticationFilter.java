@@ -27,8 +27,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/auth/request", // 인증번호 요청
             "/auth/verify",   // 로그인
             "/api/auth/request",
-            "/api/auth/verify"
-
+            "/api/auth/verify",
+            "/sse/send",
+            "/sse/subscribe",
+            "/sse/send/1"// 뒤에 ID가 붙는 모든 send 경로 허용
     );
 
     @Override
