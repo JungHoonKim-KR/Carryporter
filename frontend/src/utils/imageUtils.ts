@@ -44,3 +44,4 @@ export const formatTime = (time: string): string => {
 export const formatCityName = (city: string): string => {
   return city.charAt(0) + city.slice(1).toLowerCase();
 };
+
