@@ -2,9 +2,11 @@ package com.e101.carryporter.domain.auth.controller;
 
 import com.e101.carryporter.domain.auth.controller.dto.request.AuthRequestDto;
 import com.e101.carryporter.domain.auth.controller.dto.request.VerifyCodeRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.request.VerifyPasswordRequestDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.auth.service.AuthService;
+import com.e101.carryporter.domain.auth.service.dto.request.VerifyPasswordServiceRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -40,5 +42,18 @@ public class AuthController {
         // 보통 "Bearer " 접두사를 떼고 전달받음
         String token = refreshToken.replace("Bearer ", "");
         return ResponseEntity.ok(authService.reissue(token));
+    }
+
+    @PostMapping("/verify/password")
+    public ResponseEntity<String> verifyPassword(@RequestAttribute("userId") Long userId, @RequestBody @Valid VerifyPasswordRequestDto request){
+        VerifyPasswordServiceRequestDto command = new VerifyPasswordServiceRequestDto(
+                userId,
+                request.missionId(),
+                request.password()
+        );
+
+        authService.verifyPassword(command);
+
+        return ResponseEntity.ok("비밀번호 인증 성공");
     }
 }
