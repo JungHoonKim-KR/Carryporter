@@ -8,7 +8,7 @@ import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
-import com.e101.carryporter.domain.robot.service.dto.request.MoveServiceRequestDto;
+import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
 import com.e101.carryporter.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,7 +39,7 @@ public class RobotService {
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
     }
 
-    public void move(MoveServiceRequestDto requestDto) {
+    public void move(DispatchServiceRequestDto requestDto) {
 
         String macAddress = findById(requestDto.getRobotId()).getMacAddress();
         Location callLocation = locationService.findById(requestDto.getCallLocationId());

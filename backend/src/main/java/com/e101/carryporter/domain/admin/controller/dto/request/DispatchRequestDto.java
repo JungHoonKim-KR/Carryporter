@@ -1,6 +1,6 @@
 package com.e101.carryporter.domain.admin.controller.dto.request;
 
-import com.e101.carryporter.domain.robot.service.dto.request.MoveServiceRequestDto;
+import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MoveRequestDto {
+public class DispatchRequestDto {
 
     @NotNull(message = "빈값은 허용되지 않습니다.")
     @Min(value = 0, message = "0 이상의 수를 넣을 수 있습니다.")
@@ -20,8 +20,8 @@ public class MoveRequestDto {
     @Min(value = 0, message = "0 이상의 수를 넣을 수 있습니다.")
     private Long callLocationId;
 
-    public MoveServiceRequestDto toServiceRequestDto(Long missionId) {
-        return MoveServiceRequestDto.builder()
+    public DispatchServiceRequestDto toServiceRequestDto(Long missionId) {
+        return DispatchServiceRequestDto.builder()
                 .robotId(robotId)
                 .missionId(missionId)
                 .callLocationId(callLocationId)

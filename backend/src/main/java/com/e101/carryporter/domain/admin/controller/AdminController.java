@@ -1,7 +1,7 @@
 package com.e101.carryporter.domain.admin.controller;
 
 import com.e101.carryporter.domain.admin.controller.dto.request.LockRequestDto;
-import com.e101.carryporter.domain.admin.controller.dto.request.MoveRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
@@ -34,8 +34,8 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/missions/{missionId}/move")
-    public ResponseEntity<Void> move(@RequestBody @Valid MoveRequestDto requestDto,  @PathVariable Long missionId) {
+    @PostMapping("/missions/{missionId}/dispatch")
+    public ResponseEntity<Void> dispatch(@RequestBody @Valid DispatchRequestDto requestDto, @PathVariable Long missionId) {
         log.debug("관리자 권한 이동 요청 robot id = {}", requestDto.getRobotId());
 
         robotService.move(requestDto.toServiceRequestDto(missionId));

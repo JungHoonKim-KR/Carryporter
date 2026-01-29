@@ -4,14 +4,14 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-public class MoveServiceRequestDto {
+public class DispatchServiceRequestDto {
 
     private Long missionId;
     private Long robotId;
     private Long callLocationId;
 
     @Builder
-    private MoveServiceRequestDto(Long missionId, Long robotId, Long callLocationId) {
+    private DispatchServiceRequestDto(Long missionId, Long robotId, Long callLocationId) {
         this.missionId = missionId;
         this.robotId = robotId;
         this.callLocationId = callLocationId;

@@ -9,7 +9,7 @@ import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
-import com.e101.carryporter.domain.robot.service.dto.request.MoveServiceRequestDto;
+import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.exception.BusinessException;
@@ -164,7 +164,7 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         flushAndClear();
 
-        MoveServiceRequestDto request = MoveServiceRequestDto.builder()
+        DispatchServiceRequestDto request = DispatchServiceRequestDto.builder()
                 .robotId(robot.getId())
                 .missionId(mission.getId())
                 .callLocationId(callLocation.getId())

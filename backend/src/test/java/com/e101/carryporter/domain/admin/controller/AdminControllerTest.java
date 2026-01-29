@@ -1,6 +1,6 @@
 package com.e101.carryporter.domain.admin.controller;
 
-import com.e101.carryporter.domain.admin.controller.dto.request.MoveRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
@@ -153,21 +153,21 @@ class AdminControllerTest extends WebMvcTestSupport {
 
     @Test
     @DisplayName("로봇 이동 API 호출 시 204 No Content를 반환한다")
-    void move() throws Exception {
+    void dispatch() throws Exception {
         // given
         Long missionId = 1L;
-        MoveRequestDto requestDto = createMoveRequestDto(1L, 1L);
+        DispatchRequestDto requestDto = createMoveRequestDto(1L, 1L);
 
         willDoNothing()
                 .given(robotService)
                 .move(any());
 
         // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/move", missionId)
+        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/move");
+                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
@@ -179,14 +179,14 @@ class AdminControllerTest extends WebMvcTestSupport {
     void move_WithNullRobotId_ReturnsBadRequest() throws Exception {
         // given
         Long missionId = 1L;
-        MoveRequestDto requestDto = createMoveRequestDto(null, 1L);
+        DispatchRequestDto requestDto = createMoveRequestDto(null, 1L);
 
         // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/move", missionId)
+        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/move");
+                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
@@ -201,14 +201,14 @@ class AdminControllerTest extends WebMvcTestSupport {
     void move_WithNullCallLocationId_ReturnsBadRequest() throws Exception {
         // given
         Long missionId = 1L;
-        MoveRequestDto requestDto = createMoveRequestDto(1L, null);
+        DispatchRequestDto requestDto = createMoveRequestDto(1L, null);
 
         // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/move", missionId)
+        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/move");
+                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
@@ -223,14 +223,14 @@ class AdminControllerTest extends WebMvcTestSupport {
     void move_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
         // given
         Long missionId = 1L;
-        MoveRequestDto requestDto = createMoveRequestDto(-1L, 1L);
+        DispatchRequestDto requestDto = createMoveRequestDto(-1L, 1L);
 
         // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/move", missionId)
+        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/move");
+                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
@@ -245,14 +245,14 @@ class AdminControllerTest extends WebMvcTestSupport {
     void move_WithNegativeCallLocationId_ReturnsBadRequest() throws Exception {
         // given
         Long missionId = 1L;
-        MoveRequestDto requestDto = createMoveRequestDto(1L, -1L);
+        DispatchRequestDto requestDto = createMoveRequestDto(1L, -1L);
 
         // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/move", missionId)
+        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/move");
+                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
@@ -266,7 +266,7 @@ class AdminControllerTest extends WebMvcTestSupport {
         return new UnlockRobotRequestDto(robotId);
     }
 
-    private MoveRequestDto createMoveRequestDto(Long robotId, Long callLocationId) {
-        return new MoveRequestDto(robotId, callLocationId);
+    private DispatchRequestDto createMoveRequestDto(Long robotId, Long callLocationId) {
+        return new DispatchRequestDto(robotId, callLocationId);
     }
 }
