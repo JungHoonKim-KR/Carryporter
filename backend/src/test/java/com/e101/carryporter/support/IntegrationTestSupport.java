@@ -32,7 +32,6 @@ public class IntegrationTestSupport {
     @ServiceConnection
     static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0");
 
-
     // Redis Container
     @ServiceConnection
     static RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7.0"));
@@ -53,11 +52,14 @@ public class IntegrationTestSupport {
     }
 
     @DynamicPropertySource
-    static void mqttProperties(DynamicPropertyRegistry registry) {
-        String host = mosquitto.getHost();
-        Integer port =  mosquitto.getMappedPort(MOSQUITTO_PORT);
-        registry.add("MQTT_HOST", () -> host);
-        registry.add("MQTT_PORT", () -> port);
+    static void dynamicProperties(DynamicPropertyRegistry registry) {
+        // MQTT 설정
+        registry.add("MQTT_HOST", mosquitto::getHost);
+        registry.add("MQTT_PORT", () -> mosquitto.getMappedPort(MOSQUITTO_PORT));
+
+        // Redis 설정 - RedisConfig의 @Value가 이 값을 필요로 함
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
     }
 
 
