@@ -169,7 +169,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    set -e
+                    set -euo pipefail
                     echo "=== Frontend Blue-Green Deployment ==="
 
                     # 디렉토리 초기화 (최초 실행 시)
@@ -177,14 +177,9 @@ pipeline {
                     mkdir -p /home/ubuntu/frontend/dist-green
 
                     # 현재 활성 색상 확인 (없으면 blue가 기본)
-                    if [ -f /home/ubuntu/frontend/active_color ]; then
-                        CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color)
-                    else
-                        CURRENT_COLOR="blue"
-                        echo "blue" > /home/ubuntu/frontend/active_color
-                    fi
+                    CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color 2>/dev/null || echo "blue")
 
-                    # 배포 대상 색상 결정
+                    # 배포 대상 색상 결정 (토글)
                     if [ "$CURRENT_COLOR" = "blue" ]; then
                         TARGET_COLOR="green"
                     else
@@ -199,14 +194,17 @@ pipeline {
 
                     # 2. 빌드 결과물을 대상 디렉토리에 복사
                     echo "Copying build output to dist-$TARGET_COLOR..."
+                    rm -rf /home/ubuntu/frontend/dist-$TARGET_COLOR/*
                     docker run --rm -v /home/ubuntu/frontend/dist-$TARGET_COLOR:/output frontend-builder sh -c "cp -r /tmp/dist/* /output/"
 
-                    # 3. nginx.conf의 root 경로 변경
-                    echo "Switching nginx to $TARGET_COLOR..."
-                    sed -i "s|/home/ubuntu/frontend/dist-$CURRENT_COLOR|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
+                    # 3. nginx.conf 생성 (placeholder 치환)
+                    echo "Generating nginx config for $TARGET_COLOR..."
+                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 4. nginx reload (무중단)
-                    echo "Reloading nginx..."
+                    # 4. 설정 검증 후 reload (무중단)
+                    echo "Validating and reloading nginx..."
+                    docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     # 5. 활성 색상 업데이트
@@ -223,25 +221,21 @@ pipeline {
             }
             steps {
                 sh '''
-                    set -e
+                    set -euo pipefail
                     echo "Updating Nginx config..."
 
-                    # nginx.conf 복사
+                    # 현재 활성 색상 확인
+                    CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color 2>/dev/null || echo "blue")
+
+                    # nginx.conf 생성 (placeholder 치환)
                     cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 현재 활성 색상으로 경로 설정
-                    if [ -f /home/ubuntu/frontend/active_color ]; then
-                        CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color)
-                    else
-                        CURRENT_COLOR="blue"
-                    fi
-
-                    sed -i "s|/home/ubuntu/frontend/dist-blue|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
-
-                    # nginx reload
+                    # 설정 검증 후 reload
+                    docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 
-                    echo "Nginx config updated"
+                    echo "Nginx config updated (active: $CURRENT_COLOR)"
                 '''
             }
         }
