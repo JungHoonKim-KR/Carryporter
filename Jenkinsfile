@@ -56,8 +56,9 @@ pipeline {
                     // 변경된 파일 목록 확인
                     def changes = []
                     try {
+                        // 병합 커밋도 감지할 수 있도록 git diff-tree 사용
                         changes = sh(
-                            script: "git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD",
+                            script: "git diff-tree --no-commit-id --name-only -r HEAD || git diff --name-only HEAD~1 HEAD",
                             returnStdout: true
                         ).trim().split('\n')
                     } catch (Exception e) {
@@ -69,7 +70,8 @@ pipeline {
 
                     def jenkinsfileChanged = changes.any { it.contains('Jenkinsfile') }
                     def backendChanged = changes.any { it.startsWith('backend/') }
-                    def frontendCodeChanged = changes.any { it.startsWith('frontend/sse-client/') }
+                    // frontend/ 하위의 모든 변경 감지 (nginx/ 제외)
+                    def frontendCodeChanged = changes.any { it.startsWith('frontend/') && !it.startsWith('frontend/nginx/') }
                     def nginxConfChanged = changes.any { it.startsWith('frontend/nginx/') }
 
                     // Jenkinsfile이 바뀌면 전체 빌드

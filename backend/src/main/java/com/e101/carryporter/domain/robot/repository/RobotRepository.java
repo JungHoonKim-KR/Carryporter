@@ -22,4 +22,10 @@ public class RobotRepository {
         return Optional.ofNullable(em.find(Robot.class, robotId));
     }
 
+    public Optional<Robot> findByMacAddress(String macAddress) {
+        return em.createQuery("SELECT r FROM Robot r WHERE r.macAddress = :macAddress", Robot.class)
+                .setParameter("macAddress", macAddress)
+                .getResultStream()
+                .findFirst();
+    }
 }

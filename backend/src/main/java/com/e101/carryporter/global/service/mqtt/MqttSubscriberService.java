@@ -1,9 +1,13 @@
 package com.e101.carryporter.global.service.mqtt;
 
+import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
+import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
@@ -15,6 +19,8 @@ import org.springframework.stereotype.Service;
 public class MqttSubscriberService {
 
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    private final RobotRepository robotRepository;
 
     /**
      * MQTT 메시지 수신 처리 (mqttInputChannel로 들어오는 모든 메시지)
@@ -51,6 +57,9 @@ public class MqttSubscriberService {
                     break;
                 case "error":
                     handleError(mac, payload);
+                    break;
+                case "returned":
+                    handleReturned(mac, payload);
                     break;
                 default:
                     log.warn("알 수 없는 액션: {}", action);
@@ -152,6 +161,28 @@ public class MqttSubscriberService {
             // robotService.handleError(mac, errorCode, errorMsg);
         } catch (Exception e) {
             log.error("에러 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
+        }
+    }
+
+    /**
+     * 관리소 복귀 완료 처리
+     * Topic: robot/{MAC}/returned
+     * Payload: {"missionId": 101}
+     */
+    private void handleReturned(String mac, String payload) {
+        log.info("로봇 관리소 복귀 알림 - MAC: {}", mac);
+        try {
+            JsonNode node = objectMapper.readTree(payload);
+            long missionId = node.has("missionId") ? node.get("missionId").asLong() : -1;
+
+            Robot robot = robotRepository.findByMacAddress(mac)
+                    .orElseThrow(() -> new RuntimeException("로봇을 찾을 수 없습니다: " + mac));
+
+            log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, missionId, robot.getId());
+
+            eventPublisher.publishEvent(new RobotReturnedEvent(missionId, robot.getId(), mac));
+        } catch (Exception e) {
+            log.error("관리소 복귀 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
         }
     }
 }
