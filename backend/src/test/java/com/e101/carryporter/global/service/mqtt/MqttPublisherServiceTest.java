@@ -76,8 +76,7 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
 
         // then
         String expectedTopic = "robot/" + mac + "/command/return";
-        String expectedPayload = String.format("{\"homeX\":%.2f,\"homeY\":%.2f}", station.getPositionX(), station.getPositionY());
-
+        String expectedPayload = "{}";
         printCapturedMessage("복귀 명령", expectedTopic, expectedPayload);
     }
 
