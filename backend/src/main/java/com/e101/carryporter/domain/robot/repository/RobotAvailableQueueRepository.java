@@ -22,11 +22,13 @@ public class RobotAvailableQueueRepository {
 
     public Optional<Long> acquireRobotId() {
 
+        Object result = null;
+
         try {
             log.debug("로봇 배정 대기 중 ... ");
 
             // 최대 20초간 blocking
-            Object result = redisTemplate.opsForList()
+            result = redisTemplate.opsForList()
                     .leftPop(AVAILABLE_ROBOTS_KEY, TIME_OUT_SEC, TimeUnit.SECONDS);
 
             if (result == null) {
@@ -39,6 +41,16 @@ public class RobotAvailableQueueRepository {
             return Optional.of(robotId);
 
         } catch (Exception e) {
+            log.error("로봇 배정 에러 발생!!", e);
+            if (result != null) {
+                log.error("로봇 대기 큐에 복구 시도");
+                try {
+                    Long robotId = Long.valueOf(result.toString());
+                    returnRobotToQueue(robotId);
+                } catch (Exception ex) {
+                    log.error("복구 실패...");
+                }
+            }
             throw e;
         }
     }
