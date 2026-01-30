@@ -58,7 +58,7 @@ export const subscribeMissionUpdates = (
 
   const delays = [0, 3000, 8000, 15000, 20000, 25000, 35000, 45000, 55000];
 
-  const timeouts: NodeJS.Timeout[] = [];
+  const timeouts: ReturnType<typeof setTimeout>[] = [];
 
   statusSequence.forEach((status, index) => {
     const timeout = setTimeout(() => {

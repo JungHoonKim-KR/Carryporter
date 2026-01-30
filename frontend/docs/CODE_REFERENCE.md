@@ -3148,7 +3148,161 @@ Content-Type: application/json
 
 ---
 
+## WebcamScanner 헤더 UI 개선 (2026-01-30)
+
+### 변경 이유
+
+**문제점**:
+- CODE 인증 후 티켓 스캔 페이지에서 뒤로가기 버튼(`←`)과 X 버튼이 모두 존재하여 사용자 혼란 발생
+- 두 버튼 모두 `navigate(-1)`로 동일한 동작 수행 (부자연스러운 플로우)
+- CODE 인증 완료 → 티켓 스캔 건너뛰기 → `/login/verify`로 돌아감 (어색한 경험)
+
+**목표**:
+- UI 단순화: X 버튼만 유지
+- 명확한 네비게이션: X 버튼 클릭 시 `/home`으로 직접 이동
+- 일관된 플로우: 스캔 완료 여부와 관계없이 `/home`으로 이동
+
+### 동작 원리 (Before/After)
+
+#### Before (변경 전)
+```
+CODE 인증 완료
+  ↓
+/ticket/scan 진입
+  ├─ 뒤로가기 버튼(←): navigate(-1) → /login/verify ❌
+  ├─ X 버튼: navigate(-1) → /login/verify ❌
+  └─ 스캔 완료: navigate('/home') ✅
+
+UI: [←] (왼쪽 상단) + [X] (오른쪽 상단)
+```
+
+#### After (변경 후)
+```
+CODE 인증 완료
+  ↓
+/ticket/scan 진입
+  ├─ X 버튼 (단일 버튼): navigate('/home') ✅
+  └─ 스캔 완료: navigate('/home') ✅
+
+UI: [X] (오른쪽 상단만)
+```
+
+### 코드 변경 상세
+
+**파일**: `src/components/ticket/WebcamScanner.tsx`
+
+#### 1. handleClose 함수 수정 (라인 61-64)
+```typescript
+// Before
+const handleClose = () => {
+  navigate(-1);  // 이전 페이지로 이동
+};
+
+// After
+const handleClose = () => {
+  navigate('/home');  // 홈 화면으로 직접 이동
+};
+```
+
+**변경 이유**:
+- 티켓 스캔을 건너뛰고 홈으로 돌아가는 것이 사용자 의도에 부합
+- CODE 인증 후 `/ticket/scan` → X 버튼 → `/home` (자연스러운 플로우)
+- HomePage에서 재진입 시에도 동일하게 `/home`으로 복귀 (일관성)
+
+#### 2. 헤더 레이아웃 변경 (라인 177-200)
+```typescript
+// Before
+<div className="flex items-center justify-between px-6 py-6">
+  {/* 뒤로가기 버튼 */}
+  <button onClick={handleClose} className="...">
+    <svg><!-- 왼쪽 화살표 --></svg>
+  </button>
+
+  {/* 닫기 버튼 */}
+  <button onClick={handleClose} className="...">
+    <svg><!-- X 아이콘 --></svg>
+  </button>
+</div>
+
+// After
+<div className="flex items-center justify-end px-6 py-6">
+  {/* 닫기 버튼 (X 아이콘만 유지) */}
+  <button onClick={handleClose} className="...">
+    <svg><!-- X 아이콘 --></svg>
+  </button>
+</div>
+```
+
+**주요 변경 사항**:
+1. 뒤로가기 버튼 삭제 (13줄 제거)
+2. Flexbox 정렬: `justify-between` → `justify-end`
+3. X 버튼만 오른쪽 상단에 배치
+
+### UX 개선 효과
+
+1. **UI 단순화**: 불필요한 버튼 제거로 시각적 복잡도 감소
+2. **명확한 의도**: X 버튼 = "티켓 스캔 건너뛰고 홈으로"
+3. **일관된 플로우**: 스캔 완료 여부와 관계없이 `/home`으로 이동
+4. **인지 부하 감소**: 사용자가 "어떤 버튼을 눌러야 할지" 고민할 필요 없음
+
+### 학습 포인트
+
+#### 1. UX 설계 원칙
+- **명확한 네비게이션**: 사용자가 "어디로 갈지" 예측 가능해야 함
+- **일관성**: 동일한 목적지로 가는 경로는 하나로 통일
+- **단순화**: "덜어내는 것"이 더 나은 경험을 만드는 경우 (Less is More)
+
+#### 2. React Router 네비게이션 패턴
+```typescript
+// navigate(-1): 브라우저 히스토리 기반 (예측 불가능)
+navigate(-1);  // ❌ 사용자가 어디로 가는지 알 수 없음
+
+// navigate('/path'): 명시적 경로 이동 (예측 가능)
+navigate('/home');  // ✅ 명확하게 홈으로 이동
+```
+
+**권장 사항**:
+- 사용자 액션(버튼 클릭)에는 명시적 경로 사용
+- `navigate(-1)`은 브라우저 뒤로가기 제스처에만 의존
+
+#### 3. Flexbox 정렬 전략
+```css
+/* 양쪽 정렬 (두 요소가 끝에 배치) */
+justify-content: space-between;  /* ← (왼쪽)    (오른쪽) X */
+
+/* 오른쪽 정렬 (한 요소만 오른쪽 끝에 배치) */
+justify-content: flex-end;       /* (오른쪽만) X */
+```
+
+### 트러블슈팅
+
+**문제**: 브라우저 뒤로가기 버튼을 누르면 여전히 `/login/verify`로 돌아가는 경우
+
+**해결 방법** (선택 사항):
+```typescript
+// CodeVerificationPage.tsx에서 navigate 시 replace 옵션 추가
+navigate('/ticket/scan', { replace: true });
+```
+
+**효과**: 브라우저 히스토리에서 `/login/verify` 제거 → 뒤로가기 시 로그인 페이지로 이동
+
+**참고**: 현재는 X 버튼으로 명시적인 "건너뛰기" 동작 제공하므로, 브라우저 뒤로가기는 기본 동작 유지 (문제 없음)
+
+### 성능 최적화
+
+변경 사항 없음 (UI 단순화로 인한 렌더링 최적화는 미미함)
+
+### 관련 파일
+
+| 파일 | 역할 | 변경 라인 |
+|------|------|----------|
+| `src/components/ticket/WebcamScanner.tsx` | handleClose 함수 + 헤더 UI | 61-64, 177-200 |
+| `src/pages/TicketScanPage.tsx` | 수정 불필요 (props 변경 없음) | - |
+| `src/components/ticket/ScanSuccessModal.tsx` | 수정 불필요 (기존 동작 유지) | - |
+
+---
+
 **이 문서는 코드 변경 시 함께 업데이트해야 합니다!**
 
 **최종 업데이트**: 2026년 1월 30일
-**업데이트 내용**: 티켓 스캔/조회 시스템 (ticketId + localStorage), OCR API 엔드포인트 변경 (/ocr → /api/tickets/scan), GET body 패턴, 성능 최적화 (메모리 우선 캐싱)
+**업데이트 내용**: 티켓 스캔/조회 시스템 (ticketId + localStorage), OCR API 엔드포인트 변경 (/ocr → /api/tickets/scan), GET body 패턴, 성능 최적화 (메모리 우선 캐싱), **WebcamScanner 헤더 UI 개선 (뒤로가기 버튼 제거, X 버튼만 유지, navigate('/home') 변경)**
