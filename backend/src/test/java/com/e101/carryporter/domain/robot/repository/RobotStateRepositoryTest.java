@@ -61,4 +61,35 @@ class RobotStateRepositoryTest extends IntegrationTestSupport {
         // then
         assertThat(result).isEmpty();
     }
+
+    @DisplayName("로봇 상태만 업데이트할 수 있다")
+    @Test
+    void updateStatusOnly() {
+        // given
+        Long robotId = 1L;
+        String macAddress = "AA:BB:CC:DD";
+        RobotState robotState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
+        robotStateRepository.save(robotId, robotState);
+
+        // when
+        robotStateRepository.updateStatusOnly(robotId, RobotStatus.RESERVED);
+
+        // then
+        Optional<RobotState> result = robotStateRepository.findById(robotId);
+        assertThat(result).isPresent();
+        RobotState updatedState = result.get();
+        assertThat(updatedState.getStatus()).isEqualTo(RobotStatus.RESERVED);
+        assertThat(updatedState.getMacAddress()).isEqualTo(macAddress);
+        assertThat(updatedState.getBattery()).isEqualTo(100);
+    }
+
+    @DisplayName("존재하지 않는 로봇의 상태를 업데이트하려고 해도 예외가 발생하지 않는다")
+    @Test
+    void updateStatusOnlyForNonExistentRobot() {
+        // given
+        Long notExistRobotId = 999L;
+
+        // when & then
+        robotStateRepository.updateStatusOnly(notExistRobotId, RobotStatus.IDLE);
+    }
 }
