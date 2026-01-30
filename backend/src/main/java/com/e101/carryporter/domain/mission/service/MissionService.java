@@ -63,7 +63,6 @@ public class MissionService {
 
         mission.assignRobot(robot);
     }
-<<<<<<< HEAD
 
     @Transactional
     public void dispatch(Long missionId, Long robotId) {
