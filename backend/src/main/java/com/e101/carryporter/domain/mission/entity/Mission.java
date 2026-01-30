@@ -81,4 +81,9 @@ public class Mission extends BaseEntity {
         this.assignedAt = LocalDateTime.now();
     }
 
+    public void dispatch(Robot robot) {
+        this.missionStatus = MissionStatus.MOVING;
+        this.startedAt = LocalDateTime.now();
+        robot.changeStatus(RobotStatus.MOVING);
+    }
 }

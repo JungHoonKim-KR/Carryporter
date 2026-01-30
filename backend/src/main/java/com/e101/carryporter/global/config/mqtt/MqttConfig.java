@@ -1,6 +1,7 @@
 package com.e101.carryporter.global.config.mqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -82,7 +83,7 @@ public class MqttConfig {
     @Bean
     public MqttPahoMessageDrivenChannelAdapter mqttInbound(
             MqttPahoClientFactory mqttClientFactory,
-            MessageChannel mqttInputChannel) {
+            @Qualifier("mqttInputChannel") MessageChannel mqttInputChannel) {
 
         // Spring Integration MQTT 6.x에서는 URL을 명시적으로 전달하는 생성자 사용 필요
         // clientId만 전달하는 생성자는 내부 URL이 null이 되어 연결되지 않음
