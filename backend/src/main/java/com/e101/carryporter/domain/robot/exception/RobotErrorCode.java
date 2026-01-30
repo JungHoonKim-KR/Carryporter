@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum RobotErrorCode implements ErrorCode {
 
-    ROBOT_NOT_FOUND("해당 로봇을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),;
+    ROBOT_NOT_FOUND("해당 로봇을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ROBOT_NOT_AVAILABLE("가용 가능한 로봇이 없습니다.", HttpStatus.CONFLICT),;
 
     private final String message;
     private final HttpStatus httpStatus;
