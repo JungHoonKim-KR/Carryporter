@@ -34,6 +34,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // FormData를 전송할 때는 Content-Type을 제거하여 axios가 자동으로 설정하도록 함
+    // (multipart/form-data; boundary=... 형식으로 자동 설정됨)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => {
