@@ -48,7 +48,7 @@ npm install
 npm run dev
 
 # 4. 브라우저에서 접속
-# http://localhost:5173
+# http://localhost:3000 (포트 변경됨: 백엔드 CORS 설정 맞춤)
 ```
 
 ### 빌드
@@ -93,23 +93,34 @@ frontend/
 
 ### Core
 - **React** 19.2.0 - 최신 UI 라이브러리
-- **TypeScript** 5.9.3 - 타입 안전성
-- **Vite** 7.3.1 - 초고속 빌드 도구
-- **Tailwind CSS** 4.1.18 - 유틸리티 우선 CSS
+- **TypeScript** 5.9.3 - 타입 안전성 (strict 모드)
+- **Vite** 7.2.4 - 초고속 빌드 도구
+- **Tailwind CSS** 4.1.18 - 유틸리티 우선 CSS (v4 최신 버전)
+
+### UI Components
+- **shadcn/ui** - Radix UI 기반 접근성 높은 컴포넌트 시스템
+  - Dialog, Button, Card, Input 등 포함
+  - 복사-붙여넣기 방식으로 소스 코드 직접 소유
+- **Radix UI** - 헤드리스 UI 컴포넌트
+- **class-variance-authority** - 컴포넌트 variant 관리
 
 ### State Management
-- **Zustand** 5.0.10 - 간단한 전역 상태 관리
+- **Zustand** 5.0.10 - 간단한 전역 상태 관리 (4개 Store: auth, ticket, mission, admin)
 
 ### Routing
-- **React Router** 7.13.0 - 클라이언트 사이드 라우팅
+- **React Router** 7.13.0 - 클라이언트 사이드 라우팅 (Protected Routes 포함)
 
 ### API & Data
-- **Axios** 1.13.2 - HTTP 클라이언트
+- **Axios** 1.13.2 - HTTP 클라이언트 (Interceptor로 자동 토큰 갱신)
 - **React Query** 5.90.20 - 서버 상태 관리
 
 ### Forms & Validation
 - **React Hook Form** 7.71.1 - 성능 최적화된 폼 관리
 - **Zod** 4.3.6 - TypeScript 스키마 검증
+- **@hookform/resolvers** - Zod와 React Hook Form 통합
+
+### Media & OCR
+- **react-webcam** 7.2.0 - 웹캠 제어 (티켓 스캔 기능)
 
 ---
 
@@ -151,10 +162,13 @@ frontend/
 
 ## 🔐 보안
 
-- Access Token은 메모리에만 저장 (XSS 방지)
-- HTTPS 사용 (Production)
-- 401 에러 시 자동 로그아웃
-- 비밀번호 서버 측 AES256 암호화
+- **Access Token**: Zustand Store (메모리)에만 저장 (XSS 방지)
+- **Refresh Token**: httpOnly 쿠키로 관리 (백엔드에서 Set-Cookie)
+- **자동 토큰 갱신**: axios interceptor로 401 에러 시 자동 재발급
+- **withCredentials**: true로 쿠키 자동 전송
+- **HTTPS**: Production 환경에서 사용
+- **비밀번호**: 서버 측 AES256 암호화
+- **인증 플로우**: 2단계 (Email + Password → PIN 인증)
 
 ---
 
@@ -300,5 +314,50 @@ This project is licensed under the MIT License.
 
 ---
 
-**최종 업데이트**: 2026년 1월 29일
+---
+
+## 🌐 환경 설정
+
+### 환경 변수
+
+**개발 환경** (`.env.development`):
+```bash
+# Vite 프록시 사용으로 baseURL은 빈 문자열
+# vite.config.ts에서 /api, /ocr 경로를 프록시 설정
+```
+
+**프로덕션 환경**:
+```bash
+VITE_API_BASE_URL=https://i14e101.p.ssafy.io
+```
+
+### 개발 서버 포트
+
+- **포트**: 3000 (백엔드 CORS 설정에 맞춤)
+- **프록시**: `/api`, `/ocr` 경로는 `https://i14e101.p.ssafy.io`로 자동 프록시
+
+---
+
+## 🎯 핵심 아키텍처
+
+### 상태 관리 (Zustand)
+- **authStore**: Access Token, 사용자 정보
+- **ticketStore**: 티켓 정보 (OCR 결과)
+- **missionStore**: 미션 상태, SSE 연결, 보관된 짐 목록
+
+### API 레이어
+- **axios.ts**: HTTP 클라이언트 + Interceptor (자동 토큰 갱신)
+- **auth.api.ts**: 인증 API
+- **ticket.api.ts**: 티켓 스캔 API
+- **mission.api.ts**: 미션 관리 API + SSE 구독
+
+### 실시간 통신 (SSE)
+- **EventSource** 사용
+- **useMissionSSE** 훅으로 추상화
+- Cleanup 함수로 메모리 누수 방지
+
+---
+
+**최종 업데이트**: 2026년 1월 30일
 **구현 진행률**: 90% (미션 시스템 완료)
+**개발 포트**: 3000번 (CORS 설정 맞춤)

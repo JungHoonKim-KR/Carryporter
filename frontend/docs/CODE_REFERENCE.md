@@ -6,12 +6,189 @@
 
 ## 목차
 
-1. [타입 정의](#타입-정의)
-2. [API 함수](#api-함수)
-3. [상태 관리](#상태-관리)
-4. [공통 컴포넌트](#공통-컴포넌트)
-5. [페이지 컴포넌트](#페이지-컴포넌트)
-6. [유틸리티 함수](#유틸리티-함수)
+1. [핵심 아키텍처](#핵심-아키텍처)
+2. [타입 정의](#타입-정의)
+3. [API 함수](#api-함수)
+4. [상태 관리](#상태-관리)
+5. [공통 컴포넌트](#공통-컴포넌트)
+6. [페이지 컴포넌트](#페이지-컴포넌트)
+7. [유틸리티 함수](#유틸리티-함수)
+
+---
+
+## 핵심 아키텍처
+
+### API 프록시 설정
+
+**파일**: `vite.config.ts`
+
+**개발 환경 설정**:
+```typescript
+server: {
+  port: 3000,  // 백엔드 CORS 설정에 맞춤
+  proxy: {
+    "/ocr": {
+      target: "https://i14e101.p.ssafy.io",
+      changeOrigin: true,
+      secure: true,
+    },
+    "/api": {
+      target: "https://i14e101.p.ssafy.io",
+      changeOrigin: true,
+      secure: true,
+    },
+  },
+}
+```
+
+**axios 클라이언트 설정** (`src/api/axios.ts:8`):
+```typescript
+baseURL: import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE_URL
+```
+
+**동작 원리**:
+1. 개발 환경: Vite 프록시를 통해 `/api/*` 요청을 백엔드로 전달 (CORS 우회)
+2. 프로덕션 환경: 환경 변수의 API URL 직접 사용
+
+**주의사항**:
+- API 호출 시 상대 경로 사용 (`/api/...`)
+- 절대 URL 사용하지 않기 (`https://...` ❌)
+
+---
+
+### 인증 토큰 관리
+
+**Access Token**: Zustand Store (메모리)
+```typescript
+// src/store/authStore.ts
+const useAuthStore = create<AuthState>((set) => ({
+  accessToken: null,  // 메모리에만 저장 (XSS 방지)
+  user: null,
+  // ...
+}));
+```
+
+**Refresh Token**: httpOnly 쿠키 (백엔드 관리)
+```typescript
+// src/api/axios.ts
+withCredentials: true,  // 쿠키 자동 전송
+```
+
+**자동 토큰 갱신** (`src/api/axios.ts:54-117`):
+```typescript
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Refresh Token으로 새 Access Token 발급
+      const response = await apiClient.post("/api/auth/reissue", null);
+      const { accessToken } = response.data;
+
+      // Store 업데이트
+      useAuthStore.getState().setAccessToken(accessToken);
+
+      // 원래 요청 재시도
+      return apiClient(originalRequest);
+    }
+  }
+);
+```
+
+**플로우**:
+1. API 요청 → 401 에러
+2. Interceptor가 `/api/auth/reissue` 호출
+3. 새 Access Token 받아 Store 업데이트
+4. 원래 요청 자동 재시도
+5. Refresh Token 만료 시 → 인증 초기화 → ProtectedRoute가 로그인 페이지로 리다이렉트
+
+---
+
+### 실시간 통신 (SSE)
+
+**구현**: EventSource API 사용
+
+**Hook**: `src/hooks/useMissionSSE.ts`
+
+```typescript
+const subscribeMissionUpdates = (missionId: number, callbacks) => {
+  const eventSource = new EventSource(
+    `${API_BASE_URL}/api/missions/${missionId}/subscribe`,
+    { withCredentials: true }
+  );
+
+  eventSource.addEventListener('CONNECT', callbacks.onConnect);
+  eventSource.addEventListener('STATUS', callbacks.onStatus);
+  eventSource.onerror = callbacks.onError;
+
+  // Cleanup 함수 반환
+  return () => eventSource.close();
+};
+```
+
+**사용 예시**:
+```typescript
+useEffect(() => {
+  if (!missionId) return;
+
+  const unsubscribe = subscribeMissionUpdates(missionId, {
+    onConnect: () => setConnected(true),
+    onStatus: (event) => updateStatus(event.data),
+    onError: (error) => setError(error),
+  });
+
+  return () => unsubscribe();  // Cleanup
+}, [missionId]);
+```
+
+**주의사항**:
+- 컴포넌트 unmount 시 반드시 연결 종료
+- missionId 변경 시 기존 연결 종료 후 재연결
+- 에러 핸들링 필수 (네트워크 끊김 등)
+
+---
+
+### 상태 관리 전략
+
+**4개의 독립적인 Store**:
+
+1. **authStore** - 인증 상태
+   - Access Token (메모리)
+   - 사용자 정보
+   - 로그인/로그아웃
+
+2. **ticketStore** - 티켓 정보
+   - OCR 결과
+   - 스캔 상태
+
+3. **missionStore** - 미션 상태
+   - 현재 미션
+   - SSE 연결 상태
+   - 보관된 짐 (localStorage)
+
+4. **adminStore** - 관리자 (선택)
+   - 활성 미션 목록
+   - SSE 이벤트 히스토리
+
+**패턴**:
+- Store는 순수 상태만 관리
+- 비즈니스 로직은 API 레이어와 컴포넌트에서 처리
+- API 호출 → 응답 받고 → Store 업데이트
+
+```typescript
+// ❌ Bad: Store에서 직접 API 호출
+const useAuthStore = create((set) => ({
+  login: async (data) => {
+    const response = await loginAPI(data);
+    set({ user: response.user });
+  }
+}));
+
+// ✅ Good: 컴포넌트에서 API 호출 후 Store 업데이트
+const handleLogin = async () => {
+  const response = await login(data);
+  authStore.login(response.accessToken, response.user);
+};
+```
 
 ---
 

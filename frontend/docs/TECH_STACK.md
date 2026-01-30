@@ -6,16 +6,23 @@
 
 ## ✅ 버전 확인
 
-### 현재 사용 중인 버전 (2026년 1월 기준)
+### 현재 사용 중인 버전 (2026년 1월 30일 기준)
 
 | 기술 | 버전 | 릴리즈 | 상태 |
 |------|------|--------|------|
 | **React** | 19.2.0 | 2024년 12월 | ✅ 최신 LTS |
 | **TypeScript** | 5.9.3 | 2024년 | ✅ 최신 |
-| **Vite** | 7.3.1 | 2025년 | ✅ 최신 |
+| **Vite** | 7.2.4 | 2025년 | ✅ 최신 |
 | **Tailwind CSS** | 4.1.18 | 2024년 10월 | ✅ 최신 v4 |
 | **React Router** | 7.13.0 | 2024년 | ✅ 최신 |
 | **Zustand** | 5.0.10 | 2024년 | ✅ 최신 |
+| **Axios** | 1.13.2 | 2024년 | ✅ 최신 |
+| **React Query** | 5.90.20 | 2024년 | ✅ 최신 |
+| **shadcn/ui** | latest | 2024년 | ✅ 최신 |
+| **Radix UI** | 1.x | 2024년 | ✅ 최신 |
+| **React Hook Form** | 7.71.1 | 2024년 | ✅ 최신 |
+| **Zod** | 4.3.6 | 2024년 | ✅ 최신 |
+| **react-webcam** | 7.2.0 | 2024년 | ✅ 최신 |
 
 **결론**: 모든 라이브러리가 최신 버전입니다! 🎉
 
@@ -95,6 +102,113 @@ const handleSubmit = async (e) => {
 ```
 
 **우리 프로젝트**: 아직 사용 안 함 (React Hook Form 사용 중)
+
+---
+
+## shadcn/ui - 최신 UI 컴포넌트 시스템
+
+### 개요
+
+**shadcn/ui**는 npm 패키지가 아닌 **복사-붙여넣기** 방식의 컴포넌트 시스템입니다.
+
+### 핵심 특징
+
+1. **소스 코드 소유**
+   - 컴포넌트를 `src/components/ui/`에 직접 복사
+   - 원하는 대로 수정 가능
+   - 라이브러리 업데이트에 영향 없음
+
+2. **Radix UI 기반**
+   - 헤드리스 UI 컴포넌트 사용
+   - WAI-ARIA 접근성 표준 준수
+   - 키보드 네비게이션 지원
+
+3. **Tailwind CSS 통합**
+   - 유틸리티 클래스로 스타일링
+   - 쉬운 커스터마이징
+   - 다크 모드 지원
+
+4. **TypeScript 완벽 지원**
+   - 모든 컴포넌트에 타입 정의
+   - IntelliSense 자동 완성
+
+### 설치 방법
+
+```bash
+# CLI로 컴포넌트 추가
+npx shadcn@latest add button
+npx shadcn@latest add dialog
+npx shadcn@latest add card
+
+# 여러 컴포넌트 한번에
+npx shadcn@latest add button dialog card input
+```
+
+### 프로젝트에 설치된 컴포넌트
+
+```
+src/components/ui/
+├── button.tsx        # Button 컴포넌트
+├── dialog.tsx        # Dialog/Modal 컴포넌트
+└── (추가 가능)
+```
+
+### 사용 예시
+
+```typescript
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
+
+export function Example() {
+  return (
+    <Dialog>
+      <DialogContent>
+        <DialogHeader>제목</DialogHeader>
+        <p>내용</p>
+        <Button variant="default">확인</Button>
+      </DialogContent>
+    </Dialog>
+  )
+}
+```
+
+### 커스터마이징
+
+```typescript
+// src/components/ui/button.tsx에서 직접 수정
+const buttonVariants = cva(
+  "...",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground",
+        destructive: "bg-destructive text-destructive-foreground",
+        custom: "bg-purple-500 text-white", // 🆕 추가
+      }
+    }
+  }
+)
+```
+
+### 우리 프로젝트에서 사용
+
+- ✅ **Button**: 로그인, 스캔, 호출 등 모든 버튼
+- ✅ **Dialog**: 모달 (성공, 에러, 확인)
+- ⏳ **Card**: 티켓 카드, 미션 카드 (추가 예정)
+- ⏳ **Input**: 폼 입력 (추가 예정)
+
+### 장점
+
+1. **유연성**: 소스 코드를 직접 수정 가능
+2. **번들 크기**: 사용하는 컴포넌트만 포함
+3. **의존성 관리**: 라이브러리 버전 충돌 없음
+4. **학습 곡선**: Radix UI와 Tailwind만 알면 됨
+
+### 주의사항
+
+- `@/` alias 설정 필요 (`tsconfig.json`, `vite.config.ts`)
+- `components.json` 설정 파일 관리
+- Tailwind CSS 설정에 CSS 변수 포함 필요
 
 ---
 
