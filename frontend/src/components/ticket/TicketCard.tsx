@@ -40,11 +40,11 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
             <div className="flex items-center gap-4 text-sm text-white/80">
               <div>
                 <span className="text-xs opacity-70">Flight</span>
-                <span className="ml-2 font-semibold text-white">{ticket.flight}</span>
+                <span className="ml-2 font-semibold text-white">{ticket.flight || '-'}</span>
               </div>
               <div>
                 <span className="text-xs opacity-70">Gate</span>
-                <span className="ml-2 font-semibold text-white">{ticket.gate}</span>
+                <span className="ml-2 font-semibold text-white">{ticket.gate || '-'}</span>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
           {!isCompact && (
             <div className="text-right">
               <div className="text-xs text-white/60 mb-1">Seat</div>
-              <div className="text-lg font-semibold">{ticket.seat}</div>
+              <div className="text-lg font-semibold">{ticket.seat || '-'}</div>
             </div>
           )}
         </div>

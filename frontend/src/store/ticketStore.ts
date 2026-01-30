@@ -17,16 +17,24 @@ export const useTicketStore = create<TicketState>((set) => ({
   currentTicket: null,
   isScanning: false,
 
-  // 티켓 정보 설정
+  // 티켓 정보 설정 + ticketId localStorage 저장
   setTicket: (ticket: TicketInfo) => {
+    // ticketId를 localStorage에 영구 저장
+    if (ticket.ticketId) {
+      localStorage.setItem('ticketId', String(ticket.ticketId));
+    }
+
     set({
       currentTicket: ticket,
       isScanning: false,
     });
   },
 
-  // 티켓 정보 초기화
+  // 티켓 정보 초기화 + ticketId localStorage 제거
   clearTicket: () => {
+    // localStorage에서 ticketId 제거
+    localStorage.removeItem('ticketId');
+
     set({
       currentTicket: null,
     });

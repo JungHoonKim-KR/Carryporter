@@ -1,15 +1,44 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useTicketStore } from '../store/ticketStore';
 import { useMissionStore } from '../store/missionStore';
+import { getLatestTicket } from '../api/ticket.api';
 import { Button } from '@/components/ui/button';
 import TicketCard from '../components/ticket/TicketCard';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { currentTicket } = useTicketStore();
+  const { currentTicket, setTicket } = useTicketStore();
   const { storedLuggages } = useMissionStore();
+  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
+
+  // 티켓 정보 자동 조회
+  useEffect(() => {
+    const loadTicket = async () => {
+      // 이미 티켓이 메모리에 있으면 조회 생략
+      if (currentTicket) return;
+
+      // localStorage에 ticketId가 없으면 조회 생략
+      const ticketId = localStorage.getItem('ticketId');
+      if (!ticketId) return;
+
+      try {
+        setIsLoadingTicket(true);
+        const ticketData = await getLatestTicket();
+        setTicket(ticketData);
+      } catch (error) {
+        console.error('티켓 정보 조회 실패:', error);
+        // 에러 발생 시 localStorage의 ticketId가 유효하지 않을 수 있으므로 제거
+        localStorage.removeItem('ticketId');
+      } finally {
+        setIsLoadingTicket(false);
+      }
+    };
+
+    loadTicket();
+  }, [currentTicket, setTicket]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0064FF] to-[#4DA3FF]">
@@ -145,7 +174,12 @@ const HomePage = () => {
             내 티켓
           </h3>
 
-          {currentTicket ? (
+          {isLoadingTicket ? (
+            <div className="card-toss p-8 text-center">
+              <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-500">티켓 정보를 불러오는 중...</p>
+            </div>
+          ) : currentTicket ? (
             <TicketCard
               ticket={currentTicket}
               variant="compact"
