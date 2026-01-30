@@ -61,7 +61,7 @@ export const subscribeMissionUpdates = (
   // 에러 처리
   eventSource.onerror = (error) => {
     console.error('[SSE] Connection error:', error);
-    callbacks.onError?.(error as Error);
+    callbacks.onError?.(new Error('SSE connection error'));
   };
 
   // Cleanup 함수 반환

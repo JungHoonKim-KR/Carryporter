@@ -56,11 +56,12 @@ pipeline {
                     // 변경된 파일 목록 확인
                     def changes = []
                     try {
-                        // 병합 커밋도 감지할 수 있도록 git diff-tree 사용
-                        changes = sh(
-                            script: "git diff-tree --no-commit-id --name-only -r HEAD || git diff --name-only HEAD~1 HEAD",
+                        // 병합 커밋도 감지할 수 있도록 -m 옵션 추가
+                        def result = sh(
+                            script: "git diff-tree -m --no-commit-id --name-only -r HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'backend/'",
                             returnStdout: true
-                        ).trim().split('\n')
+                        ).trim()
+                        changes = result ? result.split('\n') : ['backend/']
                     } catch (Exception e) {
                         echo "First commit or unable to get diff, proceeding with build"
                         changes = ['backend/']
@@ -202,10 +203,10 @@ pipeline {
                     cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 4. 설정 검증 후 reload (무중단)
-                    echo "Validating and reloading nginx..."
+                    # 4. 설정 검증 후 restart
+                    echo "Validating and restarting nginx..."
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker exec ${NGINX_CONTAINER} nginx -s reload
+                    docker restart ${NGINX_CONTAINER}
 
                     # 5. 활성 색상 업데이트
                     echo "$TARGET_COLOR" > /home/ubuntu/frontend/active_color
@@ -231,9 +232,9 @@ pipeline {
                     cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 설정 검증 후 reload
+                    # 설정 검증 후 restart
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker exec ${NGINX_CONTAINER} nginx -s reload
+                    docker restart ${NGINX_CONTAINER}
 
                     echo "Nginx config updated (active: $CURRENT_COLOR)"
                 '''
