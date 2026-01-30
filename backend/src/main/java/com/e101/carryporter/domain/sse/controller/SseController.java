@@ -7,7 +7,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/api/sse")
+@RequestMapping("/sse")
 @RequiredArgsConstructor
 public class SseController {
 
@@ -30,11 +30,20 @@ public class SseController {
         return sseService.subscribe(userId, role);
     }
 
-//    // 테스트용: 내가 원하는 사람한테 알림 쏴보기
-//// 호출 URL: POST http://localhost:8080/api/sse/send?userId=user1&message=Hello
-//    @PostMapping("/send")
-//    public void sendTestMessage(@RequestParam Long userId, @RequestParam String message) {
-//        // SseEventName을 쓰거나, 테스트니까 그냥 문자열로 보냄
-//        sseService.sendToUser(userId, "FINISHED", message);
-//    }
+    /**
+     * [2. 알림 발송용] - 브라우저 탭 2번에서 호출하는 곳
+     * 이 주소를 호출하면 서버가 내부적으로 sseService를 통해 1번 탭에 알림을 쏩니다.
+     */
+    @GetMapping("/send/{userId}")
+    public String sendTest(
+            @PathVariable Long userId,
+            @RequestParam String status
+    ) {
+        // status: eventName이 됨 (예: ASSIGNED, ARRIVED 등)
+        String message = "실시간 알림 테스트입니다. 상태: " + status;
+
+        sseService.sendToUser(userId, status, message);
+
+        return "ID [" + userId + "]에게 [" + status + "] 알림 발송 완료!";
+    }
 }

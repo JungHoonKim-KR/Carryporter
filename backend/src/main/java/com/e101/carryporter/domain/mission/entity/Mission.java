@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.mission.entity;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -71,6 +72,13 @@ public class Mission extends BaseEntity {
         this.user = user;
         this.callLocation = callLocation;
         this.missionStatus = missionStatus;
+    }
+
+    public void assignRobot(Robot robot) {
+        this.robot = robot;
+        this.missionStatus = MissionStatus.ASSIGNED;
+        robot.changeStatus(RobotStatus.RESERVED);
+        this.assignedAt = LocalDateTime.now();
     }
 
 }

@@ -40,33 +40,46 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 const CodeVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login: loginStore } = useAuthStore();
+  const { login: loginStore, isAuthenticated, clearAuth } = useAuthStore();
 
-  const state = location.state as LocationState;
+  const state = location.state as LocationState | null;
   const [selectedCode, setSelectedCode] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  // state가 없으면 로그인 페이지로 리다이렉트 (useEffect 내에서 처리)
-  useEffect(() => {
-    if (!state || !state.email || state.code === undefined) {
-      navigate('/login');
-    }
-  }, [state, navigate]);
+  // state에서 값 추출 (없으면 기본값)
+  const email = state?.email ?? '';
+  const correctCode = state?.code ?? 0;
+  const hasValidState = !!(state && state.email && state.code !== undefined);
 
-  // state가 없으면 렌더링하지 않음
-  if (!state || !state.email || state.code === undefined) {
-    return null;
-  }
-
-  const { email, code: correctCode } = state;
-
-  // CODE 옵션 생성 (실제 CODE + 가짜 CODE 2개, 섞어서 표시)
-  // useMemo로 리렌더링 시에도 동일한 값 유지
+  // CODE 옵션 생성 (모든 훅은 조건부 반환 전에 호출되어야 함)
   const codeOptions = useMemo(() => {
+    if (!hasValidState) return [];
     const fakeCodes = generateFakeCodes(correctCode, 2);
     return shuffleArray([correctCode, ...fakeCodes]);
-  }, [correctCode]);
+  }, [correctCode, hasValidState]);
+
+  // 로그인 페이지 진입 시 기존 인증 정보 클리어
+  // (뒤로가기로 왔을 때 처음부터 다시 시작하도록)
+  useEffect(() => {
+    if (isAuthenticated) {
+      // 이미 로그인된 상태에서 이 페이지에 왔다면 로그아웃 후 로그인 페이지로
+      clearAuth();
+      navigate('/login', { replace: true });
+    }
+  }, []); // 마운트 시 1회만 실행
+
+  // state가 없으면 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!hasValidState) {
+      navigate('/login', { replace: true });
+    }
+  }, [hasValidState, navigate]);
+
+  // state가 없으면 렌더링하지 않음
+  if (!hasValidState) {
+    return null;
+  }
 
   const handleCodeSelect = (code: number) => {
     setSelectedCode(code);

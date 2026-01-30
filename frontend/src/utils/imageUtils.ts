@@ -29,18 +29,33 @@ export const base64ToFile = (base64String: string, filename = 'ticket.jpg'): Fil
 
 /**
  * 시간 문자열 포맷팅
- * @param time - "21:20" 형식의 시간 문자열
- * @returns "21:20" (그대로 반환, 필요시 추가 포맷팅 가능)
+ * @param time - "21:20" 형식의 시간 문자열 (null/undefined 가능)
+ * @returns "21:20" (그대로 반환, 필요시 추가 포맷팅 가능) 또는 null인 경우 "--:--"
  */
-export const formatTime = (time: string): string => {
+export const formatTime = (time?: string | null): string => {
+  // null이나 undefined인 경우 기본값 반환
+  if (!time) {
+    return '--:--';
+  }
+
   return time;
 };
 
 /**
  * 도시 이름 포맷팅 (첫 글자만 대문자, 나머지 소문자)
- * @param city - "ROME" 형식의 도시 이름
- * @returns "Rome"
+ * @param city - "ROME" 형식의 도시 이름 (null/undefined 가능)
+ * @returns "Rome" 또는 null인 경우 "-"
  */
-export const formatCityName = (city: string): string => {
-  return city.charAt(0) + city.slice(1).toLowerCase();
+export const formatCityName = (city?: string | null): string => {
+  // null이나 undefined인 경우 기본값 반환
+  if (!city) {
+    return '-';
+  }
+
+  // 빈 문자열인 경우 기본값 반환
+  if (city.trim() === '') {
+    return '-';
+  }
+
+  return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
 };

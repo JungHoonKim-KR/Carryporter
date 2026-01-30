@@ -1,10 +1,15 @@
 package com.e101.carryporter.global.service.mqtt;
 
+import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
+import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,15 +17,18 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MqttSubscriberService {
 
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final RobotRepository robotRepository;
+    private final MissionRepository missionRepository;
 
     /**
      * MQTT 메시지 수신 처리 (mqttInputChannel로 들어오는 모든 메시지)
@@ -110,6 +118,7 @@ public class MqttSubscriberService {
      * 도착 알림 처리
      * Topic: robot/{MAC}/arrived
      * Payload: {"missionId": 101}
+     * RobotArrivalEvent를 발행하려면 userId와 robotCode가 필요
      */
     private void handleArrived(String mac, String payload) {
         log.info("로봇 도착 알림 - MAC: {}", mac);
@@ -117,9 +126,36 @@ public class MqttSubscriberService {
             JsonNode node = objectMapper.readTree(payload);
             long missionId = node.has("missionId") ? node.get("missionId").asLong() : -1;
 
-            log.info("로봇 도착 - MAC: {}, missionId: {}", mac, missionId);
-            // TODO: 도착 알림 비즈니스 로직 구현
-            // missionService.handleArrived(missionId);
+            if (missionId == -1) {
+                log.error("payload에 missionId가 없습니다. MAC : {}", mac);
+                return;
+            }
+
+            Mission mission = missionRepository.findById(missionId)
+                    .orElseThrow(() -> new EntityNotFoundException("Mission not found: " + missionId));
+
+            // 1. 보안 검증
+            if (!mission.getRobot().getMacAddress().equals(mac)) {
+                log.warn("MAC 주소 불일치! 요청: {}, 미션로봇: {}", mac, mission.getRobot().getMacAddress());
+                return;
+            }
+
+//            // 2. ✅ 상태 검증 추가 (이미 끝난 미션 방지)
+//            // 미션 상태가 어떠할 때 이미 끝난 미션인지 판단? -> 코드 추가하면 테스트도 추가하기
+//            if (mission.getMissionStatus() != MissionStatus.ARRIVED) {
+//                log.info("이미 완료된 미션입니다. 무시합니다.");
+//                return;
+//            }
+
+
+            log.info("로봇 도착 이벤트 발행 - missionId: {}, userId: {}", missionId, mission.getUser().getId());
+
+            eventPublisher.publishEvent(new RobotArrivalEvent(
+                    mission.getId(),
+                    mission.getUser().getId(),
+                    mission.getRobot().getRobotCode()
+            ));
+
         } catch (Exception e) {
             log.error("도착 알림 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
         }

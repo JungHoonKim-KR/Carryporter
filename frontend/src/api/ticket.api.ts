@@ -1,12 +1,12 @@
 import apiClient from './axios';
-import type { TicketScanResponse, TicketInfo } from '../types/ticket.types';
+import type { TicketInfo } from '../types/ticket.types';
 
 /**
  * 티켓 스캔 API
  * 이미지 파일을 multipart/form-data로 전송하여 OCR 스캔 수행
  *
  * @param imageFile - 티켓 이미지 파일
- * @returns 스캔된 티켓 정보
+ * @returns 스캔된 티켓 정보 (ticketId 포함)
  */
 export const scanTicket = async (imageFile: File): Promise<TicketInfo> => {
   const formData = new FormData();
@@ -16,7 +16,7 @@ export const scanTicket = async (imageFile: File): Promise<TicketInfo> => {
   // (multipart/form-data; boundary=----WebKitFormBoundary...)
   // 수동으로 헤더를 설정하면 boundary 정보가 누락되어 405 에러 발생
   const { data } = await apiClient.post<TicketInfo>(
-    '/ocr',
+    '/api/tickets/scan',
     formData
   );
 
@@ -25,28 +25,27 @@ export const scanTicket = async (imageFile: File): Promise<TicketInfo> => {
 
 /**
  * 최신 티켓 정보 조회 API
- * 사용자가 등록한 가장 최근 티켓 정보를 조회
+ * localStorage에서 ticketId를 읽어 백엔드에서 티켓 정보를 조회
  *
  * @returns 최신 티켓 정보
+ * @throws {Error} ticketId가 없을 경우 에러 발생
  */
 export const getLatestTicket = async (): Promise<TicketInfo> => {
-  // 🔶 MOCK: 최신 티켓 정보 목업 데이터
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log('🔶 MOCK: getLatestTicket 호출됨');
-      resolve({
-        flight: "KE932",
-        gate: "E23",
-        seat: "40B",
-        boarding_time: "21:20",
-        departure_time: "22:00",
-        origin: "ROME",
-        destination: "INCHEON"
-      });
-    }, 500);
-  });
+  // localStorage에서 ticketId 읽기
+  const ticketId = localStorage.getItem('ticketId');
 
-  // 실제 API 호출 (주석 처리)
-  // const { data } = await apiClient.get<TicketInfo>('/api/me/tickets/latest');
-  // return data;
+  if (!ticketId) {
+    throw new Error('티켓 ID가 없습니다. 먼저 티켓을 스캔해주세요.');
+  }
+
+  // GET 요청에 body 포함 (백엔드 요구사항)
+  // 주의: HTTP 표준과 맞지 않지만, 백엔드 스펙에 따름
+  const { data } = await apiClient.get<TicketInfo>(
+    '/api/me/tickets/latest',
+    {
+      data: { ticketId: Number(ticketId) }
+    }
+  );
+
+  return data;
 };

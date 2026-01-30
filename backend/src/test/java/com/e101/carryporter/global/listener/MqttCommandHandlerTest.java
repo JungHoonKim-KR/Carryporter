@@ -32,7 +32,7 @@ class MqttCommandHandlerTest {
     private static final String TEST_MAC = "AA:BB:CC:DD:EE:FF";
     private static final Long TEST_MISSION_ID = 1L;
     private static final Long TEST_USER_ID = 100L;
-
+    private static final String TEST_ROBOT_CODE = "robot-code";
     @Nested
     @DisplayName("관리자 요청 이벤트")
     class AdminRequestEvents {
@@ -74,7 +74,7 @@ class MqttCommandHandlerTest {
             // given
             Double destX = 10.5;
             Double destY = 20.3;
-            MissionStartedEvent event = new MissionStartedEvent(TEST_MISSION_ID, TEST_MAC, destX, destY);
+            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destX, destY);
 
             // when
             mqttCommandHandler.handleMissionStarted(event);
