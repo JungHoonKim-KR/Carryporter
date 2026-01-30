@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.robot.service;
 
+import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
@@ -30,9 +31,15 @@ public class RobotAssignService {
             // db 에 mission, robot 상태 변경
             missionService.assignRobot(missionId, availableRobotId);
 
-            log.debug("[{}] 번 미션에 [{}] 번 로봇 배정", missionId, availableRobotId);
+            // mission 조회
+            Mission findMission = missionService.findById(missionId);
 
-            eventPublisher.publishEvent(new RobotAssignedEvent());
+            Long userId = findMission.getUser().getId();
+            String robotCode = findMission.getRobot().getRobotCode();
+
+            log.debug("[{}] 번 사용자 [{}] 번 미션에 [{}] 로봇 배정", userId, missionId, availableRobotId);
+
+            eventPublisher.publishEvent(new RobotAssignedEvent(userId, robotCode));
             return availableRobotId;
         } catch (Exception e) {
             log.error("배차 중 error 발생!! missionId = {}", missionId, e);
