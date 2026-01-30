@@ -203,10 +203,10 @@ pipeline {
                     cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 4. 설정 검증 후 reload (무중단)
-                    echo "Validating and reloading nginx..."
+                    # 4. 설정 검증 후 restart
+                    echo "Validating and restarting nginx..."
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker exec ${NGINX_CONTAINER} nginx -s reload
+                    docker restart ${NGINX_CONTAINER}
 
                     # 5. 활성 색상 업데이트
                     echo "$TARGET_COLOR" > /home/ubuntu/frontend/active_color
@@ -232,9 +232,9 @@ pipeline {
                     cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
-                    # 설정 검증 후 reload
+                    # 설정 검증 후 restart
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker exec ${NGINX_CONTAINER} nginx -s reload
+                    docker restart ${NGINX_CONTAINER}
 
                     echo "Nginx config updated (active: $CURRENT_COLOR)"
                 '''
