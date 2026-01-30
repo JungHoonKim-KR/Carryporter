@@ -1,11 +1,7 @@
-package com.e101.carryporter.domain.user.service;
+package com.e101.carryporter.domain.userlocker.service;
 
 import com.e101.carryporter.domain.userlocker.controller.dto.response.LockerResponseDto;
-import com.e101.carryporter.domain.user.entity.User;
-import com.e101.carryporter.domain.user.exception.UserErrorCode;
-import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.domain.userlocker.repository.UserLockerRepository;
-import com.e101.carryporter.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,16 +14,11 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class UserService {
+public class UserLockerService {
 
-    private final UserRepository userRepository;
     private final UserLockerRepository userLockerRepository;
 
 
-    public User findById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-    }
 
     public List<LockerResponseDto> getMyLockerHistory(Long userId) {
         return userLockerRepository.findAllByUserId(userId).stream()
