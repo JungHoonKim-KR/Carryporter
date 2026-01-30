@@ -15,13 +15,15 @@ export default defineConfig({
     proxy: {
       // OCR API 프록시 설정 (CORS 우회)
       '/ocr': {
-        target: 'http://i14e101.p.ssafy.io:8050',
+        target: 'https://i14e101.p.ssafy.io',
         changeOrigin: true,
+        secure: true,
       },
       // 일반 API 프록시 설정
       '/api': {
-        target: 'http://i14e101.p.ssafy.io:8050',
+        target: 'https://i14e101.p.ssafy.io',
         changeOrigin: true,
+        secure: true,
       },
     },
   },
