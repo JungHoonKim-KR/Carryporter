@@ -38,4 +38,11 @@ public class UserLocker extends BaseEntity {
         this.locker = locker;
         this.userLockerStatus = userLockerStatus;
     }
+    public static UserLocker createUserLocker(User user, Locker locker) {
+        return UserLocker.builder()
+                .user(user)
+                .locker(locker)
+                .userLockerStatus(UserLockerStatus.USING) // 초기 상태값 설정
+                .build();
+    }
 }

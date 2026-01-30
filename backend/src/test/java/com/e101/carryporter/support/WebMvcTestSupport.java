@@ -12,6 +12,8 @@ import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.ticket.controller.TicketController;
 import com.e101.carryporter.domain.ticket.service.TicketService;
 import com.e101.carryporter.domain.user.service.UserService;
+import com.e101.carryporter.domain.userlocker.controller.UserLockerController;
+import com.e101.carryporter.domain.userlocker.service.UserLockerService;
 import com.e101.carryporter.global.filter.AuthorizationFilter;
 import com.e101.carryporter.global.filter.CorsFilter;
 import com.e101.carryporter.global.filter.JwtAuthenticationFilter;
@@ -29,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
         AdminController.class,
         TicketController.class,
         SseController.class,
+        UserLockerController.class,
 })
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class WebMvcTestSupport {
@@ -71,4 +74,7 @@ public abstract class WebMvcTestSupport {
 
     @MockitoBean
     protected JwtUtils jwtUtils;
+
+    @MockitoBean
+    protected UserLockerService userLockerService;
 }
