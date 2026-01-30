@@ -56,11 +56,12 @@ pipeline {
                     // 변경된 파일 목록 확인
                     def changes = []
                     try {
-                        // 병합 커밋도 감지할 수 있도록 git diff-tree 사용
-                        changes = sh(
-                            script: "git diff-tree --no-commit-id --name-only -r HEAD || git diff --name-only HEAD~1 HEAD",
+                        // 병합 커밋도 감지할 수 있도록 -m 옵션 추가
+                        def result = sh(
+                            script: "git diff-tree -m --no-commit-id --name-only -r HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo 'backend/'",
                             returnStdout: true
-                        ).trim().split('\n')
+                        ).trim()
+                        changes = result ? result.split('\n') : ['backend/']
                     } catch (Exception e) {
                         echo "First commit or unable to get diff, proceeding with build"
                         changes = ['backend/']
