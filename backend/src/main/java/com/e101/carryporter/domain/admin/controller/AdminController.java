@@ -4,12 +4,16 @@ import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestD
 import com.e101.carryporter.domain.admin.controller.dto.request.LockRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
+import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final RobotService robotService;
+    private final AdminLockerService adminLockerService;
 
     @PostMapping("/missions/{missionId}/unlock")
     public ResponseEntity<Void> unlockRobot(@RequestBody @Valid UnlockRobotRequestDto requestDto, @PathVariable Long missionId) {
@@ -49,6 +54,22 @@ public class AdminController {
 
         robotService.finalizeMission(missionId, requestDto.getRobotId());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/lockers")
+    public ResponseEntity<List<LockerResponseDto>> getAllLockers() {
+        log.debug("관리자 전체 사물함 조회 요청");
+
+        List<LockerResponseDto> lockers = adminLockerService.getAllLockers();
+        return ResponseEntity.ok(lockers);
+    }
+
+    @GetMapping("/lockers/{lockerId}")
+    public ResponseEntity<LockerResponseDto> getLocker(@PathVariable Long lockerId) {
+        log.debug("관리자 사물함 단건 조회 요청 - lockerId: {}", lockerId);
+
+        LockerResponseDto locker = adminLockerService.getLocker(lockerId);
+        return ResponseEntity.ok(locker);
     }
 
 }

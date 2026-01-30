@@ -114,12 +114,12 @@ const CodeVerificationPage = () => {
       console.log('Request Data:', requestData);
 
       // CODE 인증 API 호출 (이메일 + 선택한 CODE)
+      // refreshToken은 백엔드가 httpOnly 쿠키로 설정하므로 응답 body에서 처리 불필요
       const response = await login(requestData);
 
-      // Zustand 스토어에 토큰 저장 (accessToken + refreshToken)
+      // Zustand 스토어에 accessToken 저장
       loginStore(
         response.accessToken,
-        response.refreshToken,
         {
           id: '', // 토큰에서 추출 또는 임시값
           email,

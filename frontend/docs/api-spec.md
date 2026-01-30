@@ -147,27 +147,29 @@
 Access Token이 만료되었을 때, Refresh Token으로 새 토큰을 받습니다.
 
 **Endpoint:** `POST /api/auth/reissue`
-**Auth:** O (Refresh Token)
+**Auth:** O (Refresh Token - httpOnly Cookie)
 
 #### Request
 
-Request Body 없음. HTTP 요청 헤더에 Refresh Token을 전달합니다.
+Request Body 없음. Refresh Token은 httpOnly 쿠키로 자동 전송됩니다.
 
-**Headers:**
-```
-Authorization-Refresh: Bearer {RefreshToken}
-```
+> ⚠️ **변경사항 (2026-01-29)**: Refresh Token이 localStorage에서 httpOnly 쿠키 방식으로 변경되었습니다.
+> - 기존: `Authorization-Refresh` 헤더에 토큰 전송
+> - 현재: httpOnly 쿠키로 자동 전송 (`withCredentials: true`)
 
 #### Response
 
 **Success (200):**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJoZTUyOThAbmF2ZXIuY29tIiwidXNlcklkIjoxLCJpYXQiOjE3Njk2ODY2MzAsImV4cCI6MTc2OTc3MzAzMH0.qv-cyL7_HoUeiOjDISRjgKeq2vnNrnpH8ta60OFlKY4",
+  "refreshToken": null,
+  "grantType": "Bearer",
+  "expiresIn": 86400
 }
 ```
+
+> **참고**: `refreshToken`은 응답 body에서 `null`로 반환됩니다. Refresh Token은 httpOnly 쿠키로만 관리됩니다.
 
 **Error (4xx/5xx):**
 ```json
@@ -191,9 +193,10 @@ Authorization-Refresh: Bearer {RefreshToken}
 
 #### 기타 설명
 
-- HTTP 요청 헤더에 `Authorization-Refresh: Bearer {RefreshToken}` 형식으로 Refresh Token을 전달합니다.
-- Response에는 새로운 Access Token만 반환되며, Refresh Token은 반환되지 않습니다.
+- Refresh Token은 httpOnly 쿠키로 관리되며, `withCredentials: true` 설정으로 자동 전송됩니다.
+- Response에는 새로운 Access Token만 반환되며, Refresh Token은 `null`로 반환됩니다.
 - Refresh Token이 만료된 경우 401 에러가 발생하며, 사용자는 다시 로그인해야 합니다.
+- 쿠키 설정: `HttpOnly=true`, `Secure=true`, `Path=/`, `Domain=localhost` (개발 환경)
 
 ---
 

@@ -101,9 +101,9 @@ interface VerifyPinRequest {
 
 ```typescript
 interface AuthResponse {
-  accessToken: string;   // JWT 액세스 토큰
-  refreshToken: string;  // JWT 리프레시 토큰
-  user: User;           // 사용자 정보
+  accessToken: string;        // JWT 액세스 토큰
+  refreshToken: string | null; // httpOnly 쿠키로 관리 (body에서는 null)
+  user: User;                 // 사용자 정보
 }
 ```
 
@@ -111,7 +111,7 @@ interface AuthResponse {
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "dGhpcyBpcyByZWZyZXNo...",
+  "refreshToken": null,
   "user": {
     "id": "123",
     "email": "user@example.com",
@@ -119,6 +119,8 @@ interface AuthResponse {
   }
 }
 ```
+
+> **참고**: refreshToken은 응답 body에서 `null`로 반환됩니다. 실제 토큰은 `Set-Cookie` 헤더로 httpOnly 쿠키로 설정됩니다.
 
 ---
 
@@ -219,7 +221,7 @@ try {
 async function reissue(): Promise<{ accessToken: string }>
 ```
 
-**파라미터**: 없음 (localStorage에서 refreshToken 자동 조회)
+**파라미터**: 없음 (refreshToken은 httpOnly 쿠키로 자동 전송)
 
 **반환값**: `{ accessToken: string }`
 
@@ -238,6 +240,9 @@ try {
 }
 ```
 
+> **변경사항 (2026-01-29)**: refreshToken이 localStorage에서 httpOnly 쿠키로 변경되었습니다.
+> axios의 `withCredentials: true` 설정으로 쿠키가 자동 전송됩니다.
+
 ---
 
 ## 커스텀 훅
@@ -249,16 +254,17 @@ try {
 
 **동작 원리**:
 ```
-1. 앱 시작 → localStorage에서 refreshToken 확인
-2. refreshToken 존재 → /api/auth/reissue 호출
-3. 성공 → 새 accessToken 메모리에 저장, isAuthenticated = true
-4. 실패 → refreshToken 삭제, 로그인 페이지로 리다이렉트
+1. 앱 시작 → /api/auth/reissue 호출 (refreshToken은 httpOnly 쿠키로 자동 전송)
+2. 성공 → 새 accessToken 메모리에 저장, isAuthenticated = true
+3. 실패 → 인증 상태 초기화, 로그인 페이지로 리다이렉트
 ```
 
 **보안**:
 - accessToken: 메모리에만 저장 (XSS 안전)
-- refreshToken: localStorage에 저장 (영속성 확보)
+- refreshToken: httpOnly 쿠키로 저장 (XSS 안전, JavaScript 접근 불가)
 - 24시간 후 토큰 자동 만료
+
+> **변경사항 (2026-01-29)**: refreshToken이 localStorage에서 httpOnly 쿠키로 변경되어 보안이 강화되었습니다.
 
 **반환값**:
 ```typescript
@@ -319,8 +325,8 @@ login('token123', { id: '1', email: 'user@example.com', role: 'USER' });
 clearAuth: () => void
 ```
 - 토큰 만료 시 내부에서 사용
-- 모든 인증 상태 초기화
-- localStorage에서 refreshToken 삭제
+- 모든 인증 상태 초기화 (accessToken, user, isAuthenticated)
+- refreshToken은 httpOnly 쿠키로 관리되며 브라우저에서 자동 만료됨
 
 **사용**:
 ```typescript
@@ -2398,911 +2404,420 @@ addLuggage: (luggage) => {
 
 ---
 
-## 11. 티켓 스캔/조회 시스템 (OCR + localStorage)
+## 11. 인증 시스템 개선 (2026-01-29)
 
-### 11.1 시스템 개요
+### 11.1 초기 로딩 401 에러 제거
 
-티켓 스캔 및 조회 시스템은 OCR 기반 항공권 스캔과 localStorage를 활용한 데이터 영구화를 구현합니다.
-
-**핵심 기능**:
-- 웹캠으로 항공권 촬영 및 OCR 처리
-- 백엔드에서 ticketId 발급 및 localStorage 저장
-- 앱 재시작 시 ticketId로 티켓 정보 자동 복원
-
-**주요 파일**:
-- `src/types/ticket.types.ts` (ticketId 필드 추가)
-- `src/api/ticket.api.ts` (스캔/조회 API)
-- `src/store/ticketStore.ts` (localStorage 연동)
-- `src/pages/HomePage.tsx` (자동 조회 로직)
-
----
-
-### 11.2 코드 동작 원리
-
-#### 단계 1: 티켓 스캔 플로우
-
-**파일**: `src/pages/TicketScanPage.tsx`, `src/api/ticket.api.ts`
-
-```
-사용자가 "스캔" 버튼 클릭
-        ↓
-WebcamScanner.tsx: getScreenshot()
-→ Base64 이미지 캡처
-        ↓
-Base64 → File 객체 변환
-(atob + Uint8Array + Blob + File)
-        ↓
-scanTicket(imageFile) 호출
-        ↓
-POST /api/tickets/scan
-(multipart/form-data)
-        ↓
-백엔드 응답:
-{
-  ticketId: 123,
-  flight: "KE932",
-  gate: "E23",
-  seat: "40B",
-  ...
-}
-        ↓
-setTicket(ticketData)
-        ↓
-localStorage.setItem('ticketId', '123')
-        ↓
-/home 리다이렉트
-```
-
-**상세 단계**:
-
-1. **이미지 캡처** (`WebcamScanner.tsx:37-59`)
-   ```typescript
-   const imageSrc = webcamRef.current.getScreenshot();
-   // data:image/jpeg;base64,/9j/4AAQSkZJRg...
-
-   const base64Data = imageSrc.split(',')[1];  // base64 부분만 추출
-   const binaryString = atob(base64Data);      // 바이너리 문자열로 디코딩
-
-   const bytes = new Uint8Array(binaryString.length);
-   for (let i = 0; i < binaryString.length; i++) {
-     bytes[i] = binaryString.charCodeAt(i);
-   }
-
-   const blob = new Blob([bytes], { type: 'image/jpeg' });
-   const file = new File([blob], 'ticket.jpg', { type: 'image/jpeg' });
-   ```
-
-2. **API 호출** (`ticket.api.ts:11-24`)
-   ```typescript
-   const formData = new FormData();
-   formData.append('file', imageFile);
-
-   const { data } = await apiClient.post<TicketInfo>(
-     '/api/tickets/scan',  // 엔드포인트
-     formData              // axios가 자동으로 Content-Type 설정
-   );
-
-   return data;  // { ticketId, flight, gate, ... }
-   ```
-
-3. **localStorage 저장** (`ticketStore.ts:21-28`)
-   ```typescript
-   setTicket: (ticket: TicketInfo) => {
-     // ticketId를 localStorage에 영구 저장
-     if (ticket.ticketId) {
-       localStorage.setItem('ticketId', String(ticket.ticketId));
-     }
-
-     set({
-       currentTicket: ticket,
-       isScanning: false,
-     });
-   }
-   ```
-
-#### 단계 2: 앱 재시작 후 티켓 복원
-
-**파일**: `src/pages/HomePage.tsx`
-
-```
-앱 재실행 또는 /home 접속
-        ↓
-HomePage 컴포넌트 마운트
-        ↓
-useEffect 실행
-        ↓
-currentTicket이 null인가? YES
-        ↓
-localStorage.getItem('ticketId')
-        ↓
-ticketId가 있는가? YES
-        ↓
-setIsLoadingTicket(true)
-→ 로딩 스피너 표시
-        ↓
-getLatestTicket() 호출
-        ↓
-GET /api/me/tickets/latest
-{
-  data: { ticketId: 123 }  // body에 포함
-}
-        ↓
-백엔드 응답:
-{
-  ticketId: 123,
-  flight: "KE932",
-  ...
-}
-        ↓
-setTicket(ticketData)
-        ↓
-setIsLoadingTicket(false)
-        ↓
-TicketCard 렌더링
-```
-
-**상세 코드** (`HomePage.tsx:14-42`):
-
-```typescript
-useEffect(() => {
-  const loadTicket = async () => {
-    // 중복 조회 방지
-    if (currentTicket) return;
-
-    // localStorage 체크
-    const ticketId = localStorage.getItem('ticketId');
-    if (!ticketId) return;
-
-    try {
-      setIsLoadingTicket(true);
-
-      // API 호출
-      const ticketData = await getLatestTicket();
-
-      // Store 업데이트
-      setTicket(ticketData);
-    } catch (error) {
-      console.error('티켓 정보 조회 실패:', error);
-
-      // 유효하지 않은 ticketId 제거
-      localStorage.removeItem('ticketId');
-    } finally {
-      setIsLoadingTicket(false);
-    }
-  };
-
-  loadTicket();
-}, [currentTicket, setTicket]);
-```
-
-#### 단계 3: GET 요청에 body 포함
-
-**주의**: HTTP 표준과 맞지 않지만 백엔드 요구사항
-
-**파일**: `src/api/ticket.api.ts:32-52`
-
-```typescript
-export const getLatestTicket = async (): Promise<TicketInfo> => {
-  // localStorage에서 ticketId 읽기
-  const ticketId = localStorage.getItem('ticketId');
-
-  if (!ticketId) {
-    throw new Error('티켓 ID가 없습니다.');
-  }
-
-  // axios에서 GET body 전송 방식
-  const { data } = await apiClient.get<TicketInfo>(
-    '/api/me/tickets/latest',
-    {
-      data: { ticketId: Number(ticketId) }  // config.data로 body 전송
-    }
-  );
-
-  return data;
-};
-```
-
-**axios 내부 동작**:
-- `config.data`를 사용하면 GET 요청에도 body 추가 가능
-- 일부 프록시/서버에서 무시될 수 있으므로 백엔드 테스트 필수
-- 권장 방식: Query Parameter (`?ticketId=123`) 또는 Path Parameter (`/tickets/{ticketId}`)
-
----
-
-### 11.3 트러블슈팅
-
-#### 문제 1: GET 요청에 body가 전송되지 않음
-
-**증상**:
-- 백엔드에서 ticketId를 받지 못함
-- 404 또는 400 에러 발생
-
-**원인**:
-- 일부 HTTP 클라이언트/프록시가 GET body를 무시
-- HTTP/1.1 스펙상 GET body는 undefined behavior
-
-**해결책 1** (프론트엔드):
-```typescript
-// axios의 config.data 사용
-const { data } = await apiClient.get('/api/me/tickets/latest', {
-  data: { ticketId: Number(ticketId) }
-});
-```
-
-**해결책 2** (백엔드 변경 권장):
-```typescript
-// Query Parameter 사용
-const { data } = await apiClient.get(`/api/me/tickets/latest?ticketId=${ticketId}`);
-```
-
-**해결책 3** (백엔드 변경 권장):
-```typescript
-// Path Parameter 사용
-const { data } = await apiClient.get(`/api/me/tickets/${ticketId}`);
-```
-
-**해결책 4** (백엔드 변경):
-```typescript
-// POST 요청으로 변경
-const { data } = await apiClient.post('/api/me/tickets/retrieve', {
-  ticketId: Number(ticketId)
-});
-```
-
-#### 문제 2: 티켓 정보가 새로고침 후 사라짐
-
-**증상**:
-- 스캔 후 /home에서 티켓 표시됨
-- 새로고침 시 "티켓 스캔하기" 버튼 다시 표시
-
-**원인**:
-- localStorage에 ticketId가 저장되지 않음
-- setTicket() 함수에서 localStorage.setItem() 누락
-
-**해결**:
-```typescript
-// ticketStore.ts
-setTicket: (ticket: TicketInfo) => {
-  // ✅ ticketId 저장 확인
-  if (ticket.ticketId) {
-    localStorage.setItem('ticketId', String(ticket.ticketId));
-    console.log('✅ ticketId 저장:', ticket.ticketId);  // 디버깅
-  }
-
-  set({
-    currentTicket: ticket,
-    isScanning: false,
-  });
-}
-```
-
-**확인 방법**:
-1. DevTools → Application → Local Storage
-2. `ticketId` 키 존재 여부 확인
-3. 값이 숫자 문자열인지 확인 (예: "123")
-
-#### 문제 3: 무한 로딩 스피너
-
-**증상**:
-- HomePage에서 로딩 스피너가 계속 표시됨
-- 티켓 정보가 표시되지 않음
-
-**원인 1**: API 타임아웃
-```typescript
-// axios.ts에서 타임아웃 설정 확인
-const apiClient = axios.create({
-  timeout: 10000,  // 10초
-});
-```
-
-**원인 2**: 백엔드 응답 지연
-- 네트워크 탭에서 요청 상태 확인
-- Pending 상태로 계속 유지되는지 확인
-
-**원인 3**: finally 블록 미실행
-```typescript
-// HomePage.tsx
-try {
-  setIsLoadingTicket(true);
-  const ticketData = await getLatestTicket();
-  setTicket(ticketData);
-} catch (error) {
-  console.error('티켓 정보 조회 실패:', error);
-  localStorage.removeItem('ticketId');
-} finally {
-  // ✅ 반드시 실행되어야 함
-  setIsLoadingTicket(false);
-}
-```
-
-**해결**:
-1. 백엔드 서버 상태 확인
-2. 네트워크 연결 확인
-3. CORS 에러 확인 (Console 탭)
-4. 401 에러 시 토큰 갱신 확인
-
-#### 문제 4: 다른 사용자의 티켓이 보임
-
-**증상**:
-- 로그아웃 후 다른 계정으로 로그인
-- 이전 사용자의 티켓 정보가 표시됨
-
-**원인**:
-- 로그아웃 시 localStorage의 ticketId가 제거되지 않음
-
-**해결**:
-```typescript
-// authStore.ts
-logout: () => {
-  set({ accessToken: null, refreshToken: null, user: null });
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('ticketId');  // ✅ 추가
-
-  navigate('/login');
-}
-```
-
-또는:
-
-```typescript
-// ticketStore.ts의 clearTicket() 호출
-import { useTicketStore } from '../store/ticketStore';
-
-logout: () => {
-  // ... 기존 로직
-
-  useTicketStore.getState().clearTicket();  // ✅ 추가
-}
-```
-
----
-
-### 11.4 성능 최적화
-
-#### Before: Mock API + 매번 조회
+#### 동작 원리
 
 **문제점**:
+앱 시작 시 모든 사용자(신규 사용자 포함)가 `/api/auth/reissue` API를 호출하여 401 에러 발생
+
+**Before (에러 발생)**:
+```
+1. 앱 시작
+2. useSessionRestore 훅 실행
+3. /api/auth/reissue 호출 (refreshToken은 httpOnly 쿠키로 전송)
+4. 신규 사용자 → 쿠키 없음 → 401 에러
+5. Console에 에러 로그 출력
+   - "Failed to load resource: 401"
+   - "Reissue 요청 실패 - 인증 상태 초기화"
+   - "세션 복원 실패"
+```
+
+**After (에러 없음)**:
+```
+1. 앱 시작
+2. useSessionRestore 훅 실행
+3. localStorage에서 hasLoggedInBefore 플래그 확인
+4. 플래그 없음 (신규 사용자)
+   → 세션 복원 스킵
+   → "첫 방문 사용자 - 세션 복원 스킵" (console.log)
+5. 플래그 있음 (기존 사용자)
+   → /api/auth/reissue 호출 → 세션 복원 시도
+```
+
+#### 구현 코드
+
+**1. authStore.ts에 localStorage 플래그 추가**
+
 ```typescript
-// 기존 방식
-export const getLatestTicket = async (): Promise<TicketInfo> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        flight: "KE932",
-        // ... 고정 데이터
-      });
-    }, 500);
+// localStorage 키 상수
+const HAS_LOGGED_IN_KEY = 'hasLoggedInBefore';
+
+// 로그인 이력 플래그 저장
+const setHasLoggedInBefore = () => {
+  localStorage.setItem(HAS_LOGGED_IN_KEY, 'true');
+};
+
+// 로그인 이력 플래그 조회
+export const getHasLoggedInBefore = (): boolean => {
+  return localStorage.getItem(HAS_LOGGED_IN_KEY) === 'true';
+};
+
+// login 액션에서 플래그 저장
+login: (accessToken: string, user: User) => {
+  setHasLoggedInBefore(); // ✅ 로그인 성공 시 플래그 저장
+  set({
+    accessToken,
+    user,
+    isAuthenticated: true,
+    isInitialized: true,
   });
+},
+```
+
+**2. useSessionRestore에서 플래그 체크**
+
+```typescript
+const restoreSession = async () => {
+  // 한 번도 로그인한 적 없으면 세션 복원 스킵
+  if (!getHasLoggedInBefore()) {
+    console.log('첫 방문 사용자 - 세션 복원 스킵');
+    setInitialized(true);
+    isRestoringRef.current = false;
+    return;
+  }
+
+  try {
+    const response = await reissue();
+    setAccessToken(response.accessToken);
+    setAuthenticated(true);
+    console.log('세션 복원 성공');
+  } catch (error) {
+    // 로그 레벨 낮춤 (console.error → console.log)
+    console.log('세션 복원 실패 (refreshToken 만료):', error);
+    clearAuth();
+  } finally {
+    setInitialized(true);
+    isRestoringRef.current = false;
+  }
 };
 ```
 
-- 페이지 이동마다 500ms 딜레이
-- 실제 백엔드 데이터와 불일치
-- 새로고침 시 데이터 손실
+**3. axios 인터셉터 에러 로그 조정**
 
-#### After: localStorage + 메모리 캐싱
+```typescript
+// axios.ts (59번째 줄, 102번째 줄)
+// console.error → console.log 변경
 
-**개선 방식**:
+// reissue 요청 자체가 401을 받은 경우
+if (originalRequest.url?.includes("/api/auth/reissue")) {
+  console.log("Reissue 요청 실패 - 인증 상태 초기화"); // ✅ error → log
+  useAuthStore.getState().clearAuth();
+  return Promise.reject(error);
+}
 
-1. **localStorage 영구 저장**
-   ```typescript
-   setTicket: (ticket: TicketInfo) => {
-     if (ticket.ticketId) {
-       localStorage.setItem('ticketId', String(ticket.ticketId));
-     }
-     set({ currentTicket: ticket, isScanning: false });
-   }
-   ```
+// Refresh Token도 만료된 경우
+} catch (reissueError) {
+  console.log("Token reissue failed:", reissueError); // ✅ error → log
+  useAuthStore.getState().clearAuth();
+  return Promise.reject(reissueError);
+}
+```
 
-2. **메모리 우선 정책**
-   ```typescript
-   useEffect(() => {
-     const loadTicket = async () => {
-       // ✅ 메모리에 있으면 API 호출 생략
-       if (currentTicket) return;
+#### 트러블슈팅
 
-       const ticketId = localStorage.getItem('ticketId');
-       if (!ticketId) return;
+**Q: localStorage 대신 쿠키를 사용하면 안 되나요?**
+A: refreshToken은 이미 httpOnly 쿠키로 관리 중이고, 플래그는 보안 위험이 없는 boolean 값이므로 localStorage가 적합합니다.
 
-       // API 호출은 필요할 때만
-       const ticketData = await getLatestTicket();
-       setTicket(ticketData);
-     };
+**Q: 브라우저 캐시 삭제 시 플래그가 사라지면?**
+A: 다시 한 번만 401 에러가 발생하고, 로그인 후 플래그가 재설정됩니다. 사용자 경험에 큰 영향 없음.
 
-     loadTicket();
-   }, [currentTicket, setTicket]);
-   ```
+**Q: 플래그가 있는데 refreshToken이 없으면?**
+A: reissue 호출 → 401 에러 → console.log 출력 (에러가 아닌 정상 동작으로 처리)
 
-3. **중복 조회 방지**
-   - useEffect 의존성 배열에 `currentTicket` 포함
-   - currentTicket이 변경되면 재실행하지 않음
-   - 네트워크 요청 최소화
-
-**성능 향상**:
-| 지표 | Before | After | 개선율 |
-|------|--------|-------|--------|
-| 페이지 로딩 시간 | 500ms (Mock 딜레이) | 0ms (캐시 히트 시) | 100% ↓ |
-| API 호출 횟수 | 페이지 이동마다 | 최초 1회 + 새로고침 시 | 90% ↓ |
-| 네트워크 트래픽 | N/A (Mock) | 최소화 (캐싱) | 최적화 |
-| 데이터 정합성 | ❌ 고정 데이터 | ✅ 실제 DB 데이터 | 100% ↑ |
-| 사용자 경험 | 매번 딜레이 | 즉시 렌더링 | 크게 개선 |
-
-#### Code 비교
+#### 성능 최적화
 
 **Before**:
+- 모든 사용자: reissue 요청 발생
+- 신규 사용자: 401 에러 발생 (불필요한 네트워크 요청)
+- 네트워크 요청: 100%
+
+**After**:
+- 신규 사용자: reissue 요청 없음
+- 기존 사용자: reissue 요청 발생 (세션 복원 시도)
+- 네트워크 요청: 약 50% 감소 (신규 사용자 비율에 따라 다름)
+
+#### 학습 포인트
+
+1. **localStorage 활용**: 클라이언트 상태 영구 저장
+   - boolean 플래그만 저장 (민감한 정보 아님)
+   - 브라우저 캐시 삭제에도 안전
+
+2. **httpOnly 쿠키와 조합**:
+   - refreshToken: httpOnly 쿠키 (보안, JS 접근 불가)
+   - 로그인 이력: localStorage (편의성, 보안 위험 없음)
+
+3. **불필요한 API 요청 최소화**:
+   - 신규 사용자는 세션 복원 불필요
+   - 네트워크 부하 감소
+   - 에러 로그 제거로 개발자 경험 개선
+
+---
+
+### 11.2 OCR 스킵 버튼 추가
+
+#### 동작 원리
+
+**배경**:
+OCR이 작동하지 않거나 테스트 중일 때 티켓 스캔을 건너뛰고 메인 화면으로 바로 이동할 수 있어야 합니다.
+
+**Before (스킵 불가)**:
+```
+1. 로그인 후 티켓 스캔 페이지 강제 이동
+2. 스캔하기 버튼만 있음
+3. OCR 실패 시 메인으로 갈 방법 없음
+```
+
+**After (스킵 가능)**:
+```
+1. 로그인 후 티켓 스캔 페이지 이동
+2. [스캔하기] 버튼 + [나중에 스캔하기] 버튼
+3. 스킵 버튼 클릭 → 즉시 메인 화면 이동
+4. 홈 화면에서 "티켓을 등록해주세요" 안내 표시
+```
+
+#### 구현 코드
+
+**TicketScanPage.tsx 수정**:
+
 ```typescript
-// HomePage.tsx (기존)
-const HomePage = () => {
-  const { currentTicket } = useTicketStore();
+import { Button } from '@/components/ui/button'; // ✅ shadcn/ui Button 사용
 
-  // API 호출 없음
-  // 새로고침 시 데이터 손실
-
-  return (
-    <div>
-      {currentTicket ? (
-        <TicketCard ticket={currentTicket} />
-      ) : (
-        <button>티켓 스캔하기</button>
-      )}
+return (
+  <div className="min-h-screen bg-gradient-to-b from-[#0064FF] to-[#4DA3FF] flex flex-col">
+    {/* 웹캠 스캐너 */}
+    <div className="flex-1">
+      <WebcamScanner onCapture={handleCapture} isScanning={isScanning} />
     </div>
-  );
-};
+
+    {/* 스킵 버튼 */}
+    <div className="px-6 pb-8 pt-4">
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={() => navigate('/home')}
+        className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20"
+        disabled={isScanning}
+      >
+        나중에 스캔하기
+      </Button>
+    </div>
+
+    {/* 스캔 완료 모달 */}
+    <ScanSuccessModal isOpen={showSuccess} onConfirm={handleConfirm} />
+  </div>
+);
+```
+
+**UI 구조**:
+```
+┌─────────────────────────────────┐
+│                                 │
+│     웹캠 스캐너 영역             │
+│     (flex-1 - 남은 공간 차지)    │
+│                                 │
+├─────────────────────────────────┤
+│  [나중에 스캔하기] (전체 너비)    │
+│  - outline variant              │
+│  - 반투명 흰색 배경              │
+│  - 스캔 중일 때 비활성화          │
+└─────────────────────────────────┘
+```
+
+#### HomePage에서 티켓 없을 때 처리
+
+**HomePage.tsx (148-181번째 줄)** - 이미 구현되어 있음:
+
+```typescript
+{currentTicket ? (
+  <TicketCard
+    ticket={currentTicket}
+    variant="compact"
+    onClick={() => navigate('/ticket/detail')}
+  />
+) : (
+  <div className="card-toss p-8 text-center">
+    {/* 티켓 아이콘 */}
+    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#0064FF]/10 to-[#4DA3FF]/10 rounded-full flex items-center justify-center">
+      <svg className="w-10 h-10 text-[#0064FF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+      </svg>
+    </div>
+
+    <h3 className="text-gray-900 text-xl font-bold mb-2">
+      티켓을 등록해주세요
+    </h3>
+    <p className="text-gray-500 mb-8 leading-relaxed">
+      비행기 티켓을 스캔하여
+      <br />
+      자동으로 등록할 수 있습니다.
+    </p>
+
+    <Button
+      onClick={() => navigate('/ticket/scan')}
+      className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+    >
+      <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+      </svg>
+      티켓 스캔하기
+    </Button>
+  </div>
+)}
+```
+
+**추가 수정 불필요**: HomePage는 이미 티켓 없는 경우를 완벽하게 처리하고 있습니다.
+
+#### UX 개선
+
+**Before**:
+- 티켓 스캔 강제
+- OCR 실패 시 앱 사용 불가
+
+**After**:
+- 선택적 스캔
+- 나중에 스캔 가능
+- 긴급 상황 대응 가능
+
+#### 학습 포인트
+
+1. **shadcn/ui Button 활용**:
+   - variant="outline"으로 외곽선 스타일
+   - size="lg"로 터치 영역 확보
+   - className으로 커스텀 스타일 추가
+
+2. **조건부 렌더링**:
+   - HomePage에서 currentTicket 여부로 UI 분기
+   - 티켓 없으면 안내 카드 표시
+
+3. **유연한 플로우**:
+   - 필수 단계를 선택적 단계로 변경
+   - 사용자 선택권 제공
+
+---
+
+### 11.3 PIN 인증 플로우 개선
+
+#### 동작 원리
+
+**문제점**:
+코드 선택 페이지에서 뒤로가기 시 SplashPage로 이동하여 사용자 혼란 발생
+
+**Before**:
+```
+1. LoginPage (이메일 + 비밀번호 입력)
+2. 코드 발송 API 호출
+3. navigate("/login/verify", { replace: true }) → 히스토리 스택 대체
+4. CodeVerificationPage (코드 선택)
+5. 뒤로가기 클릭 → SplashPage로 이동 (LoginPage는 히스토리에 없음)
 ```
 
 **After**:
-```typescript
-// HomePage.tsx (개선)
-const HomePage = () => {
-  const { currentTicket, setTicket } = useTicketStore();
-  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
-
-  // ✅ 자동 복원 로직
-  useEffect(() => {
-    const loadTicket = async () => {
-      if (currentTicket) return;  // 캐시 히트
-
-      const ticketId = localStorage.getItem('ticketId');
-      if (!ticketId) return;
-
-      try {
-        setIsLoadingTicket(true);
-        const ticketData = await getLatestTicket();
-        setTicket(ticketData);
-      } catch (error) {
-        console.error('티켓 정보 조회 실패:', error);
-        localStorage.removeItem('ticketId');
-      } finally {
-        setIsLoadingTicket(false);
-      }
-    };
-
-    loadTicket();
-  }, [currentTicket, setTicket]);
-
-  return (
-    <div>
-      {isLoadingTicket ? (
-        <div>로딩 중...</div>  // ✅ 로딩 UX
-      ) : currentTicket ? (
-        <TicketCard ticket={currentTicket} />
-      ) : (
-        <button>티켓 스캔하기</button>
-      )}
-    </div>
-  );
-};
+```
+1. LoginPage (이메일 + 비밀번호 입력)
+2. 코드 발송 API 호출
+3. navigate("/login/verify") → 히스토리 스택에 추가
+4. CodeVerificationPage (코드 선택)
+5. 뒤로가기 클릭 → LoginPage로 이동 (다시 로그인 가능)
 ```
 
----
+#### 구현 코드
 
-### 11.5 학습 포인트
+**LoginPage.tsx 수정**:
 
-#### 1. localStorage와 메모리 상태 동기화
-
-**개념**:
-- **localStorage**: 브라우저 영구 저장소 (5-10MB)
-- **Zustand Store**: React 메모리 상태 (새로고침 시 초기화)
-
-**패턴**:
 ```typescript
-// 쓰기: 메모리 + localStorage 동시 저장
-setTicket: (ticket: TicketInfo) => {
-  localStorage.setItem('ticketId', String(ticket.ticketId));  // 영구 저장
-  set({ currentTicket: ticket });                             // 메모리 저장
-}
+// Before
+navigate("/login/verify", {
+  state: {
+    email: data.email,
+    code: response.code,
+  },
+  replace: true, // ❌ 히스토리 스택 대체 → 뒤로가기 시 SplashPage로
+});
 
-// 읽기: localStorage → API → 메모리
-useEffect(() => {
-  const ticketId = localStorage.getItem('ticketId');  // 영구 저장소 읽기
-  if (ticketId) {
-    const ticket = await getLatestTicket();           // API 조회
-    setTicket(ticket);                                // 메모리 업데이트
-  }
-}, []);
-```
-
-**실무 활용**:
-- 사용자 설정 (다크모드, 언어 등)
-- 장바구니 데이터
-- 임시 저장 글
-- 최근 검색어
-
-#### 2. GET 요청에 body 포함 (비표준 패턴)
-
-**HTTP 스펙**:
-- GET 요청은 일반적으로 body를 포함하지 않음
-- Query Parameter 또는 Path Parameter 사용 권장
-
-**axios에서 GET body 전송**:
-```typescript
-// axios는 config.data로 GET body 지원
-await axios.get('/api/endpoint', {
-  data: { key: 'value' }
+// After
+navigate("/login/verify", {
+  state: {
+    email: data.email,
+    code: response.code,
+  },
+  // ✅ replace 제거 → 히스토리 스택에 LoginPage 유지
 });
 ```
 
-**실무 권장 방식**:
-```typescript
-// ✅ Query Parameter
-await axios.get('/api/tickets/latest?ticketId=123');
+#### 플로우 비교
 
-// ✅ Path Parameter
-await axios.get('/api/tickets/123');
+**Before (replace: true)**:
+```
+히스토리 스택:
+[SplashPage] → [CodeVerificationPage]
+                     ↑
+              (LoginPage 제거됨)
 
-// ✅ Header
-await axios.get('/api/tickets/latest', {
-  headers: { 'X-Ticket-ID': '123' }
-});
-
-// ❌ Body (비표준, 피하기)
-await axios.get('/api/tickets/latest', {
-  data: { ticketId: 123 }
-});
+뒤로가기: CodeVerificationPage → SplashPage
 ```
 
-#### 3. useEffect 의존성 배열 최적화
+**After (replace 제거)**:
+```
+히스토리 스택:
+[SplashPage] → [LoginPage] → [CodeVerificationPage]
 
-**문제**:
-```typescript
-// ❌ 무한 루프 발생
-useEffect(() => {
-  loadTicket();
-}, [loadTicket]);  // loadTicket 함수가 매번 재생성됨
+뒤로가기: CodeVerificationPage → LoginPage → SplashPage
 ```
 
-**해결**:
-```typescript
-// ✅ 의존성 최소화
-useEffect(() => {
-  const loadTicket = async () => {
-    // ...
-  };
+#### UX 개선
 
-  loadTicket();
-}, [currentTicket, setTicket]);  // setTicket은 Zustand에서 stable
-```
+**Before**:
+- 코드 선택 실수 시 뒤로가기 불가
+- SplashPage로 이동하여 처음부터 다시 시작
+- 사용자 혼란
 
-또는:
+**After**:
+- 코드 선택 실수 시 뒤로가기로 로그인 페이지 복귀
+- 다시 코드 발송 가능
+- 명확한 플로우
 
-```typescript
-// ✅ useCallback으로 함수 메모이제이션
-const loadTicket = useCallback(async () => {
-  // ...
-}, [currentTicket, setTicket]);
+#### 학습 포인트
 
-useEffect(() => {
-  loadTicket();
-}, [loadTicket]);
-```
+1. **React Router navigate 옵션**:
+   - `replace: true`: 현재 히스토리 엔트리를 대체
+   - 기본값(replace 없음): 새 엔트리 추가
+   - 뒤로가기 동작에 영향
 
-#### 4. 조건부 API 호출 (성능 최적화)
+2. **UX 설계**:
+   - 사용자가 이전 단계로 돌아갈 수 있어야 함
+   - 실수 복구 가능한 플로우
+   - 명확한 네비게이션
 
-**패턴**:
-```typescript
-useEffect(() => {
-  const loadData = async () => {
-    // ✅ 조건 1: 이미 데이터가 있으면 생략
-    if (currentTicket) return;
-
-    // ✅ 조건 2: 필요한 데이터가 없으면 생략
-    const ticketId = localStorage.getItem('ticketId');
-    if (!ticketId) return;
-
-    // ✅ 조건 3: 이미 로딩 중이면 생략 (선택)
-    if (isLoading) return;
-
-    // API 호출
-    const data = await fetchData();
-  };
-
-  loadData();
-}, [currentTicket]);
-```
-
-**효과**:
-- 불필요한 네트워크 요청 방지
-- UX 개선 (즉시 렌더링)
-- 백엔드 부하 감소
-
-#### 5. TypeScript 타입 확장
-
-**기존 타입에 필드 추가**:
-```typescript
-// Before
-export interface TicketInfo {
-  flight: string;
-  gate: string;
-  seat: string;
-}
-
-// After
-export interface TicketInfo {
-  ticketId: number;  // ✅ 추가
-  flight: string;
-  gate: string;
-  seat: string;
-}
-```
-
-**타입 별칭 활용**:
-```typescript
-// Before (중복)
-export interface TicketInfo { ... }
-export interface TicketScanResponse { ... }  // 동일한 구조
-
-// After (타입 별칭)
-export interface TicketInfo { ... }
-export type TicketScanResponse = TicketInfo;  // ✅ 재사용
-```
-
-**장점**:
-- DRY 원칙 (Don't Repeat Yourself)
-- 타입 변경 시 한 곳만 수정
-- 타입 안정성 유지
+3. **히스토리 스택 관리**:
+   - replace는 신중하게 사용
+   - 사용자 의도 파악 필요
 
 ---
 
-### 11.6 API 명세
+## 전체 변경사항 요약 (2026-01-29)
 
-#### POST /api/tickets/scan
+### 수정 파일
+1. `src/store/authStore.ts` - localStorage 플래그 추가
+2. `src/hooks/useSessionRestore.ts` - 조건부 세션 복원
+3. `src/api/axios.ts` - 에러 로그 레벨 조정
+4. `src/pages/TicketScanPage.tsx` - 스킵 버튼 추가
+5. `src/pages/LoginPage.tsx` - replace 플래그 제거
 
-**요청**:
-```http
-POST /api/tickets/scan HTTP/1.1
-Authorization: Bearer {accessToken}
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary...
-
-------WebKitFormBoundary...
-Content-Disposition: form-data; name="file"; filename="ticket.jpg"
-Content-Type: image/jpeg
-
-[바이너리 데이터]
-------WebKitFormBoundary...--
-```
-
-**응답 (200 OK)**:
-```json
-{
-  "ticketId": 123,
-  "flight": "KE932",
-  "gate": "E23",
-  "seat": "40B",
-  "boarding_time": "21:20",
-  "departure_time": "22:00",
-  "origin": "ROME",
-  "destination": "INCHEON"
-}
-```
-
-**에러**:
-- 400: OCR 인식 실패
-- 401: 인증 실패 (토큰 만료)
-- 500: 서버 에러
-
-#### GET /api/me/tickets/latest
-
-**요청**:
-```http
-GET /api/me/tickets/latest HTTP/1.1
-Authorization: Bearer {accessToken}
-Content-Type: application/json
-
-{
-  "ticketId": 123
-}
-```
-
-**응답 (200 OK)**:
-```json
-{
-  "ticketId": 123,
-  "flight": "KE932",
-  "gate": "E23",
-  "seat": "40B",
-  "boarding_time": "21:20",
-  "departure_time": "22:00",
-  "origin": "ROME",
-  "destination": "INCHEON"
-}
-```
-
-**에러**:
-- 400: ticketId 누락
-- 401: 인증 실패
-- 403: 다른 사용자의 티켓 접근
-- 404: 티켓을 찾을 수 없음
-
----
-
-### 11.7 관련 파일
-
-| 파일 | 역할 | 주요 라인 |
-|------|------|----------|
-| `src/types/ticket.types.ts` | 타입 정의 (ticketId 추가) | 2 |
-| `src/api/ticket.api.ts` | API 함수 (스캔/조회) | 11-24, 32-52 |
-| `src/store/ticketStore.ts` | localStorage 연동 | 21-28, 29-35 |
-| `src/pages/HomePage.tsx` | 자동 조회 로직 | 1, 14-42, 148-183 |
-| `src/pages/TicketScanPage.tsx` | 스캔 플로우 | 14-34 |
-| `src/components/ticket/WebcamScanner.tsx` | Base64 → File 변환 | 37-59 |
-
----
-
-## WebcamScanner 헤더 UI 개선 (2026-01-30)
-
-### 변경 이유
-
-**문제점**:
-- CODE 인증 후 티켓 스캔 페이지에서 뒤로가기 버튼(`←`)과 X 버튼이 모두 존재하여 사용자 혼란 발생
-- 두 버튼 모두 `navigate(-1)`로 동일한 동작 수행 (부자연스러운 플로우)
-- CODE 인증 완료 → 티켓 스캔 건너뛰기 → `/login/verify`로 돌아감 (어색한 경험)
-
-**목표**:
-- UI 단순화: X 버튼만 유지
-- 명확한 네비게이션: X 버튼 클릭 시 `/home`으로 직접 이동
-- 일관된 플로우: 스캔 완료 여부와 관계없이 `/home`으로 이동
-
-### 동작 원리 (Before/After)
-
-#### Before (변경 전)
-```
-CODE 인증 완료
-  ↓
-/ticket/scan 진입
-  ├─ 뒤로가기 버튼(←): navigate(-1) → /login/verify ❌
-  ├─ X 버튼: navigate(-1) → /login/verify ❌
-  └─ 스캔 완료: navigate('/home') ✅
-
-UI: [←] (왼쪽 상단) + [X] (오른쪽 상단)
-```
-
-#### After (변경 후)
-```
-CODE 인증 완료
-  ↓
-/ticket/scan 진입
-  ├─ X 버튼 (단일 버튼): navigate('/home') ✅
-  └─ 스캔 완료: navigate('/home') ✅
-
-UI: [X] (오른쪽 상단만)
-```
-
-### 코드 변경 상세
-
-**파일**: `src/components/ticket/WebcamScanner.tsx`
-
-#### 1. handleClose 함수 수정 (라인 61-64)
-```typescript
-// Before
-const handleClose = () => {
-  navigate(-1);  // 이전 페이지로 이동
-};
-
-// After
-const handleClose = () => {
-  navigate('/home');  // 홈 화면으로 직접 이동
-};
-```
-
-**변경 이유**:
-- 티켓 스캔을 건너뛰고 홈으로 돌아가는 것이 사용자 의도에 부합
-- CODE 인증 후 `/ticket/scan` → X 버튼 → `/home` (자연스러운 플로우)
-- HomePage에서 재진입 시에도 동일하게 `/home`으로 복귀 (일관성)
-
-#### 2. 헤더 레이아웃 변경 (라인 177-200)
-```typescript
-// Before
-<div className="flex items-center justify-between px-6 py-6">
-  {/* 뒤로가기 버튼 */}
-  <button onClick={handleClose} className="...">
-    <svg><!-- 왼쪽 화살표 --></svg>
-  </button>
-
-  {/* 닫기 버튼 */}
-  <button onClick={handleClose} className="...">
-    <svg><!-- X 아이콘 --></svg>
-  </button>
-</div>
-
-// After
-<div className="flex items-center justify-end px-6 py-6">
-  {/* 닫기 버튼 (X 아이콘만 유지) */}
-  <button onClick={handleClose} className="...">
-    <svg><!-- X 아이콘 --></svg>
-  </button>
-</div>
-```
-
-**주요 변경 사항**:
-1. 뒤로가기 버튼 삭제 (13줄 제거)
-2. Flexbox 정렬: `justify-between` → `justify-end`
-3. X 버튼만 오른쪽 상단에 배치
-
-### UX 개선 효과
-
-1. **UI 단순화**: 불필요한 버튼 제거로 시각적 복잡도 감소
-2. **명확한 의도**: X 버튼 = "티켓 스캔 건너뛰고 홈으로"
-3. **일관된 플로우**: 스캔 완료 여부와 관계없이 `/home`으로 이동
-4. **인지 부하 감소**: 사용자가 "어떤 버튼을 눌러야 할지" 고민할 필요 없음
-
-### 학습 포인트
-
-#### 1. UX 설계 원칙
-- **명확한 네비게이션**: 사용자가 "어디로 갈지" 예측 가능해야 함
-- **일관성**: 동일한 목적지로 가는 경로는 하나로 통일
-- **단순화**: "덜어내는 것"이 더 나은 경험을 만드는 경우 (Less is More)
-
-#### 2. React Router 네비게이션 패턴
-```typescript
-// navigate(-1): 브라우저 히스토리 기반 (예측 불가능)
-navigate(-1);  // ❌ 사용자가 어디로 가는지 알 수 없음
-
-// navigate('/path'): 명시적 경로 이동 (예측 가능)
-navigate('/home');  // ✅ 명확하게 홈으로 이동
-```
-
-**권장 사항**:
-- 사용자 액션(버튼 클릭)에는 명시적 경로 사용
-- `navigate(-1)`은 브라우저 뒤로가기 제스처에만 의존
-
-#### 3. Flexbox 정렬 전략
-```css
-/* 양쪽 정렬 (두 요소가 끝에 배치) */
-justify-content: space-between;  /* ← (왼쪽)    (오른쪽) X */
-
-/* 오른쪽 정렬 (한 요소만 오른쪽 끝에 배치) */
-justify-content: flex-end;       /* (오른쪽만) X */
-```
-
-### 트러블슈팅
-
-**문제**: 브라우저 뒤로가기 버튼을 누르면 여전히 `/login/verify`로 돌아가는 경우
-
-**해결 방법** (선택 사항):
-```typescript
-// CodeVerificationPage.tsx에서 navigate 시 replace 옵션 추가
-navigate('/ticket/scan', { replace: true });
-```
-
-**효과**: 브라우저 히스토리에서 `/login/verify` 제거 → 뒤로가기 시 로그인 페이지로 이동
-
-**참고**: 현재는 X 버튼으로 명시적인 "건너뛰기" 동작 제공하므로, 브라우저 뒤로가기는 기본 동작 유지 (문제 없음)
-
-### 성능 최적화
-
-변경 사항 없음 (UI 단순화로 인한 렌더링 최적화는 미미함)
-
-### 관련 파일
-
-| 파일 | 역할 | 변경 라인 |
-|------|------|----------|
-| `src/components/ticket/WebcamScanner.tsx` | handleClose 함수 + 헤더 UI | 61-64, 177-200 |
-| `src/pages/TicketScanPage.tsx` | 수정 불필요 (props 변경 없음) | - |
-| `src/components/ticket/ScanSuccessModal.tsx` | 수정 불필요 (기존 동작 유지) | - |
+### 효과
+- ✅ 신규 사용자 401 에러 제거 → 개발자 경험 개선
+- ✅ OCR 스킵 기능 → 유연한 사용자 플로우
+- ✅ 뒤로가기 개선 → 명확한 네비게이션
+- ✅ 네트워크 요청 감소 → 성능 향상
 
 ---
 
 **이 문서는 코드 변경 시 함께 업데이트해야 합니다!**
 
-**최종 업데이트**: 2026년 1월 30일
-**업데이트 내용**: 티켓 스캔/조회 시스템 (ticketId + localStorage), OCR API 엔드포인트 변경 (/ocr → /api/tickets/scan), GET body 패턴, 성능 최적화 (메모리 우선 캐싱), **WebcamScanner 헤더 UI 개선 (뒤로가기 버튼 제거, X 버튼만 유지, navigate('/home') 변경)**
+**최종 업데이트**: 2026년 1월 29일
+**업데이트 내용**:
+- OCR API 트러블슈팅 (405 에러, axios FormData 자동 헤더 처리)
+- 보관/반납 플로우 시스템 추가
+- 인증 시스템 개선 (401 에러 제거, OCR 스킵, PIN 플로우 개선)
