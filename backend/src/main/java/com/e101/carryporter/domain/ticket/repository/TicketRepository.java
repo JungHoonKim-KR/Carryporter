@@ -22,4 +22,13 @@ public class TicketRepository {
         return Optional.ofNullable(em.find(Ticket.class, ticketId));
     }
 
+    public Optional<Ticket> findLatestByUserId(Long userId) {
+        return em.createQuery(
+                "SELECT t FROM Ticket t WHERE t.user.id = :userId ORDER BY t.createdAt DESC",
+                        Ticket.class)
+                .setParameter("userId", userId)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst();
+    }
 }

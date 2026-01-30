@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { reissue } from '../api/auth.api';
 
@@ -22,12 +22,23 @@ export const useSessionRestore = () => {
         clearAuth,
     } = useAuthStore();
 
+    // 세션 복원 시도 여부 추적 (무한 루프 방지)
+    const isRestoringRef = useRef(false);
+
     useEffect(() => {
-        // 이미 초기화되었거나 인증된 상태면 스킵
-        if (isInitialized || isAuthenticated) {
-            if (!isInitialized) {
-                setInitialized(true);
-            }
+        // 이미 초기화된 경우 스킵
+        if (isInitialized) {
+            return;
+        }
+
+        // 이미 인증된 상태면 초기화만 완료
+        if (isAuthenticated) {
+            setInitialized(true);
+            return;
+        }
+
+        // 이미 복원 시도 중이면 스킵 (중복 호출 방지)
+        if (isRestoringRef.current) {
             return;
         }
 
@@ -37,24 +48,29 @@ export const useSessionRestore = () => {
             return;
         }
 
+        // 복원 시도 시작
+        isRestoringRef.current = true;
+
         // refreshToken으로 세션 복원 시도
         const restoreSession = async () => {
             try {
                 const response = await reissue();
                 setAccessToken(response.accessToken);
                 setAuthenticated(true);
-                setInitialized(true);
                 console.log('세션 복원 성공');
             } catch (error) {
                 console.error('세션 복원 실패:', error);
                 // refreshToken이 만료된 경우 정리
                 clearAuth();
+            } finally {
                 setInitialized(true);
+                isRestoringRef.current = false;
             }
         };
 
         restoreSession();
-    }, [refreshToken, isAuthenticated, isInitialized, setAccessToken, setAuthenticated, setInitialized, clearAuth]);
+        // isAuthenticated를 의존성에서 제거하여 무한 루프 방지
+    }, [refreshToken, isInitialized, setAccessToken, setAuthenticated, setInitialized, clearAuth]);
 
     return { isInitialized };
 };

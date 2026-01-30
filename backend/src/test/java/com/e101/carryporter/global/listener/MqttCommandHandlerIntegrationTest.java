@@ -42,6 +42,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
     private static final Long TEST_MISSION_ID = 1L;
     private static final Long TEST_USER_ID = 100L;
     private static final int ASYNC_TIMEOUT_MS = 5000;
+    private static final String TEST_ROBOT_CODE = "robot-code";
 
     @Nested
     @DisplayName("관리자 요청 이벤트 통합 테스트")
@@ -84,7 +85,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
             // given
             Double destX = 10.5;
             Double destY = 20.3;
-            MissionStartedEvent event = new MissionStartedEvent(TEST_MISSION_ID, TEST_MAC, destX, destY);
+            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destX, destY);
 
             // when
             eventPublisher.publishEvent(event);

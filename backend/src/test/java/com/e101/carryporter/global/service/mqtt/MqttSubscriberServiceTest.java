@@ -1,6 +1,18 @@
 package com.e101.carryporter.global.service.mqtt;
 
+import com.e101.carryporter.domain.location.entity.Location;
+import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.repository.MissionRepository;
+import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
+import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
+import com.e101.carryporter.domain.robot.repository.RobotRepository;
+import com.e101.carryporter.domain.user.entity.Role;
+import com.e101.carryporter.domain.user.entity.User;
+import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.support.IntegrationTestSupport;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +22,28 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private MqttSubscriberService mqttSubscriberService;
+
+    @Autowired
+    private RobotRepository robotRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private MissionRepository missionRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private EntityManager em;
 
     @MockitoBean
     private MqttPahoMessageHandler mqttOutbound;
@@ -54,22 +82,59 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
         printReceivedMessage("상태 보고", topic, payload);
     }
-
     @Test
-    @DisplayName("로봇 도착 알림 메시지 수신 처리 테스트")
+    @DisplayName("로봇 도착 알림 메시지 수신 시 RobotArrivalEvent가 발행된다")
     void handleArrived() {
-        // given
         String mac = "AA:BB:CC:DD:EE:FF";
+
+        // given
+        // 1. 기초 데이터 세팅 (User, Robot, Location)
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("test code", mac);
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        locationRepository.save(callLocation);
+
+        // 2. 미션 생성
+        Mission mission = Mission.createMission(user, callLocation);
+
+        // ✨ [핵심] 방금 만드신 메서드로 로봇을 배정합니다!
+        // 내부에서 this.robot = robot; 이 실행되므로 NPE가 해결됩니다.
+        mission.assignRobot(robot);
+
+        missionRepository.save(mission);
+
+        // 영속성 컨텍스트 비우기 (DB에 반영하여 실제 조회 환경과 맞춤)
+        flushAndClear();
+
+        // 3. MQTT 메시지 생성 (DB에 저장된 missionId 사용)
         String topic = "robot/" + mac + "/arrived";
-        String payload = "{\"missionId\":101}";
+        String payload = "{\"missionId\":" + mission.getId() + "}";
 
         Message<String> message = createMessage(topic, payload);
 
-        // when & then
-        assertThatCode(() -> mqttSubscriberService.handleMessage(message))
-                .doesNotThrowAnyException();
+        // when
+        mqttSubscriberService.handleMessage(message);
 
-        printReceivedMessage("도착 알림", topic, payload);
+        // then
+        // 1. 이벤트가 1개 발생했는지 확인
+        long publishedCount = events.stream(RobotArrivalEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        // 2. 발생한 이벤트 내용 검증
+        RobotArrivalEvent publishedEvent = events.stream(RobotArrivalEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
+        assertThat(publishedEvent.userId()).isEqualTo(user.getId());
+        // 필요하다면 로봇 코드 검증
+        // assertThat(publishedEvent.robotCode()).isEqualTo(robot.getRobotCode());
+
+        printReceivedMessage("도착 알림 (Event 발행 성공)", topic, payload);
     }
 
     @Test
@@ -139,6 +204,59 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         printReceivedMessage("알 수 없는 액션", topic, payload);
     }
 
+    @Test
+    @DisplayName("로봇 관리소 복귀 메시지 수신 시 RobotReturnedEvent가 발행된다")
+    void handleReturned() {
+        // given
+        String mac = "AA:BB:CC:DD:EE:FF";
+        Robot robot = Robot.createRobot("R-001", mac);
+        robotRepository.save(robot);
+        flushAndClear();
+
+        String topic = "robot/" + mac + "/returned";
+        String payload = "{\"missionId\":101}";
+
+        Message<String> message = createMessage(topic, payload);
+
+        // when
+        mqttSubscriberService.handleMessage(message);
+
+        // then
+        long publishedCount = events.stream(RobotReturnedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        RobotReturnedEvent publishedEvent = events.stream(RobotReturnedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(101L);
+        assertThat(publishedEvent.robotId()).isEqualTo(robot.getId());
+        assertThat(publishedEvent.robotMacAddress()).isEqualTo(mac);
+
+        printReceivedMessage("관리소 복귀", topic, payload);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 로봇의 관리소 복귀 메시지 수신 시 이벤트가 발행되지 않는다")
+    void handleReturnedWithNotExistRobot() {
+        // given
+        String mac = "00:00:00:00:00:00";
+        String topic = "robot/" + mac + "/returned";
+        String payload = "{\"missionId\":101}";
+
+        Message<String> message = createMessage(topic, payload);
+
+        // when
+        assertThatCode(() -> mqttSubscriberService.handleMessage(message))
+                .doesNotThrowAnyException();
+
+        // then
+        long publishedCount = events.stream(RobotReturnedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(0);
+
+        printReceivedMessage("존재하지 않는 로봇 복귀", topic, payload);
+    }
+
     /**
      * 테스트용 Message 객체 생성 헬퍼 메서드
      */
@@ -159,5 +277,10 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         System.out.println("TOPIC   : " + topic);
         System.out.println("PAYLOAD : " + payload);
         System.out.println("==================================================\n");
+    }
+
+    private void flushAndClear() {
+        em.flush();
+        em.clear();
     }
 }

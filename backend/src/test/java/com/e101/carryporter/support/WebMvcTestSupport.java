@@ -6,7 +6,12 @@ import com.e101.carryporter.domain.auth.service.AuthService;
 import com.e101.carryporter.domain.mission.controller.MissionController;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.service.RobotService;
+import com.e101.carryporter.domain.sse.controller.SseController;
+import com.e101.carryporter.domain.sse.service.SseService;
+import com.e101.carryporter.domain.ticket.controller.TicketController;
+import com.e101.carryporter.domain.ticket.service.TicketService;
 import com.e101.carryporter.domain.user.service.UserService;
+import com.e101.carryporter.global.filter.AuthorizationFilter;
 import com.e101.carryporter.global.filter.CorsFilter;
 import com.e101.carryporter.global.filter.JwtAuthenticationFilter;
 import com.e101.carryporter.global.utils.JwtUtils;
@@ -21,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
         MissionController.class,
         AuthController.class,
         AdminController.class,
+        TicketController.class,
+        SseController.class,
 })
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class WebMvcTestSupport {
@@ -44,7 +51,16 @@ public abstract class WebMvcTestSupport {
     protected RobotService robotService;
 
     @MockitoBean
+    protected TicketService ticketService;
+
+    @MockitoBean
+    protected SseService sseService;
+
+    @MockitoBean
     protected JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockitoBean
+    protected AuthorizationFilter authorizationFilter;
 
     @MockitoBean
     protected CorsFilter corsFilter;

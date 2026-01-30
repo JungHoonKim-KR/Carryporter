@@ -4,25 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="MR 템플릿 위치 변경">
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitlab/merge_request_templates/Default.md" beforeDir="false" afterPath="$PROJECT_DIR$/.gitlab/merge_request_templates/Default.md" afterDir="false" />
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 테스트 수정">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminLockRequestEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminLockRequestEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminUnlockRequestEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/event/AdminUnlockRequestEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionAbortedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionAbortedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionLockedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionLockedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/SseNotificationHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/SseNotificationHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthFailedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthFailedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthSuccessEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/user/event/UserAuthSuccessEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,52 +83,57 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Gradle.Build backend.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.CarryporterApplicationTests.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.MqttCommandHandlerIntegrationTest.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.MqttCommandHandlerTest.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.MqttPublisherServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.UserRepositoryTest.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Spring Boot.CarryporterApplication.executor&quot;: &quot;Run&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Merging feature/backend/mqttHandler&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/SSAFY/projects/S14P11E101&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.project.gradle&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.AdminControllerTest.executor": "Run",
+    "Gradle.Build backend.executor": "Run",
+    "Gradle.CarryporterApplicationTests.executor": "Run",
+    "Gradle.MqttCommandHandlerIntegrationTest.executor": "Run",
+    "Gradle.MqttCommandHandlerTest.executor": "Run",
+    "Gradle.MqttPublisherServiceTest.executor": "Run",
+    "Gradle.RobotRepositoryTest.findByMacAddress.executor": "Run",
+    "Gradle.RobotServiceTest.executor": "Run",
+    "Gradle.Tests in 'carryporter.test'.executor": "Run",
+    "Gradle.UserRepositoryTest.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.CarryporterApplication.executor": "Run",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "feature/backend/ocr",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\SSAFY\projects\S14P11E101\.gitlab\merge_request_templates" />
       <recent name="C:\Users\SSAFY\projects\S14P11E101\backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.MqttCommandHandlerIntegrationTest">
-    <configuration name="CarryporterApplicationTests" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+  <component name="RunManager" selected="Gradle.Tests in 'carryporter.test'">
+    <configuration name="AdminControllerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -154,7 +146,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.CarryporterApplicationTests&quot;" />
+            <option value="&quot;com.e101.carryporter.domain.admin.controller.AdminControllerTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -195,7 +187,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttCommandHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="RobotRepositoryTest.findByMacAddress" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -208,7 +200,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.listener.MqttCommandHandlerTest&quot;" />
+            <option value="&quot;com.e101.carryporter.domain.robot.repository.RobotRepositoryTest.findByMacAddress&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -222,7 +214,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttPublisherServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="RobotServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -235,7 +227,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttPublisherServiceTest&quot;" />
+            <option value="&quot;com.e101.carryporter.domain.robot.service.RobotServiceTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -249,7 +241,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="UserRepositoryTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="Tests in 'carryporter.test'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -261,8 +253,6 @@
         <option name="taskNames">
           <list>
             <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.domain.user.repository.UserRepositoryTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -285,11 +275,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.Tests in 'carryporter.test'" />
+        <item itemvalue="Gradle.RobotServiceTest" />
+        <item itemvalue="Gradle.AdminControllerTest" />
+        <item itemvalue="Gradle.RobotRepositoryTest.findByMacAddress" />
         <item itemvalue="Gradle.MqttCommandHandlerIntegrationTest" />
-        <item itemvalue="Gradle.MqttCommandHandlerTest" />
-        <item itemvalue="Gradle.MqttPublisherServiceTest" />
-        <item itemvalue="Gradle.UserRepositoryTest" />
-        <item itemvalue="Gradle.CarryporterApplicationTests" />
       </list>
     </recent_temporary>
   </component>
@@ -311,6 +301,7 @@
       <workItem from="1769405980639" duration="42000" />
       <workItem from="1769413706201" duration="11142000" />
       <workItem from="1769588173564" duration="14727000" />
+      <workItem from="1769670842921" duration="14198000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
@@ -392,7 +383,79 @@
       <option name="project" value="LOCAL" />
       <updated>1769608766636</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="[INFRA] frontend 수정">
+      <option name="closed" value="true" />
+      <created>1769671117660</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1769671117660</updated>
+    </task>
+    <task id="LOCAL-00012" summary="[BE] 로봇 반납 로직 + 테스트용 인가필터 빈 추가">
+      <option name="closed" value="true" />
+      <created>1769683989831</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1769683989831</updated>
+    </task>
+    <task id="LOCAL-00013" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
+      <option name="closed" value="true" />
+      <created>1769687149454</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1769687149454</updated>
+    </task>
+    <task id="LOCAL-00014" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
+      <option name="closed" value="true" />
+      <created>1769687537956</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1769687537956</updated>
+    </task>
+    <task id="LOCAL-00015" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
+      <option name="closed" value="true" />
+      <created>1769689209380</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1769689209380</updated>
+    </task>
+    <task id="LOCAL-00016" summary="[INFRA] 프론트 배포 테스트">
+      <option name="closed" value="true" />
+      <created>1769689433858</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1769689433858</updated>
+    </task>
+    <task id="LOCAL-00017" summary="[INFRA] 프론트 배포 테스트">
+      <option name="closed" value="true" />
+      <created>1769689797351</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1769689797351</updated>
+    </task>
+    <task id="LOCAL-00018" summary="[BE] 이벤트 파일 추가">
+      <option name="closed" value="true" />
+      <created>1769691011986</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1769691011986</updated>
+    </task>
+    <task id="LOCAL-00019" summary="[BE] 테스트 수정">
+      <option name="closed" value="true" />
+      <created>1769740221607</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1769740221607</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -406,6 +469,12 @@
     <MESSAGE value="[BE] 기타 파일 제거" />
     <MESSAGE value="MR 템플릿 추가(테스트)" />
     <MESSAGE value="MR 템플릿 위치 변경" />
-    <option name="LAST_COMMIT_MESSAGE" value="MR 템플릿 위치 변경" />
+    <MESSAGE value="[INFRA] frontend 수정" />
+    <MESSAGE value="[BE] 로봇 반납 로직 + 테스트용 인가필터 빈 추가" />
+    <MESSAGE value="[INFRA] https : nginx 설정 및 jenkins 설정 변경" />
+    <MESSAGE value="[INFRA] 프론트 배포 테스트" />
+    <MESSAGE value="[BE] 이벤트 파일 추가" />
+    <MESSAGE value="[BE] 테스트 수정" />
+    <option name="LAST_COMMIT_MESSAGE" value="[BE] 테스트 수정" />
   </component>
 </project>

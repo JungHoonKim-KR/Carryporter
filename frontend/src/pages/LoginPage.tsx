@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,11 +8,21 @@ import Checkbox from '../components/common/Checkbox';
 import { Button } from '@/components/ui/button';
 import { sendCodeSchema, type SendCodeFormData } from '../utils/validation';
 import { sendCode } from '../api/auth.api';
+import { useAuthStore } from '../store/authStore';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, clearAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  // 로그인 페이지 진입 시 기존 인증 정보 클리어
+  // (뒤로가기로 왔을 때 처음부터 다시 시작하도록)
+  useEffect(() => {
+    if (isAuthenticated) {
+      clearAuth();
+    }
+  }, []); // 마운트 시 1회만 실행
 
   const {
     register,
