@@ -92,7 +92,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
         );
 
         // when
-        userAuthService.verifyPassword(request);
+        userAuthService.unlockRequest(request);
 
         // then
         long eventCount = events.stream(UserAuthSuccessEvent.class).count();
@@ -137,7 +137,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
         );
 
         // when & then
-        assertThatThrownBy(() -> userAuthService.verifyPassword(request))
+        assertThatThrownBy(() -> userAuthService.unlockRequest(request))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

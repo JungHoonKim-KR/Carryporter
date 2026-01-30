@@ -2,10 +2,7 @@ package com.e101.carryporter.global.listener;
 
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
-import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
-import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
-import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
-import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
+import com.e101.carryporter.domain.mission.event.*;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import com.e101.carryporter.global.service.mqtt.MqttPublisherService;
 import lombok.RequiredArgsConstructor;
@@ -88,8 +85,8 @@ public class MqttCommandHandler {
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleMissionLocked(MissionLockedEvent event) {
-        log.info("[MQTT] 미션 잠금 완료 - missionId: {}, userId: {}, robotMacAddress: {}",
+    public void handleMissionLocked(MissionLockRequestEvent event) {
+        log.info("[MQTT] 미션 잠금 요청 완료 - missionId: {}, userId: {}, robotMacAddress: {}",
                 event.missionId(), event.userId(), event.robotMacAddress());
         mqttPublisherService.sendCommand(event.robotMacAddress(), "lock", "{}");
     }
