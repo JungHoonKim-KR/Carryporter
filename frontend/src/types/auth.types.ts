@@ -27,9 +27,10 @@ export interface LoginRequest {
 }
 
 // 2단계: CODE 인증 응답 (토큰 발급)
+// refreshToken은 httpOnly 쿠키로 설정되며 body에서는 null로 반환됨
 export interface LoginResponse {
   accessToken: string;        // JWT 액세스 토큰
-  refreshToken: string;       // 리프레시 토큰
+  refreshToken: string | null; // httpOnly 쿠키로 관리, body에서는 null
   tokenType: string;          // "Bearer"
   expiresIn: number;          // 토큰 만료 시간 (초)
 }
@@ -37,7 +38,7 @@ export interface LoginResponse {
 // 인증 성공 응답 (토큰 + 사용자 정보)
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null; // httpOnly 쿠키로 관리
   user: User;
 }
 
