@@ -31,6 +31,11 @@ public class MissionService {
     private final RobotRepository robotRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    public Mission findById(Long missionId) {
+        return missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+    }
+
     @Transactional
     public Long createMission(Long userId, CreateMissionServiceRequestDto request) {
 
@@ -57,5 +62,16 @@ public class MissionService {
                 .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
 
         mission.assignRobot(robot);
+    }
+
+    @Transactional
+    public void dispatch(Long missionId, Long robotId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        Robot robot = robotRepository.findById(robotId)
+                .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+
+        mission.dispatch(robot);
     }
 }
