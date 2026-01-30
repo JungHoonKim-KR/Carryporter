@@ -12,10 +12,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,10 +26,9 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
     RobotStateRepository robotStateRepository;
 
     @Autowired
-    RobotMacMappingRepository robotMacMappingRepository;
-
-    @Autowired
     RedisTemplate<String, Object> redisTemplate;
+
+    private static final String AVAILABLE_ROBOTS_KEY = "robot:available";
 
     @AfterEach
     void tearDown() {
@@ -41,527 +38,227 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("로봇 상태 업데이트")
-    class UpdateStateTest {
+    @DisplayName("로봇 배정")
+    class AcquireRobotIdTest {
 
-        @DisplayName("로봇 상태를 업데이트할 수 있다")
+        @DisplayName("큐에 로봇이 있으면 로봇 ID를 반환하고 상태를 RESERVED로 변경한다")
         @Test
-        void updateState() {
-            // given
-            Long robotId = 1L;
-            RobotState initialState = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, initialState);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RESERVED, 80);
-            Optional<RobotState> result = robotStateRepository.findById(robotId);
-
-            // then
-            assertThat(result).isPresent();
-            RobotState updatedState = result.get();
-            assertThat(updatedState.getStatus()).isEqualTo(RobotStatus.RESERVED);
-            assertThat(updatedState.getBattery()).isEqualTo(80);
-        }
-
-        @DisplayName("macAddress는 업데이트 시 유지된다")
-        @Test
-        void updateStatePreservesMacAddress() {
+        void acquireRobotIdSuccess() {
             // given
             Long robotId = 1L;
             String macAddress = "AA:BB:CC:DD";
-            RobotState initialState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, initialState);
+            RobotState robotState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
+            robotStateRepository.save(robotId, robotState);
 
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.MOVING, 90);
-            Optional<RobotState> result = robotStateRepository.findById(robotId);
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getMacAddress()).isEqualTo(macAddress);
-        }
-    }
-
-    @Nested
-    @DisplayName("가용 로봇 큐 관리")
-    class AvailableQueueManagementTest {
-
-        @DisplayName("IDLE 상태로 업데이트하면 가용 로봇 큐에 추가된다")
-        @Test
-        void updateToIdleAddsToAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            RobotState initialState = RobotState.of("AA:BB:CC:DD", RobotStatus.OFFLINE, 100);
-            robotStateRepository.save(robotId, initialState);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-        }
-
-        @DisplayName("RETURNED 상태로 업데이트하면 가용 로봇 큐에 추가된다")
-        @Test
-        void updateToReturnedAddsToAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            RobotState initialState = RobotState.of("AA:BB:CC:DD", RobotStatus.RETURNING, 100);
-            robotStateRepository.save(robotId, initialState);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RETURNED, 100);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-        }
-
-        @DisplayName("RESERVED 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToReservedRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            RobotState initialState = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, initialState);
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RESERVED, 100);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("MOVING 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToMovingRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            RobotState initialState = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, initialState);
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.MOVING, 90);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("WAITING_AUTH 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToWaitingAuthRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.WAITING_AUTH, 85);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("LOADING 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToLoadingRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.LOADING, 80);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("LOCKED 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToLockedRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.LOCKED, 100);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("RETURNING 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToReturningRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RETURNING, 70);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("OFFLINE 상태로 업데이트하면 가용 로봇 큐에서 제거된다")
-        @Test
-        void updateToOfflineRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.OFFLINE, 100);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("큐에 없는 로봇을 비가용 상태로 업데이트해도 예외가 발생하지 않는다")
-        @Test
-        void updateToNonAvailableStatusWhenNotInQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.OFFLINE, 100));
-
-            // when & then (예외 없이 정상 실행)
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.MOVING, 90);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("여러 로봇을 IDLE로 업데이트하면 모두 가용 큐에 추가된다")
-        @Test
-        void updateMultipleRobotsToIdle() {
-            // given
-            Long robotId1 = 1L;
-            Long robotId2 = 2L;
-            Long robotId3 = 3L;
-
-            robotStateRepository.save(robotId1, RobotState.of("AA:BB:CC:01", RobotStatus.OFFLINE, 100));
-            robotStateRepository.save(robotId2, RobotState.of("AA:BB:CC:02", RobotStatus.OFFLINE, 95));
-            robotStateRepository.save(robotId3, RobotState.of("AA:BB:CC:03", RobotStatus.OFFLINE, 90));
-
-            // when
-            robotAvailableQueueRepository.updateState(robotId1, RobotStatus.IDLE, 100);
-            robotAvailableQueueRepository.updateState(robotId2, RobotStatus.IDLE, 95);
-            robotAvailableQueueRepository.updateState(robotId3, RobotStatus.IDLE, 90);
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId1)).isTrue();
-            assertThat(robotAvailableQueueRepository.existsById(robotId2)).isTrue();
-            assertThat(robotAvailableQueueRepository.existsById(robotId3)).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("로봇 할당")
-    class AssignTest {
-
-        @DisplayName("할당된 로봇의 상태가 RESERVED로 변경된다")
-        @Test
-        void assignChangesStatusToReserved() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // when
-            Optional<Long> assignedRobotId = robotAvailableQueueRepository.acquireRobotId();
-
-            // then
-            assertThat(assignedRobotId).isPresent();
-            assertThat(assignedRobotId.get()).isEqualTo(robotId);
-
-            Optional<RobotState> state = robotStateRepository.findById(robotId);
-            assertThat(state).isPresent();
-            assertThat(state.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
-        }
-
-        @DisplayName("할당된 로봇은 가용 큐에서 제거된다")
-        @Test
-        void assignRemovesFromAvailableQueue() {
-            // given
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-
-            // when
-            robotAvailableQueueRepository.acquireRobotId();
-
-            // then
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-        }
-
-        @DisplayName("가장 먼저 대기한 로봇이 먼저 할당된다 (FIFO)")
-        @Test
-        void assignFifoOrder() throws InterruptedException {
-            // given
-            Long firstRobotId = 1L;
-            Long secondRobotId = 2L;
-            Long thirdRobotId = 3L;
-
-            robotStateRepository.save(firstRobotId, RobotState.of("AA:BB:CC:01", RobotStatus.OFFLINE, 100));
-            robotStateRepository.save(secondRobotId, RobotState.of("AA:BB:CC:02", RobotStatus.OFFLINE, 100));
-            robotStateRepository.save(thirdRobotId, RobotState.of("AA:BB:CC:03", RobotStatus.OFFLINE, 100));
-
-            // 순서대로 IDLE 상태로 변경 (시간 간격을 두어 score 차이 발생)
-            robotAvailableQueueRepository.updateState(firstRobotId, RobotStatus.IDLE, 100);
-            Thread.sleep(10);
-            robotAvailableQueueRepository.updateState(secondRobotId, RobotStatus.IDLE, 100);
-            Thread.sleep(10);
-            robotAvailableQueueRepository.updateState(thirdRobotId, RobotStatus.IDLE, 100);
-
-            // when & then
-            Optional<Long> first = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(first).contains(firstRobotId);
-
-            Optional<Long> second = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(second).contains(secondRobotId);
-
-            Optional<Long> third = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(third).contains(thirdRobotId);
-
-            Optional<Long> fourth = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(fourth).isEmpty();
-        }
-
-        @DisplayName("빈 대기열에서 할당 시도 시 빈 Optional을 반환한다")
-        @Test
-        void assignEmptyQueue() {
-            // given (빈 대기열)
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
 
             // when
             Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
 
             // then
-            assertThat(result).isEmpty();
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo(robotId);
+
+            Optional<RobotState> updatedState = robotStateRepository.findById(robotId);
+            assertThat(updatedState).isPresent();
+            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
         }
 
-        @DisplayName("할당 후 battery 값은 유지된다")
+        @DisplayName("큐에 여러 로봇이 있으면 먼저 들어온 로봇을 반환한다 (FIFO)")
         @Test
-        void assignPreservesBattery() {
+        void acquireRobotIdFifo() {
             // given
-            Long robotId = 1L;
-            int initialBattery = 85;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, initialBattery));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, initialBattery);
+            Long robotId1 = 1L;
+            Long robotId2 = 2L;
+            Long robotId3 = 3L;
+
+            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.IDLE, 90);
+            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.IDLE, 80);
+
+            robotStateRepository.save(robotId1, robotState1);
+            robotStateRepository.save(robotId2, robotState2);
+            robotStateRepository.save(robotId3, robotState3);
+
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId1);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId2);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId3);
 
             // when
-            robotAvailableQueueRepository.acquireRobotId();
+            Optional<Long> first = robotAvailableQueueRepository.acquireRobotId();
+            Optional<Long> second = robotAvailableQueueRepository.acquireRobotId();
+            Optional<Long> third = robotAvailableQueueRepository.acquireRobotId();
 
             // then
-            Optional<RobotState> state = robotStateRepository.findById(robotId);
-            assertThat(state).isPresent();
-            assertThat(state.get().getBattery()).isEqualTo(initialBattery);
+            assertThat(first).contains(robotId1);
+            assertThat(second).contains(robotId2);
+            assertThat(third).contains(robotId3);
+        }
+
+        @DisplayName("큐가 비어있으면 타임아웃 후 빈 Optional을 반환한다")
+        @Test
+        void acquireRobotIdTimeout() {
+            // given
+            // 큐에 아무것도 없음
+
+            // when
+            long startTime = System.currentTimeMillis();
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            // then
+            assertThat(result).isEmpty();
+            assertThat(duration).isGreaterThanOrEqualTo(20000); // 20초 이상 대기
+            assertThat(duration).isLessThan(25000); // 25초 이내
+        }
+
+        @DisplayName("큐에서 대기 중일 때 로봇이 추가되면 즉시 반환한다")
+        @Test
+        void acquireRobotIdWithDelayedPush() throws InterruptedException {
+            // given
+            Long robotId = 1L;
+            RobotState robotState = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+            robotStateRepository.save(robotId, robotState);
+
+            // 비동기로 2초 후에 큐에 로봇 추가
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Thread.sleep(2000);
+                    redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+
+            // when
+            long startTime = System.currentTimeMillis();
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            // then
+            assertThat(result).isPresent();
+            assertThat(result.get()).isEqualTo(robotId);
+            assertThat(duration).isGreaterThanOrEqualTo(2000); // 2초 이상
+            assertThat(duration).isLessThan(5000); // 5초 이내 (즉시 반환)
         }
     }
 
     @Nested
-    @DisplayName("가용 로봇 존재 여부 확인")
-    class ExistsByIdTest {
+    @DisplayName("로봇 반환")
+    class ReturnRobotToQueueTest {
 
-        @DisplayName("로봇이 대기열에 있는지 확인할 수 있다")
+        @DisplayName("로봇을 큐에 반환하면 상태가 IDLE로 변경된다")
         @Test
-        void existsById() {
+        void returnRobotToQueue() {
             // given
-            Long availableRobotId = 1L;
-            Long notAvailableRobotId = 2L;
-
-            robotStateRepository.save(availableRobotId, RobotState.of("AA:BB:CC:01", RobotStatus.IDLE, 100));
-            robotStateRepository.save(notAvailableRobotId, RobotState.of("AA:BB:CC:02", RobotStatus.MOVING, 100));
-
-            robotAvailableQueueRepository.updateState(availableRobotId, RobotStatus.IDLE, 100);
-            robotAvailableQueueRepository.updateState(notAvailableRobotId, RobotStatus.MOVING, 100);
-
-            // when & then
-            assertThat(robotAvailableQueueRepository.existsById(availableRobotId)).isTrue();
-            assertThat(robotAvailableQueueRepository.existsById(notAvailableRobotId)).isFalse();
-        }
-
-        @DisplayName("존재하지 않는 로봇 ID로 가용 여부 확인 시 false를 반환한다")
-        @Test
-        void existsByIdNotExist() {
-            // given
-            Long notExistRobotId = 999L;
-
-            // when & then
-            assertThat(robotAvailableQueueRepository.existsById(notExistRobotId)).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("통합 시나리오 테스트")
-    class IntegrationScenarioTest {
-
-        @DisplayName("로봇 등록부터 할당까지 전체 플로우가 정상 동작한다")
-        @Test
-        void fullRobotLifecycle() {
-            // given - 로봇 등록
             Long robotId = 1L;
             String macAddress = "AA:BB:CC:DD";
+            RobotState robotState = RobotState.of(macAddress, RobotStatus.RESERVED, 100);
+            robotStateRepository.save(robotId, robotState);
 
-            robotMacMappingRepository.save(macAddress, robotId);
-            robotStateRepository.save(robotId, RobotState.of(macAddress, RobotStatus.OFFLINE, 100));
+            // when
+            robotAvailableQueueRepository.returnRobotToQueue(robotId);
 
-            // when - 로봇이 IDLE 상태로 전환
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // then - 가용 큐에 추가됨
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-
-            // when - 로봇 할당
-            Optional<Long> assignedId = robotAvailableQueueRepository.acquireRobotId();
-
-            // then - 할당 성공 및 상태 RESERVED
-            assertThat(assignedId).contains(robotId);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-
-            Optional<RobotState> state = robotStateRepository.findById(robotId);
-            assertThat(state).isPresent();
-            assertThat(state.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            // then
+            Optional<RobotState> updatedState = robotStateRepository.findById(robotId);
+            assertThat(updatedState).isPresent();
+            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.IDLE);
         }
 
-        @DisplayName("미션 완료 후 복귀하여 다시 가용 상태가 된다")
+        @DisplayName("여러 로봇을 반환하면 모두 IDLE 상태로 변경된다")
         @Test
-        void robotReturnAfterMission() {
-            // given - 로봇이 미션 수행 중
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.MOVING, 80));
+        void returnMultipleRobots() {
+            // given
+            Long robotId1 = 1L;
+            Long robotId2 = 2L;
+            Long robotId3 = 3L;
 
-            // when - 미션 완료 후 복귀 중
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RETURNING, 70);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
+            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.RESERVED, 100);
+            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.MOVING, 90);
+            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.WAITING_AUTH, 80);
 
-            // when - 스테이션 복귀 완료
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.RETURNED, 65);
+            robotStateRepository.save(robotId1, robotState1);
+            robotStateRepository.save(robotId2, robotState2);
+            robotStateRepository.save(robotId3, robotState3);
 
-            // then - 다시 가용 상태
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
+            // when
+            robotAvailableQueueRepository.returnRobotToQueue(robotId1);
+            robotAvailableQueueRepository.returnRobotToQueue(robotId2);
+            robotAvailableQueueRepository.returnRobotToQueue(robotId3);
 
-            Optional<RobotState> state = robotStateRepository.findById(robotId);
-            assertThat(state).isPresent();
-            assertThat(state.get().getStatus()).isEqualTo(RobotStatus.RETURNED);
-            assertThat(state.get().getBattery()).isEqualTo(65);
-        }
-
-        @DisplayName("여러 로봇이 순차적으로 할당되고 복귀한다")
-        @Test
-        void multipleRobotsAssignAndReturn() throws InterruptedException {
-            // given - 3대의 로봇 등록 및 IDLE 상태로 전환
-            Long robot1 = 1L;
-            Long robot2 = 2L;
-            Long robot3 = 3L;
-
-            robotStateRepository.save(robot1, RobotState.of("AA:BB:CC:01", RobotStatus.OFFLINE, 100));
-            robotStateRepository.save(robot2, RobotState.of("AA:BB:CC:02", RobotStatus.OFFLINE, 95));
-            robotStateRepository.save(robot3, RobotState.of("AA:BB:CC:03", RobotStatus.OFFLINE, 90));
-
-            robotAvailableQueueRepository.updateState(robot1, RobotStatus.IDLE, 100);
-            Thread.sleep(5);
-            robotAvailableQueueRepository.updateState(robot2, RobotStatus.IDLE, 95);
-            Thread.sleep(5);
-            robotAvailableQueueRepository.updateState(robot3, RobotStatus.IDLE, 90);
-
-            // when - 첫 번째 로봇 할당
-            Optional<Long> assigned1 = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(assigned1).contains(robot1);
-
-            // when - 첫 번째 로봇이 복귀하여 다시 가용 상태
-            robotAvailableQueueRepository.updateState(robot1, RobotStatus.RETURNED, 85);
-
-            // when - 두 번째 로봇 할당 (robot2가 먼저 대기했으므로)
-            Optional<Long> assigned2 = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(assigned2).contains(robot2);
-
-            // when - 세 번째 로봇 할당
-            Optional<Long> assigned3 = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(assigned3).contains(robot3);
-
-            // when - 네 번째 할당 시도 (robot1이 복귀했으므로 할당 가능)
-            Optional<Long> assigned4 = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(assigned4).contains(robot1);
-        }
-
-        @DisplayName("비상 정지(LOCKED) 후 해제되면 다시 가용 상태가 된다")
-        @Test
-        void emergencyStopAndResume() {
-            // given - 가용 상태의 로봇
-            Long robotId = 1L;
-            robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100));
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
-
-            // when - 비상 정지
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.LOCKED, 100);
-
-            // then - 가용 큐에서 제거
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isFalse();
-
-            // when - 비상 정지 해제 후 IDLE로 복귀
-            robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-
-            // then - 다시 가용 상태
-            assertThat(robotAvailableQueueRepository.existsById(robotId)).isTrue();
+            // then
+            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.IDLE);
+            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.IDLE);
+            assertThat(robotStateRepository.findById(robotId3).get().getStatus()).isEqualTo(RobotStatus.IDLE);
         }
     }
 
     @Nested
-    @DisplayName("동시성 테스트")
-    class ConcurrencyTest {
+    @DisplayName("통합 시나리오")
+    class IntegrationScenarioTest {
 
-        @DisplayName("동시에 여러 요청이 로봇을 할당받아도 각각 다른 로봇이 할당된다")
+        @DisplayName("로봇을 배정받고 사용 후 반환하면 다시 배정받을 수 있다")
         @Test
-        void concurrentAssign() throws InterruptedException {
-            // given - 5대의 로봇을 가용 상태로 등록
-            int robotCount = 5;
-            for (int i = 1; i <= robotCount; i++) {
-                Long robotId = (long) i;
-                robotStateRepository.save(robotId, RobotState.of("AA:BB:CC:0" + i, RobotStatus.IDLE, 100));
-                robotAvailableQueueRepository.updateState(robotId, RobotStatus.IDLE, 100);
-                Thread.sleep(5);
-            }
+        void fullCycle() {
+            // given
+            Long robotId = 1L;
+            String macAddress = "AA:BB:CC:DD";
+            RobotState robotState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
+            robotStateRepository.save(robotId, robotState);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
 
-            // when - 10개의 스레드가 동시에 할당 요청
-            int threadCount = 10;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            // when - 첫 번째 배정
+            Optional<Long> firstAcquire = robotAvailableQueueRepository.acquireRobotId();
+            assertThat(firstAcquire).contains(robotId);
+            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
 
-            for (int i = 0; i < threadCount; i++) {
-                executorService.execute(() -> {
-                    try {
-                        Optional<Long> assigned = robotAvailableQueueRepository.acquireRobotId();
-                        if (assigned.isPresent()) {
-                            successCount.incrementAndGet();
-                        } else {
-                            failCount.incrementAndGet();
-                        }
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
+            // 로봇 반환
+            robotAvailableQueueRepository.returnRobotToQueue(robotId);
+            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.IDLE);
 
-            latch.await();
-            executorService.shutdown();
+            // Lua Script가 IDLE로 변경 시 큐에 추가한다고 가정하고, 수동으로 큐에 추가
+            // (실제로는 Lua Script가 처리)
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
 
-            // then - 5대만 할당 성공, 5개 요청은 실패
-            assertThat(successCount.get()).isEqualTo(robotCount);
-            assertThat(failCount.get()).isEqualTo(threadCount - robotCount);
+            // 두 번째 배정
+            Optional<Long> secondAcquire = robotAvailableQueueRepository.acquireRobotId();
 
-            // 모든 로봇이 가용 큐에서 제거됨
-            for (int i = 1; i <= robotCount; i++) {
-                assertThat(robotAvailableQueueRepository.existsById((long) i)).isFalse();
-            }
+            // then
+            assertThat(secondAcquire).contains(robotId);
+            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+        }
+
+        @DisplayName("여러 로봇을 동시에 배정하고 반환할 수 있다")
+        @Test
+        void multipleRobotsCycle() {
+            // given
+            Long robotId1 = 1L;
+            Long robotId2 = 2L;
+
+            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.IDLE, 90);
+
+            robotStateRepository.save(robotId1, robotState1);
+            robotStateRepository.save(robotId2, robotState2);
+
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId1);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId2);
+
+            // when
+            Optional<Long> robot1 = robotAvailableQueueRepository.acquireRobotId();
+            Optional<Long> robot2 = robotAvailableQueueRepository.acquireRobotId();
+
+            // then
+            assertThat(robot1).contains(robotId1);
+            assertThat(robot2).contains(robotId2);
+            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+
+            // 큐가 비어있어야 함
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(0);
         }
     }
 }
