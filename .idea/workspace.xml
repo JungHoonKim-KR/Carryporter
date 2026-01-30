@@ -4,53 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 이벤트 파일 추가">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/controller/dto/request/FinalizeRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/controller/dto/request/VerifyPasswordRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/service/dto/request/VerifyPasswordServiceRequestDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionFinalizedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotReturnedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/AdminSseNotificationHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/UserSseNotificationHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/admin/listener/AdminNotificationHandlerTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/controller/AuthVerifyControllerTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/service/AuthVerifyServiceTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/listener/RobotStatusHandlerTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/sse/listener/UserSseNotificationHandlerTest.java" afterDir="false" />
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 테스트 수정">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/controller/AdminController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/controller/AdminController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/listener/AdminNotificationHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/controller/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/controller/dto/response/TokenResponseDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/controller/dto/response/TokenResponseDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/service/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/service/AuthService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/entity/Mission.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/entity/Mission.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/event/MissionStartedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/listener/FailureCountHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/entity/Robot.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/entity/Robot.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotArrivalEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotAssignedEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotAssignedEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/listener/RobotStatusHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/listener/RobotStatusHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotStateRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotStateRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/controller/SseController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/controller/SseController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/listener/SseNotificationHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/service/SseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/sse/service/SseService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RobotRedisScriptConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RobotRedisScriptConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/filter/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/filter/JwtAuthenticationFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/admin/controller/AdminControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/admin/controller/AdminControllerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/controller/AuthControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/controller/AuthControllerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotStateRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotStateRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/sse/controller/SseControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/sse/controller/SseControllerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/support/WebMvcTestSupport.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/support/WebMvcTestSupport.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -149,7 +108,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CarryporterApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "Merging feature/backend/ocr",
+    "git-widget-placeholder": "feature/backend/ocr",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
@@ -488,7 +447,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769691011986</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="[BE] 테스트 수정">
+      <option name="closed" value="true" />
+      <created>1769740221607</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1769740221607</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -507,6 +474,7 @@
     <MESSAGE value="[INFRA] https : nginx 설정 및 jenkins 설정 변경" />
     <MESSAGE value="[INFRA] 프론트 배포 테스트" />
     <MESSAGE value="[BE] 이벤트 파일 추가" />
-    <option name="LAST_COMMIT_MESSAGE" value="[BE] 이벤트 파일 추가" />
+    <MESSAGE value="[BE] 테스트 수정" />
+    <option name="LAST_COMMIT_MESSAGE" value="[BE] 테스트 수정" />
   </component>
 </project>
