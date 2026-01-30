@@ -1,11 +1,13 @@
 package com.e101.carryporter.domain.auth.controller;
 
 import com.e101.carryporter.domain.auth.controller.dto.request.AuthRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.request.LockRequestDto;
 import com.e101.carryporter.domain.auth.controller.dto.request.VerifyCodeRequestDto;
 import com.e101.carryporter.domain.auth.controller.dto.request.VerifyPasswordRequestDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.auth.service.AuthService;
+import com.e101.carryporter.domain.auth.service.dto.request.LockServiceRequestDto;
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyPasswordServiceRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +113,7 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/verify/password")
+    @PostMapping("/unlock")
     public ResponseEntity<String> verifyPassword(@RequestAttribute("userId") Long userId, @RequestBody @Valid VerifyPasswordRequestDto request){
         VerifyPasswordServiceRequestDto command = new VerifyPasswordServiceRequestDto(
                 userId,
@@ -122,5 +124,17 @@ public class AuthController {
         authService.verifyPassword(command);
 
         return ResponseEntity.ok("비밀번호 인증 성공");
+    }
+
+    @PostMapping("/lock")
+    public ResponseEntity<String> lockRequest(@RequestAttribute("userId") Long userId, @RequestBody @Valid LockRequestDto request){
+        LockServiceRequestDto command = new LockServiceRequestDto(
+                userId,
+                request.missionId()
+        );
+        //서비스 로직 -> missionLockEvent 발행
+        authService.lockRequest(command);
+
+        return ResponseEntity.ok("잠금 요청 성공");
     }
 }

@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.auth.service;
 
 import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
+import com.e101.carryporter.domain.auth.service.dto.request.LockServiceRequestDto;
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceRequestDto;
 import com.e101.carryporter.domain.auth.repository.*;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
@@ -8,6 +9,7 @@ import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyPasswordServiceRequestDto;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
+import com.e101.carryporter.domain.mission.event.MissionLockRequestEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.event.UserAuthFailedEvent;
@@ -192,5 +194,20 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
 
         }
+    }
+    @Transactional
+    public void lockRequest(LockServiceRequestDto command){
+
+        Mission mission = missionRepository.findById(command.missionId())
+                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 미션입니다."));
+        String robotMacAddress = mission.getRobot().getMacAddress();
+
+        //성공 이벤트 발행->Mqtt로봇 문을 잠금 요청을 보낸다
+        eventPublisher.publishEvent(new MissionLockRequestEvent(
+                command.missionId(),
+                command.userId(),
+                robotMacAddress
+        ));
+        log.info("[LOCK-SERVICE] 미션 {}에 대한 로봇 {} 잠금 요청 발행", mission.getId(), robotMacAddress);
     }
 }

@@ -29,7 +29,7 @@ class AuthVerifyControllerTest extends WebMvcTestSupport {
         willDoNothing().given(authService).verifyPassword(any(VerifyPasswordServiceRequestDto.class));
 
         // when & then
-        mockMvc.perform(post("/auth/verify/password")
+        mockMvc.perform(post("/auth/unlock")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .requestAttr("userId", userId)) // ✅ 핵심: 필터가 넣어준 것처럼 속성 주입
@@ -45,7 +45,7 @@ class AuthVerifyControllerTest extends WebMvcTestSupport {
         VerifyPasswordRequestDto requestDto = new VerifyPasswordRequestDto(100L, null);
 
         // when & then
-        mockMvc.perform(post("/auth/verify/password")
+        mockMvc.perform(post("/auth/unlock")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .requestAttr("userId", 1L)) // Validation 체크 중에도 userId는 필요하다고 가정

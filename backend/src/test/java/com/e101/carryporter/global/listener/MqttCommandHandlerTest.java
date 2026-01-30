@@ -2,10 +2,7 @@ package com.e101.carryporter.global.listener;
 
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
-import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
-import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
-import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
-import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
+import com.e101.carryporter.domain.mission.event.*;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import com.e101.carryporter.global.service.mqtt.MqttPublisherService;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,7 +99,7 @@ class MqttCommandHandlerTest {
         @DisplayName("MissionLockedEvent 발생 시 로봇에게 lock 명령 전송")
         void handleMissionLocked() {
             // given
-            MissionLockedEvent event = new MissionLockedEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
+            MissionLockRequestEvent event = new MissionLockRequestEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
 
             // when
             mqttCommandHandler.handleMissionLocked(event);
