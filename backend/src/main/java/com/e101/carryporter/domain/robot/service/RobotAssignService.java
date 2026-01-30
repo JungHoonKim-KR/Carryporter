@@ -1,14 +1,21 @@
 package com.e101.carryporter.domain.robot.service;
 
+<<<<<<< HEAD
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
+=======
+import com.e101.carryporter.domain.mission.service.MissionService;
+>>>>>>> 4a30139 (feat: 로봇 배정 서비스 구현)
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotAvailableQueueRepository;
 import com.e101.carryporter.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+<<<<<<< HEAD
 import org.springframework.context.ApplicationEventPublisher;
+=======
+>>>>>>> 4a30139 (feat: 로봇 배정 서비스 구현)
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,7 +23,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class RobotAssignService {
 
+<<<<<<< HEAD
     private final ApplicationEventPublisher eventPublisher;
+=======
+>>>>>>> 4a30139 (feat: 로봇 배정 서비스 구현)
     private final RobotAvailableQueueRepository queueRepository;
     private final MissionService missionService;
 
@@ -31,6 +41,7 @@ public class RobotAssignService {
             // db 에 mission, robot 상태 변경
             missionService.assignRobot(missionId, availableRobotId);
 
+<<<<<<< HEAD
             // mission 조회
             Mission findMission = missionService.findById(missionId);
 
@@ -40,6 +51,8 @@ public class RobotAssignService {
             log.debug("[{}] 번 사용자 [{}] 번 미션에 [{}] 로봇 배정", userId, missionId, availableRobotId);
 
             eventPublisher.publishEvent(new RobotAssignedEvent(userId, robotCode));
+=======
+>>>>>>> 4a30139 (feat: 로봇 배정 서비스 구현)
             return availableRobotId;
         } catch (Exception e) {
             log.error("배차 중 error 발생!! missionId = {}", missionId, e);
