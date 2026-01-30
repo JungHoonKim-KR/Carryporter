@@ -1,5 +1,5 @@
 import apiClient from './axios';
-import type { TicketScanResponse, TicketInfo } from '../types/ticket.types';
+import type { TicketInfo } from '../types/ticket.types';
 
 /**
  * 티켓 스캔 API

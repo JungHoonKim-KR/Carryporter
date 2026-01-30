@@ -13,13 +13,6 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
 
-  // 스캔 영역 크기 설정 (보딩패스 비율)
-  const SCAN_AREA = {
-    width: 'calc(100% - 48px)', // 좌우 24px 패딩
-    maxWidth: '340px',
-    aspectRatio: '85.6 / 54', // 보딩패스 표준 비율
-  };
-
   // 웹캠 설정 (모바일 후면 카메라 사용)
   const videoConstraints = {
     facingMode: 'environment', // 후면 카메라 선호 (없으면 전면 카메라 사용)
@@ -58,9 +51,9 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
     }
   }, [onCapture]);
 
-  // 닫기 버튼 핸들러
+  // 닫기 버튼 핸들러 (홈 화면으로 직접 이동)
   const handleClose = () => {
-    navigate(-1);
+    navigate('/home');
   };
 
   // 에러 상태 UI
@@ -176,18 +169,8 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
 
       {/* 상단 헤더 영역 */}
       <div className="absolute top-0 left-0 right-0 z-20 pt-safe">
-        <div className="flex items-center justify-between px-6 py-6">
-          {/* 뒤로가기 버튼 */}
-          <button
-            onClick={handleClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm transition-all hover:bg-black/50"
-          >
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          {/* 닫기 버튼 */}
+        <div className="flex items-center justify-end px-6 py-6">
+          {/* 닫기 버튼 (X 아이콘만 유지) */}
           <button
             onClick={handleClose}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm transition-all hover:bg-black/50"
