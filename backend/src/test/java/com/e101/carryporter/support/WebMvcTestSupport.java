@@ -6,6 +6,8 @@ import com.e101.carryporter.domain.auth.service.AuthService;
 import com.e101.carryporter.domain.mission.controller.MissionController;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.service.RobotService;
+import com.e101.carryporter.domain.sse.controller.SseController;
+import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.ticket.controller.TicketController;
 import com.e101.carryporter.domain.ticket.service.TicketService;
 import com.e101.carryporter.domain.user.service.UserService;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
         AuthController.class,
         AdminController.class,
         TicketController.class,
+        SseController.class,
 })
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class WebMvcTestSupport {
@@ -49,6 +52,9 @@ public abstract class WebMvcTestSupport {
 
     @MockitoBean
     protected TicketService ticketService;
+
+    @MockitoBean
+    protected SseService sseService;
 
     @MockitoBean
     protected JwtAuthenticationFilter jwtAuthenticationFilter;

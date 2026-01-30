@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.admin.listener;
 
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
+import com.e101.carryporter.domain.sse.listener.AdminSseNotificationHandler;
 import com.e101.carryporter.domain.sse.service.SseService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.verify;
 class AdminNotificationHandlerTest {
 
     @InjectMocks
-    AdminNotificationHandler adminNotificationHandler;
+    AdminSseNotificationHandler adminNotificationHandler;
 
     @Mock
     SseService sseService;
