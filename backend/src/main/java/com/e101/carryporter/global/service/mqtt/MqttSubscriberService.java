@@ -3,6 +3,7 @@ package com.e101.carryporter.global.service.mqtt;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
+import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
@@ -73,6 +74,8 @@ public class MqttSubscriberService {
                 case "locked":
                     handleLocked(mac,payload);
                     break;
+                case "unlocked":
+                    handleUnlocked(mac,payload);
                 default:
                     log.warn("알 수 없는 액션: {}", action);
             }
@@ -257,6 +260,40 @@ public class MqttSubscriberService {
 
         } catch (Exception e) {
             log.error("잠금 완료 처리 실패 - MAC: {}, Error: {}", mac, e.getMessage());
+        }
+    }
+
+    /**
+     * 로봇 열림 완료 처리
+     * Topic: robot/{MAC}/unlocked
+     * Payload: {"missionId": 101, "status": "success"}
+     */
+    public void handleUnlocked(String mac, String payload) {
+        log.info("로봇 열림(Unlock) 완료 응답 수신 - MAC: {}", mac);
+        try {
+            JsonNode node = objectMapper.readTree(payload);
+            long missionId = node.has("missionId") ? node.get("missionId").asLong() : -1;
+
+            // 1. 로봇 정보 조회
+            Robot robot = robotRepository.findByMacAddress(mac)
+                    .orElseThrow(() -> new RuntimeException("로봇을 찾을 수 없습니다: " + mac));
+
+            // 2. 미션 정보 조회 (사용자 식별용)
+            Mission mission = missionRepository.findById(missionId)
+                    .orElseThrow(() -> new RuntimeException("미션을 찾을 수 없습니다: " + missionId));
+
+            log.info("로봇 잠금 해제 성공 - MAC: {}, MissionId: {}, UserId: {}", mac, missionId, mission.getUser().getId());
+
+            // 3. 열림 완료 이벤트 발행 (MissionUnlockedEvent)
+            // 이 이벤트를 UserSseNotificationHandler가 잡아서 최종 "열림" 알림을 보냅니다.
+            eventPublisher.publishEvent(new MissionUnlockedEvent(
+                    mission.getUser().getId(),
+                    missionId,
+                    robot.getMacAddress()
+            ));
+
+        } catch (Exception e) {
+            log.error("열림 완료 처리 중 오류 발생 - MAC: {}, Error: {}", mac, e.getMessage());
         }
     }
 }

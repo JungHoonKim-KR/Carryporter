@@ -121,9 +121,9 @@ public class AuthController {
                 request.password()
         );
 
-        authService.verifyPassword(command);
+        authService.unlockRequest(command);
 
-        return ResponseEntity.ok("비밀번호 인증 성공");
+        return ResponseEntity.ok("비밀번호 인증 요청 성공");
     }
 
     @PostMapping("/lock")

@@ -154,7 +154,7 @@ public class AuthService {
      * 모바일에서 입력한 비밀번호 검증 후 로봇 문열림
      */
 
-    public void verifyPassword(VerifyPasswordServiceRequestDto command){
+    public void unlockRequest(VerifyPasswordServiceRequestDto command){
         //미션 조회
         Mission mission = missionRepository.findById(command.missionId())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 미션입니다."));

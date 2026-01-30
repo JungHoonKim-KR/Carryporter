@@ -26,7 +26,7 @@ class AuthVerifyControllerTest extends WebMvcTestSupport {
         VerifyPasswordRequestDto requestDto = new VerifyPasswordRequestDto(missionId, password);
 
         // stubbing
-        willDoNothing().given(authService).verifyPassword(any(VerifyPasswordServiceRequestDto.class));
+        willDoNothing().given(authService).unlockRequest(any(VerifyPasswordServiceRequestDto.class));
 
         // when & then
         mockMvc.perform(post("/auth/unlock")
@@ -35,7 +35,7 @@ class AuthVerifyControllerTest extends WebMvcTestSupport {
                         .requestAttr("userId", userId)) // ✅ 핵심: 필터가 넣어준 것처럼 속성 주입
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("비밀번호 인증 성공"));
+                .andExpect(content().string("비밀번호 인증 요청 성공"));
     }
 
     @Test

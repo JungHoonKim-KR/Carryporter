@@ -3,6 +3,7 @@ package com.e101.carryporter.global.service.mqtt;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
@@ -305,6 +306,53 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
         printReceivedMessage("로봇 잠금 완료 (Event 발행 성공)", topic, payload);
     }
+
+    @Test
+    @DisplayName("로봇 열림 완료 메시지 수신 시 MissionUnlockedEvent가 발행된다")
+    void handleUnlocked() {
+        // given
+        String mac = "AA:BB:CC:DD:EE:FF";
+
+        // 1. 기초 데이터 세팅 (User, Robot, Location)
+        User user = User.createUser("locker-test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("Locker-Robot", mac);
+        robotRepository.save(robot);
+
+        Location startLocation = Location.createLocation("Lobby", "로비", 0.0, 0.0);
+        locationRepository.save(startLocation);
+
+        // 2. 미션 생성 및 로봇 배정
+        Mission mission = Mission.createMission(user, startLocation);
+        mission.assignRobot(robot);
+        missionRepository.save(mission);
+
+        flushAndClear();
+
+
+        String topic = "robot/" + mac + "/unlocked";
+        String payload = "{\"missionId\":" + mission.getId() + ", \"status\":\"success\"}";
+        Message<String> message = createMessage(topic, payload);
+
+        // when
+        mqttSubscriberService.handleMessage(message);
+
+        // then
+        long publishedCount = events.stream(MissionUnlockedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        MissionUnlockedEvent event = events.stream(MissionUnlockedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(event.userId()).isEqualTo(user.getId());
+        assertThat(event.missionId()).isEqualTo(mission.getId());
+
+        printReceivedMessage("로봇 열림 완료 (Event 발행 성공)", topic, payload);
+    }
+
+
 
     @Test
     @DisplayName("존재하지 않는 미션 ID로 잠금 완료 메시지 수신 시 예외를 던지지 않고 무시한다")
