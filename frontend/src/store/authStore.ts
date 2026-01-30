@@ -71,4 +71,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return get().refreshToken;
   },
 }));
-
