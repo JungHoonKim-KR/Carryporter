@@ -1,11 +1,13 @@
 package com.e101.carryporter.domain.robot.service;
 
 import com.e101.carryporter.domain.mission.service.MissionService;
+import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotAvailableQueueRepository;
 import com.e101.carryporter.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class RobotAssignService {
 
+    private final ApplicationEventPublisher eventPublisher;
     private final RobotAvailableQueueRepository queueRepository;
     private final MissionService missionService;
 
@@ -27,6 +30,9 @@ public class RobotAssignService {
             // db 에 mission, robot 상태 변경
             missionService.assignRobot(missionId, availableRobotId);
 
+            log.debug("[{}] 번 미션에 [{}] 번 로봇 배정", missionId, availableRobotId);
+
+            eventPublisher.publishEvent(new RobotAssignedEvent());
             return availableRobotId;
         } catch (Exception e) {
             log.error("배차 중 error 발생!! missionId = {}", missionId, e);
