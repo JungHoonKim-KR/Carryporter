@@ -57,3 +57,7 @@ mqtt:
 mattermost:
   enabled: true  # 알림 발송 여부
   webhook-url: ${MM_WEBHOOK_URL:https://meeting.ssafy.com/hooks/r8ufow86m3yuxqbz8p759cgkye}
+
+ocr:
+  server:
+    url: ${OCR_SERVER_URL:http://localhost:8020}
