@@ -265,3 +265,4 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         assertThat(eventCount).isEqualTo(2);
     }
 }
+
