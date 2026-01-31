@@ -4,6 +4,8 @@ import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestD
 import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.JoinRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
+import com.e101.carryporter.domain.user.exception.UserErrorCode;
+import com.e101.carryporter.global.exception.BusinessException;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -187,6 +189,66 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("중복된 이메일로 관리자 계정 생성 시 409 Conflict를 반환한다")
+    void joinWithDuplicatedEmail() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "관리자",
+                "password123!"
+        );
+
+        given(adminService.join(anyString(), anyString(), anyString()))
+                .willThrow(new BusinessException(UserErrorCode.DUPLICATED_USER_EMAIL));
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(UserErrorCode.DUPLICATED_USER_EMAIL.getMessage()))
+                .andExpect(jsonPath("$.status").value("CONFLICT"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(adminService, times(1)).join(
+                requestDto.getMmEmail(),
+                requestDto.getName(),
+                requestDto.getPassword()
+        );
+    }
+
+    @Test
+    @DisplayName("중복된 이름으로 관리자 계정 생성 시 409 Conflict를 반환한다")
+    void joinWithDuplicatedName() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "관리자",
+                "password123!"
+        );
+
+        given(adminService.join(anyString(), anyString(), anyString()))
+                .willThrow(new BusinessException(UserErrorCode.DUPLICATED_ADMIN_NAME));
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(UserErrorCode.DUPLICATED_ADMIN_NAME.getMessage()))
+                .andExpect(jsonPath("$.status").value("CONFLICT"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(adminService, times(1)).join(
+                requestDto.getMmEmail(),
+                requestDto.getName(),
+                requestDto.getPassword()
+        );
     }
 
 

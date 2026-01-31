@@ -30,6 +30,7 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+
     @PostMapping("/missions/{missionId}/unlock")
     public ResponseEntity<Void> unlockRobot(@RequestBody @Valid UnlockRobotRequestDto requestDto, @PathVariable Long missionId) {
         log.debug("관리자 권한 잠금 해제 요청 robot id = {}", requestDto.getRobotId());
