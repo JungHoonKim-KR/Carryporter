@@ -2,21 +2,193 @@ package com.e101.carryporter.domain.admin.controller;
 
 import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.JoinRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AdminControllerTest extends WebMvcTestSupport {
+
+    @Test
+    @DisplayName("관리자 계정 생성 요청 시 정상적으로 처리되고 204를 반환한다")
+    void join() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "관리자",
+                "password123!"
+        );
+
+        given(adminService.join(anyString(), anyString(), anyString()))
+                .willReturn(1L);
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(adminService, times(1)).join(
+                requestDto.getMmEmail(),
+                requestDto.getName(),
+                requestDto.getPassword()
+        );
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 mmEmail이 null이면 400 Bad Request를 반환한다")
+    void joinWithNullMmEmail() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                null,
+                "관리자",
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 mmEmail이 빈 문자열이면 400 Bad Request를 반환한다")
+    void joinWithBlankMmEmail() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "   ",
+                "관리자",
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 name이 null이면 400 Bad Request를 반환한다")
+    void joinWithNullName() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                null,
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 name이 빈 문자열이면 400 Bad Request를 반환한다")
+    void joinWithBlankName() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "   ",
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 password가 null이면 400 Bad Request를 반환한다")
+    void joinWithNullPassword() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "관리자",
+                null
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 password가 빈 문자열이면 400 Bad Request를 반환한다")
+    void joinWithBlankPassword() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                "admin@mattermost.com",
+                "관리자",
+                "   "
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 계정 생성 시 모든 필드가 null이면 400 Bad Request를 반환한다")
+    void joinWithAllNullFields() throws Exception {
+        // given
+        JoinRequestDto requestDto = new JoinRequestDto(
+                null,
+                null,
+                null
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).join(anyString(), anyString(), anyString());
+    }
+
 
     @Test
     @DisplayName("로봇 잠금 해제 API 호출 시 204 No Content를 반환한다")

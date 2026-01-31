@@ -1,11 +1,9 @@
 package com.e101.carryporter.domain.admin.controller;
 
-import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
-import com.e101.carryporter.domain.admin.controller.dto.request.LockRequestDto;
-import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
-import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.*;
 import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
+import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,15 @@ import java.util.List;
 public class AdminController {
 
     private final RobotService robotService;
+    private final AdminService adminService;
     private final AdminLockerService adminLockerService;
+
+    @PostMapping("/join")
+    public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
+        log.debug("관리자 계정 생성 요청, mmEmail = {}", requestDto.getMmEmail());
+        adminService.join(requestDto.getMmEmail(), requestDto.getName(), requestDto.getPassword());
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/missions/{missionId}/unlock")
     public ResponseEntity<Void> unlockRobot(@RequestBody @Valid UnlockRobotRequestDto requestDto, @PathVariable Long missionId) {
