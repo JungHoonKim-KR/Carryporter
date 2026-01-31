@@ -24,7 +24,7 @@ class SseServiceTest extends IntegrationTestSupport {
     void sendMissionStatusNotification() {
         // given
         Long userId = 1L;
-        sseService.subscribe(userId, "ROLE_USER");
+        sseService.subscribe(userId, "BASIC");
 
         // 실제 DB에 들어갈 미션 상태 Enum 사용
         MissionStatus status = MissionStatus.ASSIGNED;
