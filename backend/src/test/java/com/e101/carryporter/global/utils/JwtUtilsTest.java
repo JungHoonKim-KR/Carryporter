@@ -1,5 +1,6 @@
 package com.e101.carryporter.global.utils;
 
+import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,14 +15,15 @@ class JwtUtilsTest extends IntegrationTestSupport {
     private JwtUtils jwtUtils; // 스프링이 만들어준 객체를 가져다 씀 (application.yml 설정 적용됨)
 
     @Test
-    @DisplayName("Access Token 생성 및 검증 테스트")
+    @DisplayName("Access Token 생성 및 검증 테스트 (일반 사용자)")
     void accessTokenTest() {
         // given (준비)
         String email = "test@ssafy.com";
         Long userId = 1L;
+        Role role = Role.BASIC;
 
         // when (실행: Access Token 만들기)
-        String token = jwtUtils.createAccessToken(email, userId);
+        String token = jwtUtils.createAccessToken(email, userId, role);
         System.out.println("생성된 Access Token: " + token);
 
         // then (검증)
@@ -38,6 +40,30 @@ class JwtUtilsTest extends IntegrationTestSupport {
         // 4. 토큰의 Claim(userId)이 원래 ID와 같은지 확인
         Long extractedUserId = jwtUtils.getUserIdFromToken(token);
         assertThat(extractedUserId).isEqualTo(userId);
+
+        // 5. 토큰의 Claim(role)이 원래 role과 같은지 확인
+        Role extractedRole = jwtUtils.getRoleFromToken(token);
+        assertThat(extractedRole).isEqualTo(role);
+    }
+
+    @Test
+    @DisplayName("Access Token 생성 및 검증 테스트 (관리자)")
+    void accessTokenTestForAdmin() {
+        // given
+        String email = "admin@ssafy.com";
+        Long userId = 2L;
+        Role role = Role.ADMIN;
+
+        // when
+        String token = jwtUtils.createAccessToken(email, userId, role);
+        System.out.println("생성된 Admin Access Token: " + token);
+
+        // then
+        assertThat(token).isNotNull();
+        assertThat(jwtUtils.validateToken(token)).isTrue();
+        assertThat(jwtUtils.getMmEmailFromToken(token)).isEqualTo(email);
+        assertThat(jwtUtils.getUserIdFromToken(token)).isEqualTo(userId);
+        assertThat(jwtUtils.getRoleFromToken(token)).isEqualTo(Role.ADMIN);
     }
 
     @Test
