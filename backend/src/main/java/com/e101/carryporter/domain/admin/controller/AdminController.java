@@ -4,10 +4,13 @@ import com.e101.carryporter.domain.admin.controller.dto.request.*;
 import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.admin.service.AdminService;
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +31,25 @@ public class AdminController {
         log.debug("관리자 계정 생성 요청, mmEmail = {}", requestDto.getMmEmail());
         adminService.join(requestDto.getMmEmail(), requestDto.getName(), requestDto.getPassword());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDto> login(@RequestBody @Valid LoginRequestDto requestDto) {
+        log.debug("관리자 login 요청, mmEmail = {}", requestDto.getMmEmail());
+
+        TokenResponseDto tokens = adminService.login(requestDto.getMmEmail(), requestDto.getPassword());
+
+        // create refresh token cookie
+        ResponseCookie refreshCookie = createRefreshTokenCookie(tokens.getRefreshToken());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(TokenResponseDto.builder()
+                        .accessToken(tokens.getAccessToken())
+                        .refreshToken(null) // 보안 이유로 refresh token 을 header 로
+                        .grantType("Bearer")
+                        .expiresIn(tokens.getExpiresIn())
+                        .build());
     }
 
 
@@ -77,6 +99,16 @@ public class AdminController {
 
         LockerResponseDto locker = adminLockerService.getLocker(lockerId);
         return ResponseEntity.ok(locker);
+    }
+
+    private ResponseCookie createRefreshTokenCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60) // 7 days
+                .sameSite("None")
+                .build();
     }
 
 }

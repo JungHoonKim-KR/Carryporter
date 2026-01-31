@@ -3,12 +3,15 @@ package com.e101.carryporter.domain.admin.controller;
 import com.e101.carryporter.domain.admin.controller.dto.request.DispatchRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.JoinRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.request.LoginRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
 import com.e101.carryporter.domain.user.exception.UserErrorCode;
 import com.e101.carryporter.global.exception.BusinessException;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -19,8 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.startsWith;
 
 class AdminControllerTest extends WebMvcTestSupport {
 
@@ -247,6 +250,195 @@ class AdminControllerTest extends WebMvcTestSupport {
         verify(adminService, times(1)).join(
                 requestDto.getMmEmail(),
                 requestDto.getName(),
+                requestDto.getPassword()
+        );
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 정상적으로 처리되고 토큰과 쿠키를 반환한다")
+    void login() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "admin@mattermost.com",
+                "password123!"
+        );
+
+        TokenResponseDto tokenResponse = TokenResponseDto.builder()
+                .accessToken("access-token-value")
+                .refreshToken("refresh-token-value")
+                .grantType("Bearer")
+                .expiresIn(3600L)
+                .build();
+
+        given(adminService.login(anyString(), anyString()))
+                .willReturn(tokenResponse);
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("access-token-value"))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist()) // 보안상 body에는 없어야 함
+                .andExpect(jsonPath("$.grantType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(3600))
+                .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, startsWith("refreshToken=")));
+
+        verify(adminService, times(1)).login(
+                requestDto.getMmEmail(),
+                requestDto.getPassword()
+        );
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 mmEmail이 null이면 400 Bad Request를 반환한다")
+    void loginWithNullMmEmail() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                null,
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).login(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 mmEmail이 빈 문자열이면 400 Bad Request를 반환한다")
+    void loginWithBlankMmEmail() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "   ",
+                "password123!"
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).login(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 password가 null이면 400 Bad Request를 반환한다")
+    void loginWithNullPassword() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "admin@mattermost.com",
+                null
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).login(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 password가 빈 문자열이면 400 Bad Request를 반환한다")
+    void loginWithBlankPassword() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "admin@mattermost.com",
+                "   "
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).login(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 모든 필드가 null이면 400 Bad Request를 반환한다")
+    void loginWithAllNullFields() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                null,
+                null
+        );
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminService, never()).login(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 잘못된 비밀번호를 입력하면 401 Unauthorized를 반환한다")
+    void loginWithWrongPassword() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "admin@mattermost.com",
+                "wrongpassword"
+        );
+
+        given(adminService.login(anyString(), anyString()))
+                .willThrow(new BusinessException(UserErrorCode.UNAUTHORIZED));
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value(UserErrorCode.UNAUTHORIZED.getMessage()))
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(adminService, times(1)).login(
+                requestDto.getMmEmail(),
+                requestDto.getPassword()
+        );
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 시 존재하지 않는 이메일을 입력하면 404 Not Found를 반환한다")
+    void loginWithNonExistentEmail() throws Exception {
+        // given
+        LoginRequestDto requestDto = new LoginRequestDto(
+                "nonexistent@mattermost.com",
+                "password123!"
+        );
+
+        given(adminService.login(anyString(), anyString()))
+                .willThrow(new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(post("/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(UserErrorCode.USER_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(adminService, times(1)).login(
+                requestDto.getMmEmail(),
                 requestDto.getPassword()
         );
     }

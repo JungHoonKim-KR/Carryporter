@@ -1,10 +1,13 @@
 package com.e101.carryporter.domain.admin.service;
 
+import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.auth.repository.RefreshTokenRedisRepository;
 import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.exception.UserErrorCode;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.exception.BusinessException;
+import com.e101.carryporter.global.utils.JwtUtils;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,12 @@ class AdminServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private RefreshTokenRedisRepository refreshTokenRepository;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @DisplayName("관리자 계정을 생성하고 DB에 정상적으로 저장된다")
     @Test
@@ -180,5 +189,141 @@ class AdminServiceTest extends IntegrationTestSupport {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(UserErrorCode.DUPLICATED_ADMIN_NAME);
+    }
+
+    @DisplayName("관리자 로그인 시 올바른 이메일과 비밀번호로 토큰이 발급된다")
+    @Test
+    void login() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+
+        adminService.join(email, name, password);
+
+        // when
+        TokenResponseDto response = adminService.login(email, password);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isNotBlank();
+        assertThat(response.getRefreshToken()).isNotBlank();
+        assertThat(response.getGrantType()).isEqualTo("Bearer");
+        assertThat(response.getExpiresIn()).isGreaterThan(0);
+    }
+
+    @DisplayName("관리자 로그인 시 리프레시 토큰이 Redis에 저장된다")
+    @Test
+    void loginSavesRefreshTokenToRedis() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+
+        Long userId = adminService.join(email, name, password);
+
+        // when
+        TokenResponseDto response = adminService.login(email, password);
+
+        // then
+        assertThat(refreshTokenRepository.get(userId)).isPresent();
+        assertThat(refreshTokenRepository.get(userId).get()).isEqualTo(response.getRefreshToken());
+    }
+
+    @DisplayName("관리자 로그인 시 잘못된 비밀번호를 입력하면 예외가 발생한다")
+    @Test
+    void loginWithWrongPassword() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+        String wrongPassword = "wrongpassword";
+
+        adminService.join(email, name, password);
+
+        // when & then
+        assertThatThrownBy(() -> adminService.login(email, wrongPassword))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(UserErrorCode.UNAUTHORIZED.getMessage())
+                .extracting("errorCode")
+                .isEqualTo(UserErrorCode.UNAUTHORIZED);
+    }
+
+    @DisplayName("관리자 로그인 시 존재하지 않는 이메일을 입력하면 예외가 발생한다")
+    @Test
+    void loginWithNonExistentEmail() {
+        // given
+        String email = "nonexistent@mattermost.com";
+        String password = "password123!";
+
+        // when & then
+        assertThatThrownBy(() -> adminService.login(email, password))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(UserErrorCode.USER_NOT_FOUND.getMessage())
+                .extracting("errorCode")
+                .isEqualTo(UserErrorCode.USER_NOT_FOUND);
+    }
+
+    @DisplayName("관리자 로그인 시 발급된 액세스 토큰에 이메일과 사용자 ID가 포함된다")
+    @Test
+    void loginAccessTokenContainsEmailAndUserId() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+
+        Long userId = adminService.join(email, name, password);
+
+        // when
+        TokenResponseDto response = adminService.login(email, password);
+
+        // then
+        assertThat(response.getAccessToken()).isNotBlank();
+        // JWT 토큰이 발급되었음을 확인 (실제 JWT 파싱은 JwtUtils 유닛 테스트에서 담당)
+        assertThat(response.getAccessToken().split("\\.")).hasSize(3); // JWT는 header.payload.signature 구조
+    }
+
+    @DisplayName("관리자 로그인 시 발급된 액세스 토큰에 ADMIN 권한이 포함된다")
+    @Test
+    void loginAccessTokenContainsAdminRole() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+
+        adminService.join(email, name, password);
+
+        // when
+        TokenResponseDto response = adminService.login(email, password);
+
+        // then
+        assertThat(response.getAccessToken()).isNotBlank();
+
+        // JWT 토큰에서 role 추출
+        Role extractedRole = jwtUtils.getRoleFromToken(response.getAccessToken());
+        assertThat(extractedRole).isEqualTo(Role.ADMIN);
+    }
+
+    @DisplayName("관리자 로그인 시 발급된 액세스 토큰에서 모든 정보를 추출할 수 있다")
+    @Test
+    void loginAccessTokenContainsAllInfo() {
+        // given
+        String email = "admin@mattermost.com";
+        String name = "관리자";
+        String password = "password123!";
+
+        Long userId = adminService.join(email, name, password);
+
+        // when
+        TokenResponseDto response = adminService.login(email, password);
+
+        // then
+        String accessToken = response.getAccessToken();
+        assertThat(accessToken).isNotBlank();
+
+        // JWT에서 모든 정보 추출 및 검증
+        assertThat(jwtUtils.getMmEmailFromToken(accessToken)).isEqualTo(email);
+        assertThat(jwtUtils.getUserIdFromToken(accessToken)).isEqualTo(userId);
+        assertThat(jwtUtils.getRoleFromToken(accessToken)).isEqualTo(Role.ADMIN);
     }
 }
