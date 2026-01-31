@@ -21,7 +21,7 @@ class SseControllerTest extends WebMvcTestSupport {
     void subscribe() throws Exception {
         // given
         Long userId = 1L;
-        String role = "ROLE_USER";
+        String role = "BASIC";
 
         // sseService.subscribe(userId, role) 호출 시 SseEmitter 반환하도록 설정
         given(sseService.subscribe(anyLong(), anyString()))
