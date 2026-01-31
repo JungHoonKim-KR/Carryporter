@@ -66,8 +66,14 @@ public class UserSseNotificationHandler {
                 "인증에 성공했습니다. 로봇을 여는 중입니다.", null);
     }
 
-    public void handleMissionUnlockedEvent(MissionUnlockedEvent event){
-
+    /**
+     * 4-1. 로봇 실제 해제 완료 (하드웨어 응답 시)
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleMissionUnlockedEvent(MissionUnlockedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "로봇의 문이 열렸습니다. 물건을 확인해 주세요!", event.robotMacAddress());
     }
 
 
