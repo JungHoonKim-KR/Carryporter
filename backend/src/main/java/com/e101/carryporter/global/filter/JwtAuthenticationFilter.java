@@ -29,9 +29,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/auth/reissue",
             "/api/auth/request",
             "/api/auth/verify",
-            "/api/auth/reissue"
-
-
+            "/api/auth/reissue",
+            "/admin/join",    // 관리자 회원가입
+            "/admin/login",   // 관리자 로그인
+            "/api/admin/join",
+            "/api/admin/login"
     );
 
     @Override

@@ -99,7 +99,7 @@ public class AuthService {
         userPasswordRepository.save(savedId, tempPassword);
 
         // 4. 토큰 발급 (Access & Refresh 둘 다 생성)
-        String accessToken = jwtUtils.createAccessToken(email, savedId);
+        String accessToken = jwtUtils.createAccessToken(email, savedId, user.getRole());
         String refreshToken = jwtUtils.createRefreshToken(savedId);
 
         // 5. Refresh Token Redis 저장
@@ -144,7 +144,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_006:존재하지 않는 유저입니다."));
 
         // 5. 새 토큰 생성 (Rotation)
-        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId());
+        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId(), user.getRole());
         String newRefreshToken = jwtUtils.createRefreshToken(user.getId()); // 여기서 새로 만듦
 
         // 6. Redis 업데이트 (기존 키에 덮어쓰기)

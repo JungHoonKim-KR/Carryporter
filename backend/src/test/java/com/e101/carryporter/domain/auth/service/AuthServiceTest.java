@@ -6,6 +6,7 @@ import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceReq
 import com.e101.carryporter.domain.auth.repository.EmailCodeRedisRepository;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.utils.JwtUtils;
 import com.e101.carryporter.support.IntegrationTestSupport;
@@ -105,5 +106,55 @@ class AuthServiceTest extends IntegrationTestSupport {
         // 두 번의 인증 결과로 나온 userId가 동일하다면, 내부적으로 중복 생성되지 않았음을 증명함
         assertThat(secondUserId).isEqualTo(firstUserId);
         assertThat(secondResponse.getAccessToken()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("일반 사용자 인증 시 발급된 액세스 토큰에 BASIC 권한이 포함된다")
+    void verifyAuthAccessTokenContainsBasicRole() {
+        // given
+        String email = "user@ssafy.com";
+        Integer code = 99;
+        Integer tempPassword = 1234;
+
+        emailCodeRepository.save(email, code);
+        tempPasswordRepository.save(email, tempPassword);
+
+        VerifyCodeServiceRequestDto command = new VerifyCodeServiceRequestDto(email, code);
+
+        // when
+        TokenResponseDto response = authService.verifyAuth(command);
+
+        // then
+        assertThat(response.getAccessToken()).isNotBlank();
+
+        // JWT 토큰에서 role 추출
+        Role extractedRole = jwtUtils.getRoleFromToken(response.getAccessToken());
+        assertThat(extractedRole).isEqualTo(Role.BASIC);
+    }
+
+    @Test
+    @DisplayName("일반 사용자 인증 시 발급된 액세스 토큰에서 모든 정보를 추출할 수 있다")
+    void verifyAuthAccessTokenContainsAllInfo() {
+        // given
+        String email = "user@ssafy.com";
+        Integer code = 99;
+        Integer tempPassword = 1234;
+
+        emailCodeRepository.save(email, code);
+        tempPasswordRepository.save(email, tempPassword);
+
+        VerifyCodeServiceRequestDto command = new VerifyCodeServiceRequestDto(email, code);
+
+        // when
+        TokenResponseDto response = authService.verifyAuth(command);
+
+        // then
+        String accessToken = response.getAccessToken();
+        assertThat(accessToken).isNotBlank();
+
+        // JWT에서 모든 정보 추출 및 검증
+        assertThat(jwtUtils.getMmEmailFromToken(accessToken)).isEqualTo(email);
+        assertThat(jwtUtils.getUserIdFromToken(accessToken)).isNotNull();
+        assertThat(jwtUtils.getRoleFromToken(accessToken)).isEqualTo(Role.BASIC);
     }
 }
