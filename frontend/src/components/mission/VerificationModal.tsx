@@ -74,7 +74,7 @@ export const VerificationModal = ({
               key={idx}
               className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold transition-all ${
                 password[idx]
-                  ? 'bg-[#0064FF] text-white shadow-lg shadow-blue-500/30 scale-110'
+                  ? 'bg-toss-blue-500 text-white shadow-lg shadow-blue-500/30 scale-110'
                   : 'bg-gray-100 text-gray-300'
               }`}
             >
@@ -129,7 +129,7 @@ export const VerificationModal = ({
         <Button
           disabled={password.length !== 4 || isVerifying}
           onClick={handleVerify}
-          className="w-full h-14 mt-4 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] disabled:bg-gray-300"
+          className="w-full h-14 mt-4 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-gray-300"
         >
           {isVerifying ? '인증 중...' : '인증하기'}
         </Button>

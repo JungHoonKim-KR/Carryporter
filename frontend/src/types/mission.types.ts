@@ -1,9 +1,10 @@
 export interface Location {
   id: number;
-  name: string; // "Gate A", "Locker Zone 1"
-  code: string; // "GATE_A", "LOCKER_1"
+  name: string; // "1번 정류장", "탑승구 1"
+  code: string; // "STATION_1", "GATE_1"
+  type?: 'station' | 'gate'; // 정류장 또는 탑승구 (gate = 탑승구)
   description?: string;
-  icon?: string; // "🚪", "🔒"
+  icon?: string; // "🚉", "🚪"
 }
 
 // 미션 타입 (보관 또는 반납)
@@ -18,6 +19,7 @@ export interface StoredLuggage {
   weight: number; // kg
   storedAt: string; // ISO 날짜
   robotCode?: string;
+  destination?: string; // 정류장/게이트 이름 (예: "1번 정류장", "탑승구 1")
 }
 
 // 미션 상태
@@ -52,6 +54,7 @@ export interface Mission {
   status: MissionStatus;
   missionType?: MissionType; // 보관 또는 반납
   robotCode?: string;
+  destination?: string; // 목적지 이름 (예: "1번 정류장", "탑승구 1")
   lockerInfo?: {
     lockerId: string; // "A-127"
     lockerName: string; // "Locker A-127"

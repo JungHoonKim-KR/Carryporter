@@ -16,7 +16,7 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
       onClick={onClick}
     >
       {/* 배경 그라데이션 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0064FF] via-[#3B8CFF] to-[#4DA3FF]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-toss-blue-500 via-[#3B8CFF] to-toss-blue-light" />
 
       {/* 장식용 원형 */}
       <div className="absolute -top-20 -right-20 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
@@ -29,10 +29,10 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
           <div className="flex items-center gap-2">
             {/* 항공사 로고 (KOREAN) */}
             <div className="bg-white rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-              <div className="w-5 h-5 bg-[#0064FF] rounded-sm flex items-center justify-center">
+              <div className="w-5 h-5 bg-toss-blue-500 rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">K</span>
               </div>
-              <span className="text-[#0064FF] font-bold text-sm tracking-tight">KOREAN</span>
+              <span className="text-toss-blue-500 font-bold text-sm tracking-tight">KOREAN</span>
             </div>
           </div>
 

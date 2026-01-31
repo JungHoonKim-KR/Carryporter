@@ -2991,10 +2991,230 @@ navigate("/login/verify", {
 
 ---
 
+---
+
+## UI 일관성 개선 작업 (2026-01-31)
+
+### 동작 원리
+
+#### 문제 상황
+- HomePage는 `bg-gray-50` 배경과 깔끔한 카드 스타일 사용
+- 다른 페이지들(MissionCreatePage, MissionTrackPage 등)은 그라디언트 배경과 iOS 스타일 사용
+- 페이지 간 UI 일관성이 없어 사용자 경험이 단절됨
+
+#### 해결 방법
+
+**1. 전체 페이지 배경 통일**
+```typescript
+// ❌ Before: 그라디언트 배경
+<div className="min-h-screen bg-gradient-to-b from-toss-blue-500 via-toss-blue-100 to-white">
+
+// ✅ After: 회색 배경
+<div className="min-h-screen bg-gray-50">
+```
+
+**2. 헤더 스타일 통일**
+```typescript
+// 모든 페이지에서 동일한 헤더 구조 사용
+<header className="bg-gray-50">
+  <div className="max-w-md mx-auto px-6 py-4">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+          <img src="/images/logo.png" alt="CARRY PORTER Logo" />
+        </div>
+        <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+      </div>
+    </div>
+  </div>
+</header>
+```
+
+**3. 카드 스타일 통일**
+```typescript
+// 모든 섹션 카드에 동일한 스타일 적용
+<div className="bg-white rounded-2xl p-5 shadow-sm">
+  {/* 내용 */}
+</div>
+```
+
+**4. 정류장/탑승구 분류 구현**
+
+shadcn/ui Tabs 컴포넌트를 사용하여 탭 방식으로 구현:
+
+```typescript
+// 데이터 구조
+const stations: Location[] = [
+  { id: 1, name: "1번 정류장", code: "STATION_1", type: "station", icon: "🚉" },
+  // ... 6개
+];
+
+const boardingGates: Location[] = [
+  { id: 7, name: "탑승구 1", code: "GATE_1", type: "gate", icon: "🚪" },
+  // ... 6개
+];
+
+// UI 구현
+<Tabs defaultValue="station">
+  <TabsList className="grid w-full grid-cols-2">
+    <TabsTrigger value="station">정류장</TabsTrigger>
+    <TabsTrigger value="gate">탑승구</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="station">
+    {/* 정류장 6개 그리드 */}
+  </TabsContent>
+
+  <TabsContent value="gate">
+    {/* 탑승구 6개 그리드 */}
+  </TabsContent>
+</Tabs>
+```
+
+### 트러블슈팅
+
+#### 문제 1: shadcn/ui Tabs 컴포넌트 없음
+
+**원인**: 프로젝트에 Tabs 컴포넌트가 설치되지 않음
+
+**해결**:
+```bash
+npx shadcn@latest add tabs
+```
+
+**결과**: `src/components/ui/tabs.tsx` 생성됨
+
+#### 문제 2: Location 타입에 type 필드 부재
+
+**원인**: 기존 Location 타입에 정류장/탑승구 구분 필드가 없음
+
+**해결**: `mission.types.ts` 업데이트
+```typescript
+export interface Location {
+  id: number;
+  name: string;
+  code: string;
+  type?: 'station' | 'gate'; // 추가
+  icon?: string;
+  description?: string;
+}
+```
+
+### 성능 최적화
+
+#### Before vs After
+
+**기존 방식**:
+- 과도한 애니메이션 (backdrop-blur, shadow-xl, scale transforms)
+- 그라디언트 배경으로 렌더링 부담
+- iOS 스타일의 화려한 효과
+
+**개선 방식**:
+- 절제된 애니메이션 (fade-in-up만 사용)
+- 단순 배경색 (`bg-gray-50`)
+- 필요한 곳에만 shadow-sm 적용
+
+**성능 향상**:
+- 렌더링 복잡도 감소
+- CSS 계산 부하 감소
+- 일관된 사용자 경험
+
+### 학습 포인트
+
+#### 1. shadcn/ui Tabs 컴포넌트
+
+**특징**:
+- Radix UI 기반의 접근성 높은 컴포넌트
+- 키보드 네비게이션 지원
+- WAI-ARIA 표준 준수
+
+**사용법**:
+```typescript
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+<Tabs defaultValue="tab1">
+  <TabsList>
+    <TabsTrigger value="tab1">Tab 1</TabsTrigger>
+    <TabsTrigger value="tab2">Tab 2</TabsTrigger>
+  </TabsList>
+  <TabsContent value="tab1">Content 1</TabsContent>
+  <TabsContent value="tab2">Content 2</TabsContent>
+</Tabs>
+```
+
+#### 2. UI 일관성의 중요성
+
+**UX 원칙**:
+- **일관성**: 모든 페이지가 동일한 디자인 언어 사용
+- **예측 가능성**: 사용자가 다음 화면을 예측 가능
+- **학습 곡선**: 일관된 UI는 학습 시간 감소
+
+**구현 팁**:
+- 공통 레이아웃 컴포넌트 사용
+- 디자인 토큰 정의 (색상, 간격, 그림자 등)
+- 스타일 가이드 문서화
+
+#### 3. TypeScript 타입 확장
+
+**타입 안전성 유지**:
+```typescript
+// 기존 인터페이스에 새 필드 추가
+interface Location {
+  // 기존 필드들
+  type?: 'station' | 'gate'; // 선택적 필드로 추가
+}
+```
+
+**주의사항**:
+- 기존 코드 호환성 유지 (선택적 필드 사용)
+- 타입 변경 시 모든 사용처 확인
+- 타입 가드 함수 활용
+
+#### 4. 컴포넌트 재사용
+
+**재사용 가능한 헤더 컴포넌트 패턴**:
+```typescript
+// 향후 개선: 공통 HeaderLayout 컴포넌트
+const HeaderLayout = ({ title, showClose = true, onClose }) => (
+  <header className="bg-gray-50">
+    {/* 공통 헤더 구조 */}
+  </header>
+);
+```
+
+### 변경사항 요약 (2026-01-31)
+
+#### 수정 파일
+1. `src/types/mission.types.ts` - Location 타입에 type 필드 추가
+2. `src/components/ui/tabs.tsx` - shadcn/ui Tabs 컴포넌트 추가
+3. `src/pages/MissionCreatePage.tsx` - 전면 리디자인 + 정류장/탑승구 탭 추가
+4. `src/pages/MissionTrackPage.tsx` - 배경 및 카드 스타일 변경
+5. `src/pages/TicketDetailPage.tsx` - 배경 및 헤더 통일
+6. `src/pages/TicketScanPage.tsx` - 레이아웃 추가
+7. `src/pages/CodeVerificationPage.tsx` - AuthLayout 제거, 일반 레이아웃 적용
+
+#### 주요 변경사항
+- ✅ 모든 페이지 배경을 `bg-gray-50`으로 통일
+- ✅ 헤더 스타일 통일 (로고 + 앱 이름)
+- ✅ 카드 스타일 통일 (`bg-white rounded-2xl shadow-sm`)
+- ✅ 정류장/탑승구 탭 방식 구현 (총 12개 선택지)
+- ✅ 그라디언트 배경 제거 → 성능 향상
+- ✅ iOS 스타일 효과 제거 → 일관성 개선
+
+#### 효과
+- ✅ 페이지 간 UI 일관성 확보
+- ✅ 사용자 경험 향상 (예측 가능한 인터페이스)
+- ✅ 렌더링 성능 개선 (단순한 스타일)
+- ✅ 정류장/탑승구 분류로 선택 편의성 향상
+
+---
+
 **이 문서는 코드 변경 시 함께 업데이트해야 합니다!**
 
-**최종 업데이트**: 2026년 1월 29일
+**최종 업데이트**: 2026년 1월 31일
 **업데이트 내용**:
+- UI 일관성 개선 작업 (전체 페이지 디자인 통일)
+- 정류장/탑승구 분류 시스템 구현 (shadcn/ui Tabs)
 - OCR API 트러블슈팅 (405 에러, axios FormData 자동 헤더 처리)
 - 보관/반납 플로우 시스템 추가
 - 인증 시스템 개선 (401 에러 제거, OCR 스킵, PIN 플로우 개선)

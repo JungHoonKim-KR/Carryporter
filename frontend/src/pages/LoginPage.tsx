@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AuthLayout from "../components/layouts/AuthLayout";
-import Input from "../components/common/Input";
-import Checkbox from "../components/common/Checkbox";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { sendCodeSchema, type SendCodeFormData } from "../utils/validation";
 import { sendCode } from "../api/auth.api";
@@ -29,6 +28,7 @@ const LoginPage = () => {
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors },
     } = useForm<SendCodeFormData>({
         resolver: zodResolver(sendCodeSchema),
@@ -74,83 +74,176 @@ const LoginPage = () => {
     };
 
     return (
-        <AuthLayout>
-            {/* 카드 컨테이너 */}
-            <div className="bg-white rounded-3xl shadow-2xl p-10">
-                {/* 제목 */}
-                <h2 className="text-2xl font-bold text-gray-900 mb-8 text-left">
-                    로그인
-                </h2>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* MM 이메일 */}
-                    <Input
-                        label="MM 이메일"
-                        type="email"
-                        placeholder="example@email.com"
-                        error={errors.email?.message}
-                        {...register("email")}
-                        required
-                    />
-
-                    {/* 비밀번호 */}
-                    <Input
-                        label="비밀번호"
-                        type="password"
-                        placeholder="숫자 4자리 입력"
-                        error={errors.password?.message}
-                        {...register("password")}
-                        required
-                        maxLength={4}
-                    />
-
-                    {/* 비밀번호 확인 */}
-                    <Input
-                        label="비밀번호 확인"
-                        type="password"
-                        placeholder="비밀번호 재입력"
-                        error={errors.passwordConfirm?.message}
-                        {...register("passwordConfirm")}
-                        required
-                        maxLength={4}
-                    />
-
-                    {/* 약관 동의 박스 */}
-                    <div className="bg-gray-100 rounded-lg p-4 space-y-3">
-                        <Checkbox
-                            label="회수되지 않은 짐은 7일간 보관되는 것에 동의합니다."
-                            error={errors.agreeTerms?.message}
-                            {...register("agreeTerms")}
-                            required
-                        />
-
-                        <Checkbox
-                            label="서비스 이용약관 및 개인정보 처리 방침에 동의합니다."
-                            error={errors.agreePrivacy?.message}
-                            {...register("agreePrivacy")}
-                            required
-                        />
-                    </div>
-
-                    {/* API 에러 메시지 */}
-                    {apiError && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-sm text-red-600">{apiError}</p>
+        <div className="min-h-screen bg-gray-50">
+            {/* 헤더 */}
+            <header className="bg-gray-50 pt-safe">
+                <div className="max-w-md mx-auto px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                            <img
+                                src="/images/logo.png"
+                                alt="CARRY PORTER Logo"
+                                className="w-6 h-6"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
                         </div>
-                    )}
+                        <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                    </div>
+                </div>
+            </header>
 
-                    {/* 로그인 버튼 */}
-                    <Button
-                        type="submit"
-                        size="lg"
-                        disabled={isLoading}
-                        className="w-full mt-6"
-                    >
-                        {isLoading ? "전송 중..." : "로그인"}
-                    </Button>
-                </form>
-            </div>
-        </AuthLayout>
+            {/* 메인 컨텐츠 */}
+            <main className="max-w-md mx-auto px-6 py-6">
+                {/* 환영 메시지 */}
+                <div className="mb-8 animate-fade-in-up">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        환영합니다! 👋
+                    </h2>
+                    <p className="text-gray-500">
+                        편리한 짐 운반 서비스를 시작하세요
+                    </p>
+                </div>
+
+                {/* 로그인 폼 카드 */}
+                <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        {/* MM 이메일 */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Mattermost 이메일 <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                                type="email"
+                                placeholder="example@email.com"
+                                className="h-12"
+                                {...register("email")}
+                            />
+                            {errors.email?.message && (
+                                <p className="text-sm text-red-600">{errors.email.message}</p>
+                            )}
+                        </div>
+
+                        {/* 비밀번호 */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                비밀번호 <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                                type="password"
+                                placeholder="숫자 4자리 입력"
+                                className="h-12"
+                                maxLength={4}
+                                {...register("password")}
+                            />
+                            {errors.password?.message && (
+                                <p className="text-sm text-red-600">{errors.password.message}</p>
+                            )}
+                        </div>
+
+                        {/* 비밀번호 확인 */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                비밀번호 확인 <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                                type="password"
+                                placeholder="비밀번호 재입력"
+                                className="h-12"
+                                maxLength={4}
+                                {...register("passwordConfirm")}
+                            />
+                            {errors.passwordConfirm?.message && (
+                                <p className="text-sm text-red-600">{errors.passwordConfirm.message}</p>
+                            )}
+                        </div>
+
+                        {/* 약관 동의 */}
+                        <div className="pt-2 space-y-4">
+                            <div className="flex items-start space-x-3">
+                                <Controller
+                                    name="agreeTerms"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            id="agreeTerms"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    )}
+                                />
+                                <label
+                                    htmlFor="agreeTerms"
+                                    className="text-sm text-gray-700 leading-relaxed cursor-pointer"
+                                >
+                                    회수되지 않은 짐은 7일간 보관되는 것에 동의합니다. <span className="text-red-500">*</span>
+                                </label>
+                            </div>
+                            {errors.agreeTerms?.message && (
+                                <p className="text-sm text-red-600 ml-7">{errors.agreeTerms.message}</p>
+                            )}
+
+                            <div className="flex items-start space-x-3">
+                                <Controller
+                                    name="agreePrivacy"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            id="agreePrivacy"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    )}
+                                />
+                                <label
+                                    htmlFor="agreePrivacy"
+                                    className="text-sm text-gray-700 leading-relaxed cursor-pointer"
+                                >
+                                    서비스 이용약관 및 개인정보 처리 방침에 동의합니다. <span className="text-red-500">*</span>
+                                </label>
+                            </div>
+                            {errors.agreePrivacy?.message && (
+                                <p className="text-sm text-red-600 ml-7">{errors.agreePrivacy.message}</p>
+                            )}
+                        </div>
+
+                        {/* API 에러 메시지 */}
+                        {apiError && (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-600">{apiError}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 로그인 버튼 */}
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white mt-6"
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    전송 중...
+                                </div>
+                            ) : (
+                                "로그인"
+                            )}
+                        </Button>
+                    </form>
+                </div>
+
+                {/* 안내 텍스트 */}
+                <p className="text-center text-sm text-gray-500 mt-6 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    처음 이용하시나요? 회원가입 후 이용해주세요
+                </p>
+            </main>
+        </div>
     );
 };
 

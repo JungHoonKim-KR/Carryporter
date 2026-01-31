@@ -13,11 +13,11 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
 
-  // 웹캠 설정 (모바일 후면 카메라 사용)
+  // 웹캠 설정 (PC와 모바일 모두 호환)
   const videoConstraints = {
-    facingMode: 'environment', // 후면 카메라 선호 (없으면 전면 카메라 사용)
-    width: 1920,
-    height: 1080,
+    facingMode: { ideal: 'environment' }, // 후면 카메라 선호, 없으면 전면 카메라
+    width: { min: 640, ideal: 1920, max: 1920 }, // 유연한 해상도
+    height: { min: 480, ideal: 1080, max: 1080 },
   };
 
   // 웹캠 에러 핸들러
@@ -77,12 +77,21 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
             설정에서 카메라 접근을 활성화할 수 있습니다.
           </p>
 
-          <Button
-            onClick={() => window.location.reload()}
-            className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] rounded-xl"
-          >
-            다시 시도
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={() => window.location.reload()}
+              className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 rounded-xl"
+            >
+              다시 시도
+            </Button>
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="w-full h-14 text-lg font-semibold rounded-xl"
+            >
+              홈으로 돌아가기
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -137,7 +146,7 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
           <Button
             onClick={handleScan}
             disabled={isScanning}
-            className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] disabled:bg-[#0064FF]/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-toss-blue-500/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
           >
             {isScanning ? (
               <div className="flex items-center gap-3">

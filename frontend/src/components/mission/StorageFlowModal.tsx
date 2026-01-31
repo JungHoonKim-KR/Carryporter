@@ -63,6 +63,7 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
             weight: currentMission?.weightInfo?.luggageWeight || 14.3,
             storedAt: new Date().toISOString(),
             robotCode: currentMission?.robotCode,
+            destination: currentMission?.destination, // 목적지 이름 저장
         };
 
         addStoredLuggage(storedLuggage);
@@ -81,31 +82,49 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
     const isOverweight = weight > 15;
 
     return (
-        <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#0064FF] to-[#4DA3FF] flex flex-col">
+        <div className="min-h-screen bg-gray-50">
             {/* 헤더 */}
-            <header className="pt-safe px-6 py-6">
-                <h1 className="text-white text-2xl font-bold">짐 보관</h1>
-                <p className="text-white/80 text-sm mt-1">
-                    {step === 'WEIGHT_CHECK' && '짐 무게를 측정하고 있습니다...'}
-                    {step === 'WEIGHT_RESULT' && '무게 측정이 완료되었습니다'}
-                    {step === 'STORAGE_COMPLETE' && '보관이 완료되었습니다!'}
-                </p>
+            <header className="bg-gray-50 pt-safe">
+                <div className="max-w-md mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                                <img
+                                    src="/images/logo.png"
+                                    alt="CARRY PORTER Logo"
+                                    className="w-6 h-6"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                                <p className="text-gray-500 text-xs">
+                                    {step === 'WEIGHT_CHECK' && '무게 측정 중...'}
+                                    {step === 'WEIGHT_RESULT' && '무게 측정 완료'}
+                                    {step === 'STORAGE_COMPLETE' && '보관 완료!'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             {/* 메인 컨텐츠 */}
-            <main className="flex-1 px-6 pb-8 overflow-y-auto">
+            <main className="max-w-md mx-auto px-6 py-6">
                 {/* 무게 측정 카드 */}
                 {(step === 'WEIGHT_CHECK' || step === 'WEIGHT_RESULT') && (
-                    <div className="card-toss p-6 animate-fade-in-scale">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm animate-fade-in-up">
                         <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
                             <span className="text-2xl">⚖️</span>
                             짐 무게 측정
                         </h3>
 
                         {/* 무게 표시 */}
-                        <div className="text-center py-8 bg-gradient-to-br from-[#0064FF]/5 to-[#4DA3FF]/5 rounded-2xl mb-4">
+                        <div className="text-center py-8 bg-gradient-to-br from-toss-blue-500/5 to-toss-blue-light/5 rounded-2xl mb-4">
                             <p className="text-gray-500 text-sm mb-2">현재 무게</p>
-                            <div className={`text-7xl font-bold mb-2 weight-counter ${isOverweight ? 'text-red-500' : 'text-[#0064FF]'}`}>
+                            <div className={`text-7xl font-bold mb-2 weight-counter ${isOverweight ? 'text-red-500' : 'text-toss-blue-500'}`}>
                                 {step === 'WEIGHT_CHECK' ? weightCountUp.currentValue.toFixed(1) : weight.toFixed(1)}
                                 <span className="text-3xl ml-2">kg</span>
                             </div>
@@ -131,11 +150,11 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
 
                         {/* 무게 분류 표시 */}
                         <div className="grid grid-cols-2 gap-3 mb-6">
-                            <div className={`p-4 rounded-xl text-center transition-all ${!isOverweight ? 'bg-[#0064FF] text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 text-gray-400'
+                            <div className={`p-4 rounded-xl text-center transition-all ${!isOverweight ? 'bg-toss-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 text-gray-400'
                                 }`}>
                                 <p className="text-sm font-semibold">15kg 이하</p>
                             </div>
-                            <div className={`p-4 rounded-xl text-center transition-all ${isOverweight ? 'bg-[#FF6D00] text-white shadow-lg shadow-orange-500/30' : 'bg-gray-100 text-gray-400'
+                            <div className={`p-4 rounded-xl text-center transition-all ${isOverweight ? 'bg-toss-orange text-white shadow-lg shadow-orange-500/30' : 'bg-gray-100 text-gray-400'
                                 }`}>
                                 <p className="text-sm font-semibold">15kg 초과</p>
                             </div>
@@ -146,7 +165,7 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                             <Button
                                 onClick={handleLock}
                                 disabled={isLocking}
-                                className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] disabled:bg-gray-300"
+                                className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-gray-300"
                             >
                                 {isLocking ? (
                                     <div className="flex items-center gap-2">
@@ -170,20 +189,20 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                 {step === 'STORAGE_COMPLETE' && (
                     <div className="space-y-4">
                         {/* 완료 애니메이션 */}
-                        <div className="text-center py-8 animate-fade-in-scale">
-                            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#00C853] to-[#69F0AE] rounded-full flex items-center justify-center shadow-lg shadow-green-500/30">
-                                <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm text-center animate-fade-in-up">
+                            <div className="w-20 h-20 mx-auto mb-4 bg-toss-green rounded-2xl flex items-center justify-center">
+                                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-white text-2xl font-bold mb-2">보관 완료!</h2>
-                            <p className="text-white/80">짐이 안전하게 보관되었습니다</p>
+                            <h2 className="text-gray-900 text-xl font-bold mb-2">보관 완료!</h2>
+                            <p className="text-gray-500">짐이 안전하게 보관되었습니다</p>
                         </div>
 
                         {/* 보관 정보 카드 */}
-                        <div className="bg-white rounded-2xl p-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                        <div className="bg-white rounded-2xl p-6 shadow-sm animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                             <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-[#00C853]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-toss-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 보관 정보
@@ -220,7 +239,7 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                         {/* 홈으로 버튼 */}
                         <Button
                             onClick={handleGoHome}
-                            className="w-full h-14 text-lg font-semibold bg-white text-[#0064FF] hover:bg-white/90 shadow-lg"
+                            className="w-full h-14 text-lg font-semibold bg-toss-green hover:bg-toss-green/90 text-white"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />

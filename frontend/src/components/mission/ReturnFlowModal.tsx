@@ -77,24 +77,42 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
     const allChecked = checklist.itemsRemoved && checklist.nothingLeft && checklist.confirmReturn;
 
     return (
-        <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#00C853] to-[#69F0AE] flex flex-col">
+        <div className="min-h-screen bg-gray-50">
             {/* 헤더 */}
-            <header className="pt-safe px-6 py-6">
-                <h1 className="text-white text-2xl font-bold">짐 반납</h1>
-                <p className="text-white/80 text-sm mt-1">
-                    {step === 'SELECT_LUGGAGE' && '반납할 짐을 선택해주세요'}
-                    {step === 'REMOVE_ITEMS' && '물건을 모두 꺼내주세요'}
-                    {step === 'CONFIRM_CHECKLIST' && '반납 전 확인사항을 체크해주세요'}
-                    {step === 'RETURN_COMPLETE' && '반납이 완료되었습니다!'}
-                </p>
+            <header className="bg-gray-50 pt-safe">
+                <div className="max-w-md mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                                <img
+                                    src="/images/logo.png"
+                                    alt="CARRY PORTER Logo"
+                                    className="w-6 h-6"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                                <p className="text-gray-500 text-xs">
+                                    {step === 'SELECT_LUGGAGE' && '반납할 짐 선택'}
+                                    {step === 'REMOVE_ITEMS' && '물건 꺼내기'}
+                                    {step === 'CONFIRM_CHECKLIST' && '반납 전 확인'}
+                                    {step === 'RETURN_COMPLETE' && '반납 완료!'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             {/* 메인 컨텐츠 */}
-            <main className="flex-1 px-6 pb-8 overflow-y-auto">
+            <main className="max-w-md mx-auto px-6 py-6">
                 {/* 짐 선택 */}
                 {step === 'SELECT_LUGGAGE' && (
                     <div className="space-y-4 animate-fade-in-up">
-                        <div className="bg-white rounded-2xl p-6">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
                             <h3 className="text-gray-900 font-bold mb-4">보관된 짐 목록</h3>
                             <div className="space-y-3">
                                 {storedLuggages.map((luggage) => (
@@ -104,7 +122,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                                         className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl text-left transition-all active:scale-[0.98]"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-[#0064FF] to-[#4DA3FF] rounded-xl flex items-center justify-center">
+                                            <div className="w-12 h-12 bg-toss-blue-500 rounded-xl flex items-center justify-center">
                                                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                 </svg>
@@ -128,10 +146,10 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
 
                 {/* 물건 빼기 안내 */}
                 {step === 'REMOVE_ITEMS' && selectedLuggage && (
-                    <div className="space-y-4 animate-fade-in-scale">
-                        <div className="bg-white rounded-2xl p-6">
+                    <div className="space-y-4 animate-fade-in-up">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
                             <div className="text-center py-8">
-                                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#FF9800] to-[#FFCA28] rounded-full flex items-center justify-center">
+                                <div className="w-20 h-20 mx-auto mb-6 bg-[#FF9800] rounded-2xl flex items-center justify-center">
                                     <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4l3 3m0 0l3-3m-3 3V9" />
                                     </svg>
@@ -160,11 +178,11 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                         <Button
                             onClick={handleLock}
                             disabled={isLocking}
-                            className="w-full h-14 text-lg font-semibold bg-white text-[#00C853] hover:bg-white/90"
+                            className="w-full h-14 text-lg font-semibold bg-[#FF9800] hover:bg-[#FF9800]/90 text-white"
                         >
                             {isLocking ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 border-2 border-[#00C853] border-t-transparent rounded-full animate-spin" />
+                                    <div className="w-5 h-5 border-2 border-toss-green border-t-transparent rounded-full animate-spin" />
                                     확인 중...
                                 </div>
                             ) : (
@@ -182,7 +200,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                 {/* 반납 전 확인사항 */}
                 {step === 'CONFIRM_CHECKLIST' && (
                     <div className="space-y-4 animate-fade-in-up">
-                        <div className="bg-white rounded-2xl p-6">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm">
                             <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
                                 <svg className="w-5 h-5 text-[#FF9800]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -197,7 +215,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                                         type="checkbox"
                                         checked={checklist.itemsRemoved}
                                         onChange={() => handleChecklistChange('itemsRemoved')}
-                                        className="w-5 h-5 rounded border-gray-300 text-[#00C853] focus:ring-[#00C853]"
+                                        className="w-5 h-5 rounded border-gray-300 text-toss-green focus:ring-toss-green"
                                     />
                                     <span className="text-gray-700">카트에서 모든 물건을 꺼냈습니다</span>
                                 </label>
@@ -207,7 +225,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                                         type="checkbox"
                                         checked={checklist.nothingLeft}
                                         onChange={() => handleChecklistChange('nothingLeft')}
-                                        className="w-5 h-5 rounded border-gray-300 text-[#00C853] focus:ring-[#00C853]"
+                                        className="w-5 h-5 rounded border-gray-300 text-toss-green focus:ring-toss-green"
                                     />
                                     <span className="text-gray-700">카트 안에 남은 물건이 없습니다</span>
                                 </label>
@@ -217,7 +235,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                                         type="checkbox"
                                         checked={checklist.confirmReturn}
                                         onChange={() => handleChecklistChange('confirmReturn')}
-                                        className="w-5 h-5 rounded border-gray-300 text-[#00C853] focus:ring-[#00C853]"
+                                        className="w-5 h-5 rounded border-gray-300 text-toss-green focus:ring-toss-green"
                                     />
                                     <span className="text-gray-700">반납을 확인합니다</span>
                                 </label>
@@ -228,11 +246,11 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                         <Button
                             onClick={handleReturn}
                             disabled={!allChecked || isReturning}
-                            className="w-full h-14 text-lg font-semibold bg-white text-[#00C853] hover:bg-white/90 disabled:bg-white/50 disabled:text-gray-400"
+                            className="w-full h-14 text-lg font-semibold bg-toss-green hover:bg-toss-green/90 text-white disabled:bg-gray-300 disabled:text-gray-500"
                         >
                             {isReturning ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 border-2 border-[#00C853] border-t-transparent rounded-full animate-spin" />
+                                    <div className="w-5 h-5 border-2 border-toss-green border-t-transparent rounded-full animate-spin" />
                                     반납 처리 중...
                                 </div>
                             ) : (
@@ -246,20 +264,20 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                 {step === 'RETURN_COMPLETE' && selectedLuggage && (
                     <div className="space-y-4">
                         {/* 완료 애니메이션 */}
-                        <div className="text-center py-8 animate-fade-in-scale">
-                            <div className="w-24 h-24 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                <svg className="w-12 h-12 text-[#00C853]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm text-center animate-fade-in-up">
+                            <div className="w-20 h-20 mx-auto mb-4 bg-toss-green rounded-2xl flex items-center justify-center">
+                                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-white text-2xl font-bold mb-2">반납 완료!</h2>
-                            <p className="text-white/80">이용해 주셔서 감사합니다</p>
+                            <h2 className="text-gray-900 text-xl font-bold mb-2">반납 완료!</h2>
+                            <p className="text-gray-500">이용해 주셔서 감사합니다</p>
                         </div>
 
                         {/* 반납 정보 카드 */}
-                        <div className="bg-white rounded-2xl p-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                        <div className="bg-white rounded-2xl p-6 shadow-sm animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                             <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-[#00C853]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-toss-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 반납 정보
@@ -288,7 +306,7 @@ export const ReturnFlowModal = ({ onComplete }: ReturnFlowModalProps) => {
                         {/* 홈으로 버튼 */}
                         <Button
                             onClick={handleGoHome}
-                            className="w-full h-14 text-lg font-semibold bg-white text-[#00C853] hover:bg-white/90 shadow-lg"
+                            className="w-full h-14 text-lg font-semibold bg-toss-green hover:bg-toss-green/90 text-white"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
