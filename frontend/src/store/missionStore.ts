@@ -91,14 +91,10 @@ export const useMissionStore = create<MissionState>()(
        */
       generateWeightInfo: () =>
         set((state) => {
-          const initialWeight = 3.7; // 카트 자체 무게 (고정)
           const luggageWeight = Math.random() * 20 + 5; // 5-25kg 랜덤
-          const finalWeight = initialWeight + luggageWeight;
 
           console.log('[MissionStore] 무게 정보 생성:', {
-            initialWeight,
             luggageWeight: luggageWeight.toFixed(1),
-            finalWeight: finalWeight.toFixed(1),
           });
 
           return {
@@ -106,8 +102,8 @@ export const useMissionStore = create<MissionState>()(
               ? {
                 ...state.currentMission,
                 weightInfo: {
-                  initialWeight,
-                  finalWeight: parseFloat(finalWeight.toFixed(1)),
+                  initialWeight: 0, // 카트 무게 제거
+                  finalWeight: parseFloat(luggageWeight.toFixed(1)),
                   luggageWeight: parseFloat(luggageWeight.toFixed(1)),
                 },
               }

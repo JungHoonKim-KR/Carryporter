@@ -61,19 +61,22 @@
   --color-card-foreground: 222.2 84% 4.9%;
   --color-popover: 0 0% 100%;
   --color-popover-foreground: 222.2 84% 4.9%;
-  --color-primary: 218 100% 50%;  /* Toss Blue #0064FF */
+  --color-primary: 218 100% 50%;
+  /* Toss Blue #0064FF */
   --color-primary-foreground: 210 40% 98%;
   --color-secondary: 210 40% 96.1%;
   --color-secondary-foreground: 222.2 47.4% 11.2%;
   --color-muted: 210 40% 96.1%;
-  --color-muted-foreground: 220 13% 85%;  /* placeholder 더 연한 회색으로 조정 */
+  --color-muted-foreground: 220 13% 85%;
+  /* placeholder 더 연한 회색으로 조정 */
   --color-accent: 210 40% 96.1%;
   --color-accent-foreground: 222.2 47.4% 11.2%;
   --color-destructive: 0 84.2% 60.2%;
   --color-destructive-foreground: 210 40% 98%;
   --color-border: 214.3 31.8% 91.4%;
   --color-input: 214.3 31.8% 91.4%;
-  --color-ring: 218 100% 50%;  /* Toss Blue #0064FF */
+  --color-ring: 218 100% 50%;
+  /* Toss Blue #0064FF */
   --radius-lg: 0.5rem;
   --radius-md: 0.375rem;
   --radius-sm: 0.25rem;
@@ -180,8 +183,13 @@
 /* ===== 애니메이션 키프레임 ===== */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeInUp {
@@ -189,6 +197,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -200,6 +209,7 @@
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -211,6 +221,7 @@
     opacity: 0;
     transform: translateY(100%);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -223,6 +234,7 @@
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -234,6 +246,7 @@
     opacity: 1;
     transform: translateX(0);
   }
+
   to {
     opacity: 0;
     transform: translateX(-100px);
@@ -244,6 +257,7 @@
   from {
     width: 0;
   }
+
   to {
     width: 100%;
   }
@@ -256,13 +270,27 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes bounce-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* 애니메이션 유틸리티 클래스 */
@@ -286,14 +314,27 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes scan-line {
-  0% { top: 10%; }
-  50% { top: 80%; }
-  100% { top: 10%; }
+  0% {
+    top: 10%;
+  }
+
+  50% {
+    top: 80%;
+  }
+
+  100% {
+    top: 10%;
+  }
 }
 
 /* 애니메이션 유틸리티 클래스 */
@@ -322,13 +363,63 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 .animate-scan-line {
   animation: scan-line 2s ease-in-out infinite;
+}
+
+/* 에러 흔들림 애니메이션 */
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 텍스트 그라디언트 색상 애니메이션 (#0064FF -> grey -> 반복) */
+@keyframes gradient-text-flow {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-text {
+  background: linear-gradient(90deg, #0064FF, #9E9E9E, #0064FF);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-text-flow 2s ease-in-out infinite;
 }
 
 /* ===== 스크롤바 스타일 ===== */
@@ -461,9 +552,12 @@ body {
 
 /* 무게 카운트업 애니메이션 */
 @keyframes weight-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }

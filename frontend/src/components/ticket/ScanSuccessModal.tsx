@@ -87,7 +87,7 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
         {/* 등록 버튼 (Toss 스타일) */}
         <Button
           onClick={onConfirm}
-          className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+          className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
         >
           등록
         </Button>

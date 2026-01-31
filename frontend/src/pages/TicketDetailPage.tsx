@@ -64,7 +64,7 @@ const TicketDetailPage = () => {
         <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
           <Button
             size="lg"
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
             onClick={() => navigate('/home')}
           >
             확인

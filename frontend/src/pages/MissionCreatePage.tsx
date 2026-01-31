@@ -157,11 +157,10 @@ const MissionCreatePage = () => {
                         setLocationId(station.id);
                         setError('');
                       }}
-                      className={`p-4 rounded-xl transition-all ${
-                        locationId === station.id
+                      className={`p-4 rounded-xl transition-all ${locationId === station.id
                           ? 'bg-toss-blue-500 text-white shadow-md'
                           : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       <div className="text-3xl mb-2">{station.icon}</div>
                       <p className="text-sm font-semibold">{station.name}</p>
@@ -181,11 +180,10 @@ const MissionCreatePage = () => {
                         setLocationId(gate.id);
                         setError('');
                       }}
-                      className={`p-4 rounded-xl transition-all ${
-                        locationId === gate.id
+                      className={`p-4 rounded-xl transition-all ${locationId === gate.id
                           ? 'bg-toss-blue-500 text-white shadow-md'
                           : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       <div className="text-3xl mb-2">{gate.icon}</div>
                       <p className="text-sm font-semibold">{gate.name}</p>
@@ -229,7 +227,7 @@ const MissionCreatePage = () => {
           <Button
             type="submit"
             disabled={!locationId}
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:opacity-40"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
           >
             {!locationId ? (
               <span className="flex items-center gap-2">

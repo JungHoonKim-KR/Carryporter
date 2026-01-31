@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useMissionStore } from '../../store/missionStore';
@@ -29,8 +29,8 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
 
     // 무게 카운트업 애니메이션
     const weightCountUp = useWeightCountUp({
-        startValue: 3.7, // 카트 자체 무게
-        endValue: currentMission?.weightInfo?.finalWeight || 18.0,
+        startValue: 0, // 무게 측정 시작
+        endValue: currentMission?.weightInfo?.luggageWeight || 0,
         duration: 2000,
         onComplete: () => {
             console.log('[StorageFlow] 무게 측정 완료');
@@ -38,13 +38,38 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
         },
     });
 
-    // 컴포넌트 마운트 시 무게 생성 및 애니메이션 시작
-    useState(() => {
+    // 컴포넌트 마운트 시 무게 생성
+    useEffect(() => {
+        // 무게 정보가 없으면 생성
         if (!currentMission?.weightInfo) {
+            console.log('[StorageFlow] 무게 정보 생성 중...');
             generateWeightInfo();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // 무게 정보가 생성되면 애니메이션 시작
+    useEffect(() => {
+        if (currentMission?.weightInfo && step === 'WEIGHT_CHECK') {
+            console.log('[StorageFlow] 무게 정보 확인, 애니메이션 시작:', currentMission.weightInfo.luggageWeight);
+            const timer = setTimeout(() => {
+                weightCountUp.startAnimation();
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentMission?.weightInfo]);
+
+    // 무게 다시 측정 함수
+    const handleRemeasure = () => {
+        // 무게 정보 초기화 및 재생성
+        generateWeightInfo();
+        // 측정 단계로 돌아가기
+        setStep('WEIGHT_CHECK');
+        // 애니메이션 재시작
         setTimeout(() => weightCountUp.startAnimation(), 500);
-    });
+    };
 
     // 잠금 버튼 클릭
     const handleLock = async () => {
@@ -79,7 +104,11 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
     };
 
     const weight = currentMission?.weightInfo?.luggageWeight || weightCountUp.currentValue;
+    // 색상은 측정 중에도 15kg 초과 시 변경
     const isOverweight = weight > 15;
+    // 현재 무게가 15kg을 넘으면 빨간색, 아니면 파란색
+    const currentDisplayWeight = step === 'WEIGHT_CHECK' ? weightCountUp.currentValue : weight;
+    const weightColor = currentDisplayWeight > 15 ? 'text-red-500' : 'text-toss-blue-500';
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -100,11 +129,6 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                             </div>
                             <div>
                                 <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
-                                <p className="text-gray-500 text-xs">
-                                    {step === 'WEIGHT_CHECK' && '무게 측정 중...'}
-                                    {step === 'WEIGHT_RESULT' && '무게 측정 완료'}
-                                    {step === 'STORAGE_COMPLETE' && '보관 완료!'}
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -115,7 +139,7 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
             <main className="max-w-md mx-auto px-6 py-6">
                 {/* 무게 측정 카드 */}
                 {(step === 'WEIGHT_CHECK' || step === 'WEIGHT_RESULT') && (
-                    <div className="bg-white rounded-2xl p-6 shadow-sm animate-fade-in-up">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm anim ate-fade-in-up">
                         <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
                             <span className="text-2xl">⚖️</span>
                             짐 무게 측정
@@ -124,7 +148,7 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                         {/* 무게 표시 */}
                         <div className="text-center py-8 bg-gradient-to-br from-toss-blue-500/5 to-toss-blue-light/5 rounded-2xl mb-4">
                             <p className="text-gray-500 text-sm mb-2">현재 무게</p>
-                            <div className={`text-7xl font-bold mb-2 weight-counter ${isOverweight ? 'text-red-500' : 'text-toss-blue-500'}`}>
+                            <div className={`text-7xl font-bold mb-2 weight-counter ${weightColor}`}>
                                 {step === 'WEIGHT_CHECK' ? weightCountUp.currentValue.toFixed(1) : weight.toFixed(1)}
                                 <span className="text-3xl ml-2">kg</span>
                             </div>
@@ -142,45 +166,49 @@ export const StorageFlowModal = ({ onComplete }: StorageFlowModalProps) => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
                                     <p className="text-red-600 text-sm font-medium">
-                                        15kg 초과! 추가 요금이 발생할 수 있습니다.
+                                        짐을 덜어주세요.
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        {/* 무게 분류 표시 */}
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <div className={`p-4 rounded-xl text-center transition-all ${!isOverweight ? 'bg-toss-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 text-gray-400'
-                                }`}>
-                                <p className="text-sm font-semibold">15kg 이하</p>
-                            </div>
-                            <div className={`p-4 rounded-xl text-center transition-all ${isOverweight ? 'bg-toss-orange text-white shadow-lg shadow-orange-500/30' : 'bg-gray-100 text-gray-400'
-                                }`}>
-                                <p className="text-sm font-semibold">15kg 초과</p>
-                            </div>
-                        </div>
-
-                        {/* 잠금 버튼 */}
+                        {/* 잠금 및 무게 다시측정 버튼 */}
                         {step === 'WEIGHT_RESULT' && (
-                            <Button
-                                onClick={handleLock}
-                                disabled={isLocking}
-                                className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-gray-300"
-                            >
-                                {isLocking ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        잠금 중...
-                                    </div>
-                                ) : (
-                                    <>
+                            <div className="space-y-3">
+                                {/* 무게 초과 시 다시측정 버튼 */}
+                                {isOverweight && (
+                                    <Button
+                                        onClick={handleRemeasure}
+                                        className="w-full h-14 text-lg font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+                                    >
                                         <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        잠금
-                                    </>
+                                        무게 다시측정
+                                    </Button>
                                 )}
-                            </Button>
+
+                                {/* 잠금 버튼 */}
+                                <Button
+                                    onClick={handleLock}
+                                    disabled={isLocking || isOverweight}
+                                    className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-gray-300 text-white"
+                                >
+                                    {isLocking ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            잠금 중...
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                            잠금
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         )}
                     </div>
                 )}

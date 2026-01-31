@@ -80,7 +80,7 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
           <div className="space-y-3">
             <Button
               onClick={() => window.location.reload()}
-              className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 rounded-xl"
+              className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl"
             >
               다시 시도
             </Button>
@@ -146,7 +146,7 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
           <Button
             onClick={handleScan}
             disabled={isScanning}
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 disabled:bg-toss-blue-500/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:bg-toss-blue-500/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
           >
             {isScanning ? (
               <div className="flex items-center gap-3">

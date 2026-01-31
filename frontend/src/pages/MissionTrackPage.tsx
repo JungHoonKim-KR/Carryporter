@@ -21,13 +21,12 @@ const TimelineStep = ({
 }) => (
   <div className="flex items-center gap-4">
     <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-        completed
+      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${completed
           ? 'bg-toss-green text-white shadow-md'
           : active
             ? 'bg-toss-blue-500 text-white shadow-md'
             : 'bg-gray-200 text-gray-400'
-      }`}
+        }`}
     >
       {completed ? '✓' : '○'}
     </div>
@@ -109,7 +108,7 @@ const MissionTrackPage = () => {
             </svg>
           </div>
           <p className="text-gray-600 mb-6">미션 정보가 없습니다.</p>
-          <Button onClick={() => navigate('/home')} className="bg-toss-blue-500">
+          <Button onClick={() => navigate('/home')} className="bg-toss-blue-500 text-white">
             홈으로 돌아가기
           </Button>
         </div>
@@ -159,16 +158,14 @@ const MissionTrackPage = () => {
 
             {/* 실시간 연결 상태 */}
             <div
-              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-                isConnected
+              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isConnected
                   ? 'bg-toss-green/20 text-toss-green'
                   : 'bg-red-50 text-red-500'
-              }`}
+                }`}
             >
               <div
-                className={`w-2 h-2 rounded-full ${
-                  isConnected ? 'bg-toss-green' : 'bg-red-500'
-                } ${isConnected ? 'animate-pulse' : ''}`}
+                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-toss-green' : 'bg-red-500'
+                  } ${isConnected ? 'animate-pulse' : ''}`}
               />
               {isConnected ? '실시간' : '연결 끊김'}
             </div>
@@ -270,7 +267,7 @@ const MissionTrackPage = () => {
         {status === 'FINISHED' && (
           <Button
             onClick={handleComplete}
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
           >
             완료
           </Button>
