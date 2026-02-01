@@ -35,12 +35,12 @@ public class RobotRedisScriptConfig {
                 -- LREM key count value: count가 0이면 일치하는 모든 요소 제거
                 redis.call('LREM', queueKey, 0, robotId)
 
-                -- (핵심) 가용 상태(IDLE, RETURNED)가 되면 큐의 맨 뒤(Right)에 줄을 세웁니다.
-                if status == 'IDLE' or status == 'RETURNED' then
+                -- (핵심) 가용 상태(IDLE, IDLE)가 되면 큐의 맨 뒤(Right)에 줄을 세웁니다.
+                if status == 'IDLE' or status == 'IDLE' then
                     redis.call('RPUSH', queueKey, robotId)
                 end
                 
-                -- RESERVED, WORKING 등 다른 상태라면?
+                -- BUSY, WORKING 등 다른 상태라면?
                 -- 위에서 LREM으로 이미 지워졌으므로 아무것도 안 하면 됨 (큐에서 사라짐)
 
                 return 1

@@ -106,9 +106,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         assertThat(updatedMission.getRobot().getId()).isEqualTo(robotId);
         assertThat(updatedMission.getAssignedAt()).isNotNull();
 
-        // 3. Robot 상태 확인 (IDLE → RESERVED)
+        // 3. Robot 상태 확인 (IDLE → BUSY)
         Robot updatedRobot = robotRepository.findById(robotId).orElseThrow();
-        assertThat(updatedRobot.getRobotStatus()).isEqualTo(RobotStatus.RESERVED);
+        assertThat(updatedRobot.getRobotStatus()).isEqualTo(RobotStatus.BUSY);
 
         // 4. Redis 큐가 비어있는지 확인
         Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
@@ -187,9 +187,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
                 .isInstanceOf(BusinessException.class);
 
         // 로봇이 다시 IDLE 상태로 변경되었는지 확인
-        Optional<RobotState> returnedRobotState = robotStateRepository.findById(robotId);
-        assertThat(returnedRobotState).isPresent();
-        assertThat(returnedRobotState.get().getStatus()).isEqualTo(RobotStatus.IDLE);
+        Optional<RobotState> IDLERobotState = robotStateRepository.findById(robotId);
+        assertThat(IDLERobotState).isPresent();
+        assertThat(IDLERobotState.get().getStatus()).isEqualTo(RobotStatus.IDLE);
 
         // 이벤트가 발행되지 않았는지 확인
         long eventCount = events.stream(RobotAssignedEvent.class).count();
@@ -245,7 +245,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         assertThat(updatedMission1.getRobot().getId()).isEqualTo(robotId1);
 
         Robot updatedRobot1 = robotRepository.findById(robotId1).orElseThrow();
-        assertThat(updatedRobot1.getRobotStatus()).isEqualTo(RobotStatus.RESERVED);
+        assertThat(updatedRobot1.getRobotStatus()).isEqualTo(RobotStatus.BUSY);
 
         // 2. 두 번째 배정 확인
         assertThat(assignedRobotId2).isEqualTo(robotId2);
@@ -254,7 +254,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         assertThat(updatedMission2.getRobot().getId()).isEqualTo(robotId2);
 
         Robot updatedRobot2 = robotRepository.findById(robotId2).orElseThrow();
-        assertThat(updatedRobot2.getRobotStatus()).isEqualTo(RobotStatus.RESERVED);
+        assertThat(updatedRobot2.getRobotStatus()).isEqualTo(RobotStatus.BUSY);
 
         // 3. Redis 큐가 비어있는지 확인
         Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);

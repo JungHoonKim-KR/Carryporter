@@ -36,7 +36,7 @@ public class RobotAvailableQueueRepository {
             }
 
             Long robotId = Long.valueOf(result.toString());
-            robotStateRepository.updateStatusOnly(robotId, RobotStatus.RESERVED);
+            robotStateRepository.updateStatusOnly(robotId, RobotStatus.BUSY);
 
             return Optional.of(robotId);
 

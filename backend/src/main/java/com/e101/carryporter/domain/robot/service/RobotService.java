@@ -25,10 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RobotService {
 
-    private final LocationService locationService;
     private final RobotRepository robotRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final MissionRepository missionRepository;
     private final MissionService missionService;
 
     public Robot findById(Long robotId) {
@@ -52,9 +50,8 @@ public class RobotService {
 
         Mission mission = missionService.findById(requestDto.getMissionId());
         Robot robot = findById(requestDto.getRobotId());
-        Location callLocation = locationService.findById(requestDto.getCallLocationId());
 
-        missionService.dispatch(mission.getId(), robot.getId());
+        missionService.dispatch(mission.getId());
 
         //로봇코드
         eventPublisher.publishEvent(new MissionStartedEvent(

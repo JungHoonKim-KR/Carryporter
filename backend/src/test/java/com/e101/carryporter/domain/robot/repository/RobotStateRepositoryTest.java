@@ -72,13 +72,13 @@ class RobotStateRepositoryTest extends IntegrationTestSupport {
         robotStateRepository.save(robotId, robotState);
 
         // when
-        robotStateRepository.updateStatusOnly(robotId, RobotStatus.RESERVED);
+        robotStateRepository.updateStatusOnly(robotId, RobotStatus.BUSY);
 
         // then
         Optional<RobotState> result = robotStateRepository.findById(robotId);
         assertThat(result).isPresent();
         RobotState updatedState = result.get();
-        assertThat(updatedState.getStatus()).isEqualTo(RobotStatus.RESERVED);
+        assertThat(updatedState.getStatus()).isEqualTo(RobotStatus.BUSY);
         assertThat(updatedState.getMacAddress()).isEqualTo(macAddress);
         assertThat(updatedState.getBattery()).isEqualTo(100);
     }

@@ -50,12 +50,12 @@ public class AdminSseNotificationHandler {
      */
     @Async
     @EventListener
-    public void handleRobotReturned(RobotReturnedEvent event) {
+    public void handleRobotIDLE(RobotReturnedEvent event) {
         log.info("[ADMIN SSE] 로봇 복귀 완료 - missionId: {}, robotId: {}, macAddress: {}",
                 event.missionId(), event.robotId(), event.robotMacAddress());
 
         sseService.broadcastToAdmins(
-                "ROBOT_RETURNED",
+                "ROBOT_IDLE",
                 Map.of(
                         "missionId", event.missionId(),
                         "robotId", event.robotId(),
