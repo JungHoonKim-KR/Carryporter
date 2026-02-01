@@ -29,6 +29,7 @@ public class RobotAssignService {
         try {
         // redis 가용 로봇 확보 (Atomic LPOP + BUSY 마킹)
         // 성공 시, Redis 상에서 이 로봇은 이미 BUSY 상태가 됨
+        // 없을시 todo
         availableRobotId = queueRepository.acquireRobotId()
                 .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_AVAILABLE));
 
