@@ -79,7 +79,7 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
 
           <div className="space-y-3">
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => setHasError(false)}
               className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl"
             >
               다시 시도

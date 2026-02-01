@@ -99,17 +99,6 @@ const SplashPage = () => {
             >
               가장 낮은 눈높이에서, 가장 높은 서비스를
             </p>
-
-            {/* 버튼 - 전체 완료 후 표시 */}
-            <button
-              onClick={handleStart}
-              disabled={visibleChars < fullText.length}
-              className={`bg-toss-blue-500 text-white px-8 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:bg-toss-blue-600 hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-0 ${
-                visibleChars >= fullText.length ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              시작하기
-            </button>
           </div>
         )}
       </div>

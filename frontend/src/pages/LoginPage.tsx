@@ -7,11 +7,10 @@ import { sendCodeSchema, type SendCodeFormData } from "../utils/validation";
 import { sendCode } from "../api/auth.api";
 import { setMockPassword } from "../api/mission.api.mock";
 import { useAuthStore } from "../store/authStore";
-import { useLoginSteps } from "../hooks/useLoginSteps";
-import { EmailInputStep } from "@/components/auth/EmailInputStep";
-import { PasswordInputStep } from "@/components/auth/PasswordInputStep";
-import { PasswordConfirmStep } from "@/components/auth/PasswordConfirmStep";
-import { TermsAgreementStep } from "@/components/auth/TermsAgreementStep";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PasswordInputField } from "@/components/auth/PasswordInputField";
+import { TermsCheckbox } from "@/components/auth/TermsCheckbox";
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -33,36 +32,20 @@ const LoginPage = () => {
         handleSubmit,
         control,
         watch,
-        formState: { errors },
+        formState: { errors, isValid },
     } = useForm<SendCodeFormData>({
         resolver: zodResolver(sendCodeSchema),
         mode: 'onChange',
     });
 
-    // 폼 값 감시
-    const email = watch('email');
+    // 폼 값 감시 (비밀번호 일치 확인용)
     const password = watch('password');
     const passwordConfirm = watch('passwordConfirm');
     const agreeTerms = watch('agreeTerms');
     const agreePrivacy = watch('agreePrivacy');
 
-    // 단계 관리 훅
-    const {
-        currentStep,
-        isEmailValid,
-        isPasswordValid,
-        isPasswordConfirmValid,
-        isTermsValid,
-        handleNextStep,
-        handlePrevStep,
-    } = useLoginSteps({
-        email,
-        password,
-        passwordConfirm,
-        agreeTerms,
-        agreePrivacy,
-        errors,
-    });
+    // 폼 전체 유효성 검사
+    const isFormValid = isValid && agreeTerms && agreePrivacy;
 
     const onSubmit = async (data: SendCodeFormData) => {
         try {
@@ -104,30 +87,16 @@ const LoginPage = () => {
             {/* 헤더 */}
             <header className="bg-gray-50 pt-safe">
                 <div className="max-w-md mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                                <img
-                                    src="/images/logo.png"
-                                    alt="CARRY PORTER Logo"
-                                    className={cn("w-6 h-6", logoError && "hidden")}
-                                    onError={() => setLogoError(true)}
-                                />
-                            </div>
-                            <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                            <img
+                                src="/images/logo.png"
+                                alt="CARRY PORTER Logo"
+                                className={cn("w-6 h-6", logoError && "hidden")}
+                                onError={() => setLogoError(true)}
+                            />
                         </div>
-
-                        {/* 뒤로가기 버튼 */}
-                        {currentStep !== 'EMAIL' && (
-                            <button
-                                onClick={handlePrevStep}
-                                className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors rounded-xl hover:bg-gray-100"
-                            >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                        )}
+                        <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
                     </div>
                 </div>
             </header>
@@ -146,51 +115,92 @@ const LoginPage = () => {
 
                 {/* 로그인 폼 카드 */}
                 <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                        {/* 이메일 단계 */}
-                        {currentStep === 'EMAIL' && (
-                            <EmailInputStep
-                                register={register}
-                                errors={errors}
-                                isValid={!!isEmailValid}
-                                onNext={handleNextStep}
-                            />
-                        )}
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        {/* 폼 제목 */}
+                        <div className="text-center space-y-2">
+                            <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+                            <p className="text-sm text-gray-600">
+                                CARRY PORTER 이용을 위해 정보를 입력해주세요
+                            </p>
+                        </div>
 
-                        {/* 비밀번호 단계 */}
-                        {currentStep === 'PASSWORD' && (
-                            <PasswordInputStep
-                                register={register}
-                                errors={errors}
-                                isValid={!!isPasswordValid}
-                                onNext={handleNextStep}
-                                onBack={handlePrevStep}
-                            />
-                        )}
+                        {/* 모든 입력 필드 */}
+                        <div className="space-y-5">
+                            {/* 1. 이메일 필드 */}
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="email"
+                                    className="block text-sm font-medium text-gray-700"
+                                >
+                                    Mattermost 이메일
+                                </label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="example@email.com"
+                                    {...register("email")}
+                                    className={errors.email ? "border-red-500" : ""}
+                                />
+                                {errors.email && (
+                                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                                )}
+                            </div>
 
-                        {/* 비밀번호 확인 단계 */}
-                        {currentStep === 'PASSWORD_CONFIRM' && (
-                            <PasswordConfirmStep
-                                register={register}
-                                errors={errors}
-                                password={password || ''}
-                                isValid={!!isPasswordConfirmValid}
-                                onNext={handleNextStep}
-                                onBack={handlePrevStep}
-                            />
-                        )}
+                            {/* 2. 비밀번호 필드 */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    비밀번호 (4자리 숫자)
+                                </label>
+                                <PasswordInputField
+                                    register={register}
+                                    errors={errors}
+                                    name="password"
+                                    label=""
+                                    placeholder="4자리 숫자"
+                                />
+                            </div>
 
-                        {/* 약관 동의 단계 */}
-                        {currentStep === 'TERMS' && (
-                            <TermsAgreementStep
-                                control={control}
-                                errors={errors}
-                                isValid={!!isTermsValid}
-                                onSubmit={handleSubmit(onSubmit)}
-                                onBack={handlePrevStep}
-                                isLoading={isLoading}
-                            />
-                        )}
+                            {/* 3. 비밀번호 확인 필드 */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    비밀번호 확인
+                                </label>
+                                <PasswordInputField
+                                    register={register}
+                                    errors={errors}
+                                    name="passwordConfirm"
+                                    label=""
+                                    placeholder="4자리 숫자"
+                                />
+                                {passwordConfirm && password && passwordConfirm === password && !errors.passwordConfirm && (
+                                    <p className="text-sm text-green-600">
+                                        ✓ 비밀번호가 일치합니다
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* 4. 약관 동의 */}
+                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                                <TermsCheckbox
+                                    control={control}
+                                    name="agreeTerms"
+                                    label="보관 정책에 동의합니다 (필수)"
+                                    errors={errors}
+                                />
+                                <TermsCheckbox
+                                    control={control}
+                                    name="agreePrivacy"
+                                    label="서비스 이용약관에 동의합니다 (필수)"
+                                    errors={errors}
+                                />
+                            </div>
+
+                            {/* 약관 설명 */}
+                            <div className="text-xs text-gray-500 space-y-1">
+                                <p>· 보관 정책: 짐 보관 시 안전 및 책임 범위에 대한 내용입니다.</p>
+                                <p>· 서비스 이용약관: 로봇 호출 서비스 이용 시 준수사항입니다.</p>
+                            </div>
+                        </div>
 
                         {/* API 에러 메시지 */}
                         {apiError && (
@@ -203,6 +213,15 @@ const LoginPage = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* 단일 제출 버튼 */}
+                        <Button
+                            type="submit"
+                            disabled={!isFormValid || isLoading}
+                            className="w-full"
+                        >
+                            {isLoading ? "처리 중..." : "회원가입"}
+                        </Button>
                     </form>
                 </div>
 

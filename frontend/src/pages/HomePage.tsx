@@ -74,7 +74,8 @@ const HomePage = () => {
         {/* 로봇 호출 */}
         <button
           onClick={() => navigate('/mission/create')}
-          className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center gap-3 mb-6"
+          className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center gap-3 mb-6 animate-fade-in-up"
+          style={{ animationDelay: '100ms' }}
         >
           <div className="w-10 h-10 bg-toss-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,7 +94,8 @@ const HomePage = () => {
         {/* 내 짐 */}
         <button
           onClick={() => navigate('/ticket/detail')}
-          className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center gap-3 mb-6"
+          className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center gap-3 mb-6 animate-fade-in-up"
+          style={{ animationDelay: '200ms' }}
         >
           <div className="w-10 h-10 bg-toss-green rounded-lg flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +112,7 @@ const HomePage = () => {
         </button>
 
         {/* 로봇 현황 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+        <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
           <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -133,7 +135,7 @@ const HomePage = () => {
 
         {/* 보관된 짐 목록 */}
         {storedLuggages.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+          <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
             <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
               <svg className="w-5 h-5 text-toss-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -167,7 +169,7 @@ const HomePage = () => {
         )}
 
         {/* 티켓 정보 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+        <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
