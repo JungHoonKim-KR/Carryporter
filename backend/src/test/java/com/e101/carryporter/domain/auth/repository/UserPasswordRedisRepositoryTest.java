@@ -185,7 +185,7 @@ class UserPasswordRedisRepositoryTest extends IntegrationTestSupport {
             Integer password = 1234;
 
             // 테스트를 위해 짧은 TTL로 직접 설정
-            redisTemplate.opsForValue().set("user:password:" + userId, password, 1, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set("user:password:" + userId, password.toString(), 1, TimeUnit.SECONDS);
 
             // when
             Thread.sleep(1100); // 1.1초 대기

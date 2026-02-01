@@ -21,7 +21,7 @@ public class EmailCodeRedisRepository {
     // email 인증 번호 저장 메서드 (TTL: 5분)
     public void save(String email, Integer code) {
         try {
-            redisTemplate.opsForValue().set(getEmailCodeKey(email), code, TTL_MINUTES, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(getEmailCodeKey(email), code.toString(), TTL_MINUTES, TimeUnit.MINUTES);
             log.debug("이메일 인증번호 저장 email = {}", email);
         } catch (Exception e) {
             log.error("인증번호 저장 실패 : email = {}", email, e);

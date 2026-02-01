@@ -8,8 +8,40 @@ import org.springframework.data.redis.core.script.RedisScript;
 @Configuration
 public class RobotRedisScriptConfig {
 
-    @Bean("updateRobotStateScript")
-    public RedisScript<Long> updateRobotStateScript() {
+    @Bean("acquireRobotScript")
+    public RedisScript<Long> acquireRobotScript() {
+        String script = """
+                -- [KEYS]
+                local queueKey = KEYS[1]      -- robot:available (List)
+                
+                -- [ARGV]
+                local statusKeyPrefix = ARGV[1]  -- robot:status:
+                local newStatus = ARGV[2]        -- BUSY
+                local updatedAt = ARGV[3]
+
+                -- 1. [FIFO] 대기열의 맨 앞(Left)에서 하나 꺼냄
+                local robotId = redis.call('LPOP', queueKey)
+
+                -- 2. 없으면 nil 반환 (Java에서는 null로 받음)
+                if not robotId then
+                    return nil
+                end
+
+                -- 3. [Atomic] 꺼낸 로봇의 상태를 즉시 BUSY로 변경
+                -- Hash Key 동적 생성 (prefix + robotId)
+                local hashKey = statusKeyPrefix .. robotId
+                
+                redis.call('HSET', hashKey, 'status', newStatus, 'updatedAt', updatedAt)
+
+                -- 4. 로봇 ID 반환
+                return tonumber(robotId)
+                """;
+
+        return new DefaultRedisScript<>(script, Long.class);
+    }
+
+    @Bean("updateRobotInfoScript")
+    public RedisScript<Long> updateRobotInfoScript() {
         String script = """
                 -- [KEYS]
                 local hashKey = KEYS[1]      -- robot:status:{id}
@@ -35,8 +67,8 @@ public class RobotRedisScriptConfig {
                 -- LREM key count value: count가 0이면 일치하는 모든 요소 제거
                 redis.call('LREM', queueKey, 0, robotId)
 
-                -- (핵심) 가용 상태(IDLE, IDLE)가 되면 큐의 맨 뒤(Right)에 줄을 세웁니다.
-                if status == 'IDLE' or status == 'IDLE' then
+                -- (핵심) 가용 상태(IDLE)가 되면 큐의 맨 뒤(Right)에 줄을 세웁니다.
+                if status == 'IDLE' then
                     redis.call('RPUSH', queueKey, robotId)
                 end
                 

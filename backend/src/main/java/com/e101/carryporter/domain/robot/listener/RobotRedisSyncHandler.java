@@ -1,7 +1,7 @@
 package com.e101.carryporter.domain.robot.listener;
 
 import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
-import com.e101.carryporter.domain.robot.repository.RobotStateRepository;
+import com.e101.carryporter.domain.robot.repository.RobotRealTimeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
@@ -17,7 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class RobotRedisSyncHandler {
 
-    private final RobotStateRepository robotStateRepository;
+    private final RobotRealTimeRepository robotRealTimeRepository;
 
     @Async
     @Retryable(
@@ -28,7 +28,7 @@ public class RobotRedisSyncHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRobotAvailabilityChangedEvent(RobotAvailabilityChangedEvent event) {
         log.debug("{} 로봇 상태 변경 {} -> {}", event.robotCode(), event.previousStatus(), event.newStatus());
-        robotStateRepository.updateStatusOnly(event.robotId(),event.newStatus());
+        robotRealTimeRepository.updateStatusOnly(event.robotId(),event.newStatus());
     }
 
     // 3번다 실패했을 경우
