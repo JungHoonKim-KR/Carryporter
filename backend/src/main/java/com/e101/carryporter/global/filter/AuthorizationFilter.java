@@ -81,7 +81,6 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             }
 
             // 역할 정보를 request에 저장 (컨트롤러에서 사용 가능)
-            request.setAttribute("userRole", user.getRole());
             log.info("인가 성공 - 관리자 접근: userId={}, uri={}, role = {}", userId, requestURI, user.getRole());
         }
 
