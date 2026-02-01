@@ -15,7 +15,7 @@ const MOCK_PASSWORD_KEY = 'mock_user_password';
 // Mock 비밀번호 저장 (로그인 시 호출)
 export const setMockPassword = (password: number): void => {
   localStorage.setItem(MOCK_PASSWORD_KEY, password.toString());
-  console.log('[MOCK] 비밀번호 저장됨:', password);
+  if (import.meta.env.DEV) console.log('[MOCK] 비밀번호 저장됨:', password);
 };
 
 // Mock 비밀번호 조회
@@ -28,7 +28,7 @@ export const getMockPassword = (): number | null => {
 export const createMission = async (
   data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
-  console.log('[MOCK] createMission 호출:', data);
+  if (import.meta.env.DEV) console.log('[MOCK] createMission 호출:', data);
 
   // 1초 지연 시뮬레이션
   await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
@@ -38,7 +38,7 @@ export const createMission = async (
     missionId: Math.floor(Math.random() * 10000),
   };
 
-  console.log('[MOCK] createMission 응답:', mockResponse);
+  if (import.meta.env.DEV) console.log('[MOCK] createMission 응답:', mockResponse);
   return mockResponse;
 };
 
@@ -51,7 +51,7 @@ export const subscribeMissionUpdates = (
     onError?: (error: Error) => void;
   }
 ): (() => void) => {
-  console.log('[MOCK] SSE 연결 시작:', missionId);
+  if (import.meta.env.DEV) console.log('[MOCK] SSE 연결 시작:', missionId);
 
   // 연결 성공 콜백
   setTimeout(() => {
@@ -77,7 +77,7 @@ export const subscribeMissionUpdates = (
 
   statusSequence.forEach((status, index) => {
     const timeout = setTimeout(() => {
-      console.log(`[MOCK] 상태 변경: ${status}`);
+      if (import.meta.env.DEV) console.log(`[MOCK] 상태 변경: ${status}`);
       callbacks.onStatus?.({
         missionId,
         status,
@@ -91,7 +91,7 @@ export const subscribeMissionUpdates = (
 
   // Cleanup 함수 (SSE 연결 종료)
   return () => {
-    console.log('[MOCK] SSE 연결 종료');
+    if (import.meta.env.DEV) console.log('[MOCK] SSE 연결 종료');
     timeouts.forEach((timeout) => clearTimeout(timeout));
   };
 };
@@ -101,7 +101,7 @@ export const verifyMission = async (
   missionId: string,
   password: number
 ): Promise<void> => {
-  console.log('[MOCK] verifyMission 호출:', { missionId, password });
+  if (import.meta.env.DEV) console.log('[MOCK] verifyMission 호출:', { missionId, password });
 
   await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
 
@@ -112,7 +112,7 @@ export const verifyMission = async (
 
   // 저장된 비밀번호와 비교
   const storedPassword = getMockPassword();
-  console.log('[MOCK] 저장된 비밀번호:', storedPassword, '입력된 비밀번호:', password);
+  if (import.meta.env.DEV) console.log('[MOCK] 저장된 비밀번호:', storedPassword, '입력된 비밀번호:', password);
 
   if (storedPassword === null) {
     console.warn('[MOCK] 저장된 비밀번호 없음, 테스트 모드로 통과');
@@ -123,6 +123,6 @@ export const verifyMission = async (
     throw new Error('비밀번호가 일치하지 않습니다.');
   }
 
-  console.log('[MOCK] verifyMission 성공');
+  if (import.meta.env.DEV) console.log('[MOCK] verifyMission 성공');
 };
 

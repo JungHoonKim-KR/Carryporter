@@ -7,36 +7,8 @@ import { VerificationModal } from '../components/mission/VerificationModal';
 import { MissionTypeSelector } from '../components/mission/MissionTypeSelector';
 import { StorageFlowModal } from '../components/mission/StorageFlowModal';
 import { ReturnFlowModal } from '../components/mission/ReturnFlowModal';
+import { TimelineStep } from '../components/mission/TimelineStep';
 import type { MissionType } from '../types/mission.types';
-
-// 타임라인 스텝 컴포넌트
-const TimelineStep = ({
-  label,
-  active,
-  completed,
-}: {
-  label: string;
-  active: boolean;
-  completed: boolean;
-}) => (
-  <div className="flex items-center gap-4">
-    <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${completed
-          ? 'bg-toss-green text-white shadow-md'
-          : active
-            ? 'bg-toss-blue-500 text-white shadow-md'
-            : 'bg-gray-200 text-gray-400'
-        }`}
-    >
-      {completed ? '✓' : '○'}
-    </div>
-    <div className="flex-1">
-      <span className={`font-medium ${active ? 'text-gray-900 text-base font-bold' : 'text-gray-600'}`}>
-        {label}
-      </span>
-    </div>
-  </div>
-);
 
 /**
  * 미션 추적 페이지
@@ -46,13 +18,12 @@ const MissionTrackPage = () => {
   const navigate = useNavigate();
   const {
     currentMission,
-    missionStatus,
     clearMission,
     setMissionType,
     hasStoredLuggages,
   } = useMissionStore();
 
-  const { isConnected, connectionError } = useMissionSSE(currentMission?.id || null);
+  const { isConnected, connectionError } = useMissionSSE(); // missionId 파라미터 제거
 
   // UI 상태 관리
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -62,10 +33,10 @@ const MissionTrackPage = () => {
 
   // ARRIVED 상태 → 인증 모달 자동 표시
   useEffect(() => {
-    if (missionStatus?.status === 'ARRIVED' && !currentMission?.missionType) {
+    if (currentMission?.status === 'ARRIVED' && !currentMission?.missionType) {
       setShowVerifyModal(true);
     }
-  }, [missionStatus?.status, currentMission?.missionType]);
+  }, [currentMission?.status, currentMission?.missionType]);
 
   // 인증 성공 후 타입 선택 표시
   const handleVerificationSuccess = () => {
@@ -116,7 +87,7 @@ const MissionTrackPage = () => {
     );
   }
 
-  const status = missionStatus?.status || currentMission.status;
+  const status = currentMission.status;
 
   // 보관/반납 플로우 모달이 표시 중이면 해당 UI만 렌더링
   if (showStorageFlow) {
@@ -183,11 +154,12 @@ const MissionTrackPage = () => {
           <p className="text-gray-600 text-sm">
             {status === 'MOVING' && '로봇이 이동 중입니다'}
             {status === 'ARRIVED' && '로봇이 도착했습니다'}
-            {status === 'LOCKED' && '짐을 보관 중입니다'}
+            {status === 'UNLOCKED' && '짐 무게 측정'} {/* 추가됨 */}
+            {status === 'LOCKED' && '수령 완료'} {/* 변경됨 */}
             {status === 'RETURNING' && '로봇이 복귀 중입니다'}
             {status === 'RETURNED' && '보관 완료'}
             {status === 'FINISHED' && '미션 완료!'}
-            {!['MOVING', 'ARRIVED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status) && '작업 중입니다'}
+            {!['MOVING', 'ARRIVED', 'UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status) && '작업 중입니다'}
           </p>
           {connectionError && (
             <p className="text-red-500 text-xs mt-1">
@@ -226,7 +198,7 @@ const MissionTrackPage = () => {
               completed={['UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
             />
             <TimelineStep
-              label="인증"
+              label="짐 무게 측정"
               active={status === 'UNLOCKED'}
               completed={['LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
             />
@@ -239,8 +211,8 @@ const MissionTrackPage = () => {
         </div>
 
         {/* 로봇 정보 카드 */}
-        {missionStatus?.robotCode && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+        {currentMission?.robotCode && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
             <h3 className="text-gray-900 font-bold text-base mb-3 flex items-center gap-2">
               <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
@@ -256,7 +228,7 @@ const MissionTrackPage = () => {
               <div>
                 <p className="text-gray-500 text-xs">로봇 코드</p>
                 <p className="text-gray-900 text-xl font-bold">
-                  {missionStatus.robotCode}
+                  {currentMission.robotCode}
                 </p>
               </div>
             </div>

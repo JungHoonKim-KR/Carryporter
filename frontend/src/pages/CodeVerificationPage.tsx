@@ -106,11 +106,11 @@ const CodeVerificationPage = () => {
         email,
         code: selectedCode,
       };
-      console.log('=== CODE 인증 요청 데이터 ===');
-      console.log('Email:', email);
-      console.log('Selected Code:', selectedCode, '(type:', typeof selectedCode, ')');
-      console.log('Correct Code:', correctCode, '(type:', typeof correctCode, ')');
-      console.log('Request Data:', requestData);
+      if (import.meta.env.DEV) console.log('=== CODE 인증 요청 데이터 ===');
+      if (import.meta.env.DEV) console.log('Email:', email);
+      if (import.meta.env.DEV) console.log('Selected Code:', selectedCode, '(type:', typeof selectedCode, ')');
+      if (import.meta.env.DEV) console.log('Correct Code:', correctCode, '(type:', typeof correctCode, ')');
+      if (import.meta.env.DEV) console.log('Request Data:', requestData);
 
       // CODE 인증 API 호출 (이메일 + 선택한 CODE)
       // refreshToken은 백엔드가 httpOnly 쿠키로 설정하므로 응답 body에서 처리 불필요
@@ -173,7 +173,7 @@ const CodeVerificationPage = () => {
         </div>
 
         {/* CODE 선택 카드 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+        <div className="bg-white rounded-2xl p-5 shadow-sm animate-fade-in-up">
           <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />

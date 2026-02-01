@@ -56,12 +56,12 @@ const TicketDetailPage = () => {
         </div>
 
         {/* 티켓 카드 */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+        <div className="animate-fade-in-up">
           <TicketCard ticket={currentTicket} variant="detailed" />
         </div>
 
         {/* 확인 버튼 */}
-        <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+        <div className="mt-6 animate-fade-in-up">
           <Button
             size="lg"
             className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"

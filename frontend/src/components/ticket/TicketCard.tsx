@@ -1,5 +1,6 @@
 import { formatCityName, formatTime } from '../../utils/imageUtils';
 import type { TicketInfo, TicketCardVariant } from '../../types/ticket.types';
+import { cn } from '@/lib/utils';
 
 interface TicketCardProps {
   ticket: TicketInfo;
@@ -12,7 +13,10 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl ${onClick ? 'cursor-pointer' : ''} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
+      className={cn(
+        'relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
+        onClick && 'cursor-pointer'
+      )}
       onClick={onClick}
     >
       {/* 배경 그라데이션 */}
@@ -88,12 +92,12 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs text-white/60 mb-1">Boarding</div>
-            <div className="text-lg font-semibold">{formatTime(ticket.boarding_time)}</div>
+            <div className="text-lg font-semibold">{formatTime(ticket.boardingTime)}</div>
           </div>
 
           <div>
             <div className="text-xs text-white/60 mb-1">Departs</div>
-            <div className="text-lg font-semibold">{formatTime(ticket.departure_time)}</div>
+            <div className="text-lg font-semibold">{formatTime(ticket.departureTime)}</div>
           </div>
 
           {!isCompact && (

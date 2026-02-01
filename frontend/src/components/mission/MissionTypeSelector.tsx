@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import type { MissionType } from '../../types/mission.types';
 
 interface MissionTypeSelectorProps {
@@ -13,6 +15,7 @@ export const MissionTypeSelector = ({
     onSelect,
     hasStoredLuggage,
 }: MissionTypeSelectorProps) => {
+    const [logoError, setLogoError] = useState(false);
     return (
         <div className="min-h-screen bg-gray-50">
             {/* 헤더 */}
@@ -24,10 +27,8 @@ export const MissionTypeSelector = ({
                                 <img
                                     src="/images/logo.png"
                                     alt="CARRY PORTER Logo"
-                                    className="w-6 h-6"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
+                                    className={cn("w-6 h-6", logoError && "hidden")}
+                                    onError={() => setLogoError(true)}
                                 />
                             </div>
                             <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
@@ -50,7 +51,7 @@ export const MissionTypeSelector = ({
                 </div>
 
                 {/* 선택 버튼들 */}
-                <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <div className="space-y-4 animate-fade-in-up">
                     {/* 보관 버튼 */}
                     <button
                         onClick={() => onSelect('STORAGE')}
@@ -76,27 +77,35 @@ export const MissionTypeSelector = ({
                     <button
                         onClick={() => hasStoredLuggage && onSelect('RETURN')}
                         disabled={!hasStoredLuggage}
-                        className={`w-full rounded-2xl p-6 text-left transition-all group ${hasStoredLuggage
+                        className={cn(
+                            'w-full rounded-2xl p-6 text-left transition-all group',
+                            hasStoredLuggage
                                 ? 'bg-white shadow-sm hover:shadow-md active:scale-[0.98]'
                                 : 'bg-white/50 shadow-sm cursor-not-allowed'
-                            }`}
+                        )}
                     >
                         <div className="flex items-center gap-4">
                             <div
-                                className={`w-16 h-16 rounded-2xl flex items-center justify-center ${hasStoredLuggage
-                                        ? 'bg-toss-red'
-                                        : 'bg-gray-300'
-                                    }`}
+                                className={cn(
+                                    'w-16 h-16 rounded-2xl flex items-center justify-center',
+                                    hasStoredLuggage ? 'bg-toss-red' : 'bg-gray-300'
+                                )}
                             >
                                 <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4l3 3m0 0l3-3m-3 3V9" />
                                 </svg>
                             </div>
                             <div className="flex-1">
-                                <h3 className={`text-xl font-bold mb-1 ${hasStoredLuggage ? 'text-gray-900' : 'text-gray-400'}`}>
+                                <h3 className={cn(
+                                    'text-xl font-bold mb-1',
+                                    hasStoredLuggage ? 'text-gray-900' : 'text-gray-400'
+                                )}>
                                     반납
                                 </h3>
-                                <p className={`text-sm ${hasStoredLuggage ? 'text-gray-500' : 'text-gray-400'}`}>
+                                <p className={cn(
+                                    'text-sm',
+                                    hasStoredLuggage ? 'text-gray-500' : 'text-gray-400'
+                                )}>
                                     {hasStoredLuggage ? '보관된 짐을 반납합니다' : '보관된 짐이 없습니다'}
                                 </p>
                             </div>
@@ -111,7 +120,7 @@ export const MissionTypeSelector = ({
 
                 {/* 안내 텍스트 */}
                 {!hasStoredLuggage && (
-                    <p className="mt-4 text-gray-500 text-sm text-center animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    <p className="mt-4 text-gray-500 text-sm text-center animate-fade-in-up">
                         먼저 짐을 보관해야 반납할 수 있습니다
                     </p>
                 )}

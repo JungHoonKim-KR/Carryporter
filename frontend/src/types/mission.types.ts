@@ -37,8 +37,8 @@ export type MissionStatus =
 // 미션 생성 요청
 export interface CreateMissionRequest {
   userId: number;
-  startLocationId: number;
-  endLocationId: number;
+  startLocation: number; // 키 이름 변경 (startLocationId → startLocation)
+  endLocation: number;   // 키 이름 변경 (endLocationId → endLocation)
 }
 
 export interface CreateMissionResponse {
@@ -49,8 +49,8 @@ export interface CreateMissionResponse {
 export interface Mission {
   id: string;
   userId: number;
-  startLocationId: number;
-  endLocationId: number;
+  startLocation: number; // 키 이름 변경 (startLocationId → startLocation)
+  endLocation: number;   // 키 이름 변경 (endLocationId → endLocation)
   status: MissionStatus;
   missionType?: MissionType; // 보관 또는 반납
   robotCode?: string;
@@ -76,6 +76,25 @@ export interface MissionStatusEvent {
   status: MissionStatus;
   robotCode?: string;
   timestamp: string;
+  message?: string; // SSE의 msg 필드 저장 (선택사항)
+}
+
+// SSE 이벤트 타입 (8가지)
+export type SSEEventType =
+  | 'Connect'
+  | 'RobotAssignedEvent'
+  | 'MissionStartedEvent'
+  | 'RobotArrivalEvent'
+  | 'UserAuthSuccessEvent'
+  | 'MissionUnlockedEvent'
+  | 'MissionAbortedEvent'
+  | 'MissionLockedEvent';
+
+// SSE 이벤트 데이터 구조 (공통)
+export interface SSEEventData {
+  msg: string;
+  timestamp: string;
+  robotCode?: string; // 로봇 관련 이벤트만 포함
 }
 
 // 비밀번호 인증
