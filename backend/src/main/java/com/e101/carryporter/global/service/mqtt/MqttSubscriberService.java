@@ -68,8 +68,8 @@ public class MqttSubscriberService {
                 case "error":
                     handleError(mac, payload);
                     break;
-                case "returned":
-                    handleReturned(mac, payload);
+                case "IDLE":
+                    handleIDLE(mac, payload);
                     break;
                 case "locked":
                     handleLocked(mac,payload);
@@ -209,10 +209,10 @@ public class MqttSubscriberService {
 
     /**
      * 관리소 복귀 완료 처리
-     * Topic: robot/{MAC}/returned
+     * Topic: robot/{MAC}/IDLE
      * Payload: {"missionId": 101}
      */
-    private void handleReturned(String mac, String payload) {
+    private void handleIDLE(String mac, String payload) {
         log.info("로봇 관리소 복귀 알림 - MAC: {}", mac);
         try {
             JsonNode node = objectMapper.readTree(payload);

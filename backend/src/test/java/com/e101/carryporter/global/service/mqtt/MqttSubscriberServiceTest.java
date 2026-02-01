@@ -96,7 +96,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", mac);
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12");
         locationRepository.save(callLocation);
 
         // 2. 미션 생성
@@ -207,14 +207,14 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
     @Test
     @DisplayName("로봇 관리소 복귀 메시지 수신 시 RobotReturnedEvent가 발행된다")
-    void handleReturned() {
+    void handleIDLE() {
         // given
         String mac = "AA:BB:CC:DD:EE:FF";
         Robot robot = Robot.createRobot("R-001", mac);
         robotRepository.save(robot);
         flushAndClear();
 
-        String topic = "robot/" + mac + "/returned";
+        String topic = "robot/" + mac + "/IDLE";
         String payload = "{\"missionId\":101}";
 
         Message<String> message = createMessage(topic, payload);
@@ -239,10 +239,10 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
 
     @Test
     @DisplayName("존재하지 않는 로봇의 관리소 복귀 메시지 수신 시 이벤트가 발행되지 않는다")
-    void handleReturnedWithNotExistRobot() {
+    void handleIDLEWithNotExistRobot() {
         // given
         String mac = "00:00:00:00:00:00";
-        String topic = "robot/" + mac + "/returned";
+        String topic = "robot/" + mac + "/IDLE";
         String payload = "{\"missionId\":101}";
 
         Message<String> message = createMessage(topic, payload);
@@ -271,7 +271,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("Locker-Robot", mac);
         robotRepository.save(robot);
 
-        Location startLocation = Location.createLocation("Lobby", "로비", 0.0, 0.0);
+        Location startLocation = Location.createLocation("Lobby", "로비");
         locationRepository.save(startLocation);
 
         // 2. 미션 생성 및 로봇 배정
@@ -320,7 +320,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("Locker-Robot", mac);
         robotRepository.save(robot);
 
-        Location startLocation = Location.createLocation("Lobby", "로비", 0.0, 0.0);
+        Location startLocation = Location.createLocation("Lobby", "로비");
         locationRepository.save(startLocation);
 
         // 2. 미션 생성 및 로봇 배정

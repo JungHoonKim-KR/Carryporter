@@ -55,7 +55,7 @@ public class AdminSseNotificationHandler {
                 event.missionId(), event.robotId(), event.robotMacAddress());
 
         sseService.broadcastToAdmins(
-                "ROBOT_RETURNED",
+                "ROBOT_IDLE",
                 Map.of(
                         "missionId", event.missionId(),
                         "robotId", event.robotId(),
