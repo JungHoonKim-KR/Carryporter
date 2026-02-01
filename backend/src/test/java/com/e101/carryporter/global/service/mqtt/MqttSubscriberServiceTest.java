@@ -96,7 +96,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", mac);
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12");
         locationRepository.save(callLocation);
 
         // 2. 미션 생성
@@ -271,7 +271,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("Locker-Robot", mac);
         robotRepository.save(robot);
 
-        Location startLocation = Location.createLocation("Lobby", "로비", 0.0, 0.0);
+        Location startLocation = Location.createLocation("Lobby", "로비");
         locationRepository.save(startLocation);
 
         // 2. 미션 생성 및 로봇 배정
@@ -320,7 +320,7 @@ class MqttSubscriberServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("Locker-Robot", mac);
         robotRepository.save(robot);
 
-        Location startLocation = Location.createLocation("Lobby", "로비", 0.0, 0.0);
+        Location startLocation = Location.createLocation("Lobby", "로비");
         locationRepository.save(startLocation);
 
         // 2. 미션 생성 및 로봇 배정

@@ -74,7 +74,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         userRepository.save(user);
 
         // 2. Location 생성
-        Location location = Location.createLocation("TestLocation", "Test Description", 10.0, 20.0);
+        Location location = Location.createLocation("TestLocation", "Test Description");
         locationRepository.save(location);
 
         // 3. Mission 생성 (REQUESTED 상태)
@@ -134,7 +134,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         userRepository.save(user);
 
         // 2. Location 생성
-        Location location = Location.createLocation("TestLocation", "Test Description", 10.0, 20.0);
+        Location location = Location.createLocation("TestLocation", "Test Description");
         locationRepository.save(location);
 
         // 3. Mission 생성 (REQUESTED 상태)
@@ -164,7 +164,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     void assignRobotToMission_RollbackOnError() {
         // given
         // 1. Location 생성
-        Location location = Location.createLocation("TestLocation", "Test Description", 10.0, 20.0);
+        Location location = Location.createLocation("TestLocation", "Test Description");
         locationRepository.save(location);
 
         // 2. Mission 생성하지 않음 (존재하지 않는 missionId 사용)
@@ -205,7 +205,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         userRepository.save(user);
 
         // 2. Location 생성
-        Location location = Location.createLocation("TestLocation", "Test Description", 10.0, 20.0);
+        Location location = Location.createLocation("TestLocation", "Test Description");
         locationRepository.save(location);
 
         // 3. 두 개의 Mission 생성

@@ -62,8 +62,8 @@ public class RobotService {
                 mission.getId(),
                 robot.getRobotCode(),
                 robot.getMacAddress(),
-                callLocation.getPositionX(),
-                callLocation.getPositionY()
+                10.0,
+                20.0
         ));
     }
 

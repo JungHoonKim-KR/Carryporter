@@ -24,7 +24,7 @@ class LocationRepositoryTest extends IntegrationTestSupport {
     @Test
     void saveLocation() {
         // given
-        Location location = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
 
         // when
         Long savedId = locationRepository.save(location);
