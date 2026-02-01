@@ -20,7 +20,7 @@ public class CorsFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) res;
 
         // 프론트엔드 주소 허용 (모두 허용하려면 "*" 사용, 보안상 특정 주소를 적는 게 좋음)
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000"); // 정훈님 : 일단 3000만
+        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); // 정훈님 : 일단 3000만
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
         response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With");

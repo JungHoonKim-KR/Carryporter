@@ -31,7 +31,8 @@ public class SseController {
 
         // 2. Role 정보 결정
         // 필터에서 관리자 확인을 거쳐 userRole을 넣어줬다면 그 값을 쓰고, 아니면 기본 ROLE_USER 사용
-        String roleName = (userRole != null) ? userRole.name() : "BASIC";
+        // 1. 권한 확정 로직
+        String roleName = userRole.name();
 
         log.info("[SSE-SUBSCRIBE] 구독 시작 - userId: {}, role: {}", userId, roleName);
 

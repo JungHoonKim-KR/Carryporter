@@ -33,7 +33,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/admin/join",    // 관리자 회원가입
             "/admin/login",   // 관리자 로그인
             "/api/admin/join",
-            "/api/admin/login"
+            "/api/admin/login",   // 관리자 로그인
+            "/api/test/sse",
+            "/test/sse"
     );
 
     @Override

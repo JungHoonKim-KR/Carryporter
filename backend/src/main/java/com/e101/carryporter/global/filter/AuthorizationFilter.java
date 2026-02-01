@@ -31,13 +31,19 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             "/auth/reissue",
             "/api/auth/request",
             "/api/auth/verify",
-            "/api/auth/reissue"
+            "/api/auth/reissue",
+
+
+            "/api/test/sse",
+            "/test/sse"
     );
 
     // 관리자 전용 URL 목록
     private static final List<String> ADMIN_ONLY_PATHS = Arrays.asList(
             "/admin",
-            "/api/admin"
+            "/api/admin",
+            "/admin/join",    // 관리자 회원가입
+            "/admin/login"   // 관리자 로그인
     );
 
     @Override
@@ -46,46 +52,48 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 
         String requestURI = request.getServletPath();
 
-        // 1. 화이트리스트에 있는 경로는 인가 검사 건너뜀
-        if (isWhitelisted(requestURI)) {
+        // 1. [최우선] 화이트리스트 및 '인증이 필요 없는 경로'는 바로 통과
+        // 회원가입, 로그인은 토큰이 없으므로 여기서 바로 filterChain.doFilter를 타야 합니다.
+        if (isWhitelisted(requestURI) || isPublicAdminPath(requestURI)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. JwtAuthenticationFilter에서 설정한 userId 가져오기
+        // 2. 인증 체크 (여기서부터는 로그인이 되어 있어야 함)
         Long userId = (Long) request.getAttribute("userId");
-
-        // userId가 없으면 인증되지 않은 요청 (JwtAuthenticationFilter에서 이미 처리됨)
         if (userId == null) {
-            filterChain.doFilter(request, response);
+            log.warn("❌ 인증 실패 - 로그인 정보 없음: uri={}", requestURI);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
             return;
         }
 
-        // 3. 관리자 전용 경로 확인
+        // 3. 인가 및 Role 설정 (인증된 유저 정보 조회)
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "사용자 정보를 찾을 수 없습니다.");
+            return;
+        }
+
+        User user = userOptional.get();
+        request.setAttribute("userRole", user.getRole());
+        log.info("✅ 인가 성공 - userId: {}, role: {}, uri: {}", userId, user.getRole(), requestURI);
+
+        // 4. 관리자 권한 필수 경로 체크 (로그인 이후의 관리자 기능들)
         if (isAdminOnlyPath(requestURI)) {
-            Optional<User> userOptional = userRepository.findById(userId);
-
-            if (userOptional.isEmpty()) {
-                log.warn("인가 실패 - 사용자를 찾을 수 없음: userId={}, uri={}", userId, requestURI);
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "접근 권한이 없습니다.");
-                return;
-            }
-
-            User user = userOptional.get();
             if (!user.isAdmin()) {
-                log.warn("인가 실패 - 관리자 권한 필요: userId={}, role={}, uri={}", userId, user.getRole(), requestURI);
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자만 접근 가능합니다.");
                 return;
             }
-
-            // 역할 정보를 request에 저장 (컨트롤러에서 사용 가능)
-            request.setAttribute("userRole", user.getRole());
-            log.info("인가 성공 - 관리자 접근: userId={}, uri={}", userId, requestURI);
         }
 
         filterChain.doFilter(request, response);
     }
 
+    // 회원가입, 로그인은 인증 없이 들어올 수 있게 분리
+    private boolean isPublicAdminPath(String uri) {
+        return uri.equals("/api/admin/join") || uri.equals("/api/admin/login")
+                || uri.equals("/admin/join") || uri.equals("/admin/login");
+    }
     private boolean isWhitelisted(String uri) {
         return WHITELIST.stream().anyMatch(uri::startsWith);
     }
