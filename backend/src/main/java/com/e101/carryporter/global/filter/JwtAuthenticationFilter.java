@@ -1,5 +1,6 @@
 package com.e101.carryporter.global.filter;
 
+import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.global.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -56,11 +57,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 3. 토큰 유효성 검사
         if (token != null && jwtUtils.validateToken(token)) {
             // 토큰이 유효하면 유저 정보를 request에 담아둠 (컨트롤러에서 쓰기 위해)
+
             String email = jwtUtils.getMmEmailFromToken(token);
             Long userId = jwtUtils.getUserIdFromToken(token);
+            Role role = jwtUtils.getRoleFromToken(token);
 
             request.setAttribute("mmEmail", email);
             request.setAttribute("userId", userId);
+            request.setAttribute("role", role);
+
+            log.debug("사용자 정보: mmId = {}, userId = {}, role = {}", userId, userId, role);
 
             filterChain.doFilter(request, response); // 통과!
         } else {
