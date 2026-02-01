@@ -50,7 +50,7 @@ public class AdminSseNotificationHandler {
      */
     @Async
     @EventListener
-    public void handleRobotIDLE(RobotReturnedEvent event) {
+    public void handleRobotReturned(RobotReturnedEvent event) {
         log.info("[ADMIN SSE] 로봇 복귀 완료 - missionId: {}, robotId: {}, macAddress: {}",
                 event.missionId(), event.robotId(), event.robotMacAddress());
 

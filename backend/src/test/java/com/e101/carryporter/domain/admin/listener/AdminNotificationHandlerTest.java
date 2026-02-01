@@ -36,7 +36,7 @@ class AdminNotificationHandlerTest {
         RobotReturnedEvent event = new RobotReturnedEvent(missionId, robotId, macAddress);
 
         // when
-        adminNotificationHandler.handleRobotIDLE(event);
+        adminNotificationHandler.handleRobotReturned(event);
 
         // then
         ArgumentCaptor<Map> dataCaptor = ArgumentCaptor.forClass(Map.class);
