@@ -1,6 +1,5 @@
 package com.e101.carryporter.global.filter;
 
-import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -44,10 +43,12 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        log.debug("authorization filter 호출!!");
         String requestURI = request.getServletPath();
 
         // 1. 화이트리스트에 있는 경로는 인가 검사 건너뜀
         if (isWhitelisted(requestURI)) {
+            log.debug("white list !!");
             filterChain.doFilter(request, response);
             return;
         }
@@ -57,6 +58,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
 
         // userId가 없으면 인증되지 않은 요청 (JwtAuthenticationFilter에서 이미 처리됨)
         if (userId == null) {
+            log.debug("인증되지 않은 요청");
             filterChain.doFilter(request, response);
             return;
         }
@@ -79,8 +81,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             }
 
             // 역할 정보를 request에 저장 (컨트롤러에서 사용 가능)
-            request.setAttribute("userRole", user.getRole());
-            log.info("인가 성공 - 관리자 접근: userId={}, uri={}", userId, requestURI);
+            log.info("인가 성공 - 관리자 접근: userId={}, uri={}, role = {}", userId, requestURI, user.getRole());
         }
 
         filterChain.doFilter(request, response);
