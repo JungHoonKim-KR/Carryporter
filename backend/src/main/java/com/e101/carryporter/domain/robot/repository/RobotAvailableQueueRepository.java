@@ -27,9 +27,6 @@ public class RobotAvailableQueueRepository {
         try {
             log.debug("로봇 배정 대기 중 ... ");
 
-            // 최대 20초간 blocking
-            result = redisTemplate.opsForList()
-                    .leftPop(AVAILABLE_ROBOTS_KEY, TIME_OUT_SEC, TimeUnit.SECONDS);
 
             if (result == null) {
                 return Optional.empty();

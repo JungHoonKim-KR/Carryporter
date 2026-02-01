@@ -68,7 +68,7 @@ public class RobotStateRepository {
         }
     }
 
-    public void updateStatusOnly(Long robotId, RobotStatus robotStatus) {
+    public void updateStatusOnly(Long robotId, RobotStatus newStatus) {
         String robotKey = ROBOT_STATUS_PREFIX + robotId;
 
         try {
@@ -78,13 +78,13 @@ public class RobotStateRepository {
                     updateRobotScript,
                     keys,
                     robotId,
-                    robotStatus.name(),
+                    newStatus.name(),
                     null,
                     LocalDateTime.now().toString());
 
-            log.debug("Redis 상태 동기화 완료: robotId={}, status={}", robotId, robotStatus);
+            log.debug("Redis 상태 동기화 완료: robotId={}, status={}", robotId, newStatus);
         } catch (Exception e) {
-            log.error("Redis 상태 업데이트 중 에러 발생: robotId={}, status={}", robotId, robotStatus, e);
+            log.error("Redis 상태 업데이트 중 에러 발생: robotId={}, status={}", robotId, newStatus, e);
             throw new RuntimeException("Redis update failed", e);
         }
     }
