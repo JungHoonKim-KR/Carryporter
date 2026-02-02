@@ -27,13 +27,13 @@ public class MissionStatusHandler {
 
     @Async
     @EventListener
-    public void handleRobotReturnedEvent(MissionLockedEvent event) {
+    public void handleMissionLockedEvent(MissionLockedEvent event) {
         missionService.completeLock(event.missionId());
     }
 
     @Async
     @EventListener
-    public void handleRobotReturnedEvent(MissionUnlockedEvent event) {
+    public void handleMissionUnlockedEvent(MissionUnlockedEvent event) {
         missionService.completeUnlock(event.missionId());
     }
 
