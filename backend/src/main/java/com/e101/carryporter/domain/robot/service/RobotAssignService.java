@@ -39,7 +39,7 @@ public class RobotAssignService {
 
             log.debug("[{}] 번 사용자 [{}] 번 미션에 [{}] 로봇 배정", userId, missionId, availableRobotId);
 
-            eventPublisher.publishEvent(new RobotAssignedEvent(userId, robotCode));
+            eventPublisher.publishEvent(new RobotAssignedEvent(userId, missionId, robotCode, findMission.getCallLocation().getLocationName(), findMission.getLocker().getLockerCode(), "FIRST/RECALL"));
             return availableRobotId;
         } catch (Exception e) {
             log.error("배차 중 error 발생!! missionId = {}", missionId, e);

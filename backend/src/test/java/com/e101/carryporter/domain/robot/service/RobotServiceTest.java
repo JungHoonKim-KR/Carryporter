@@ -88,7 +88,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", "aa:bb:cc");
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        Location callLocation = Location.createLocation("test location", "description");
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
@@ -122,7 +122,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", "aa:bb:cc");
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        Location callLocation = Location.createLocation("test location", "description");
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
@@ -157,7 +157,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", "aa:bb:cc");
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        Location callLocation = Location.createLocation("test location", "description");
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
@@ -186,8 +186,6 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
-        assertThat(publishedEvent.destX()).isEqualTo(callLocation.getPositionX());
-        assertThat(publishedEvent.destY()).isEqualTo(callLocation.getPositionY());
 
     }
 
@@ -201,7 +199,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         Robot robot = Robot.createRobot("test code", "aa:bb:cc");
         robotRepository.save(robot);
 
-        Location callLocation = Location.createLocation("test location", "description", 1.0, 2.0);
+        Location callLocation = Location.createLocation("test location", "description");
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);

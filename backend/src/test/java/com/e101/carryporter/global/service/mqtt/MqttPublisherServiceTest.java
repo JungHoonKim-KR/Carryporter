@@ -43,18 +43,15 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
     void sendDeliverCommand() {
         // given
         String mac = "00:11:22:33:44:55";
-        Location destination = Location.builder()
-                .locationName("목적지")
-                .description("목적지")
-                .positionX(2.0)
-                .positionY(3.5)
-                .build();
+        double destX = 2.0;
+        double destY = 3.5;
+
         // when
-        mqttPublisherService.sendDeliverCommand(mac, destination.getPositionX(), destination.getPositionY());
+        mqttPublisherService.sendDeliverCommand(mac, destX, destY);
 
         // then
         String expectedTopic = "robot/" + mac + "/command/deliver";
-        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destination.getPositionX(), destination.getPositionY());
+        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
 
         printCapturedMessage("배송 명령", expectedTopic, expectedPayload);
     }
@@ -64,12 +61,6 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
     void sendReturnCommand() {
         // given
         String mac = "AA:BB:CC:DD:EE:FF";
-        Location station = Location.builder()
-                .locationName("스테이션")
-                .description("충전소")
-                .positionX(0.0)
-                .positionY(0.0)
-                .build();
 
         // when
         mqttPublisherService.sendReturnCommand(mac);

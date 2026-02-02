@@ -33,7 +33,7 @@ class RobotStatusHandlerTest extends IntegrationTestSupport {
         // given
         Robot robot = Robot.createRobot("R-001", "AA:BB:CC:DD:EE:FF");
         robotRepository.save(robot);
-        robot.changeStatus(RobotStatus.RETURNED);
+        robot.changeStatus(RobotStatus.IDLE);
         flushAndClear();
 
         MissionFinalizedEvent event = new MissionFinalizedEvent(1L, robot.getId());

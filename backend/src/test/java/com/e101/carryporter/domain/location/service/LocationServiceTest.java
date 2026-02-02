@@ -30,8 +30,6 @@ class LocationServiceTest extends IntegrationTestSupport {
         Location location = Location.builder()
                 .description("test description")
                 .locationName("test location name")
-                .positionX(1.0)
-                .positionY(1.0)
                 .build();
 
         locationRepository.save(location);
@@ -44,8 +42,6 @@ class LocationServiceTest extends IntegrationTestSupport {
         // then
         assertThat(findLocation.getDescription()).isEqualTo("test description");
         assertThat(findLocation.getLocationName()).isEqualTo("test location name");
-        assertThat(findLocation.getPositionX()).isEqualTo(1.0);
-        assertThat(findLocation.getPositionY()).isEqualTo(1.0);
 
     }
     @DisplayName("위치가 없을 경우 예외가 발생한다.")

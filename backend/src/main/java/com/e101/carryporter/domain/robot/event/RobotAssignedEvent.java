@@ -9,7 +9,7 @@ public record RobotAssignedEvent(
         Long missionId,         // 현재 진행 중인 미션 식별자
         String robotCode,       // 배정된 로봇 코드
         String callLocationName,  // 호출지 정보 (첫 호출 시 필요)
-        String locker_code,        // 사물함 코드 (재호출/복귀 시에만 포함, 첫 호출 시 null)
+        String lockerCode,        // 사물함 코드 (재호출/복귀 시에만 포함, 첫 호출 시 null)
         String requestType      // "FIRST" (보관 요청), "RECALL" (수령/반납을 위한 재호출) 등으로 구분 가능
 ) {
     /**

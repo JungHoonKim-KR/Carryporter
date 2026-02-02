@@ -8,6 +8,7 @@ import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.user.entity.User;
@@ -61,17 +62,23 @@ public class MissionService {
         Robot robot = robotRepository.findById(robotId)
                 .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
 
+        // robot 이 idle 상태인지 검증
+        validateIdleRobot(robot);
+
         mission.assignRobot(robot);
     }
 
     @Transactional
-    public void dispatch(Long missionId, Long robotId) {
+    public void dispatch(Long missionId) {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
 
-        Robot robot = robotRepository.findById(robotId)
-                .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+        mission.dispatch();
+    }
 
-        mission.dispatch(robot);
+    private void validateIdleRobot(Robot robot) {
+        if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
+            throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
+        }
     }
 }

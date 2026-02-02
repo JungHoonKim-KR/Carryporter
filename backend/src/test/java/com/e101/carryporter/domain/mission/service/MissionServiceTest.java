@@ -45,7 +45,7 @@ class MissionServiceTest extends IntegrationTestSupport {
 
         // given
         User user = User.createUser("test@mm.com");
-        Location location = Location.createLocation("Gate A12", "탑승구 A12", 1.0, 2.0);
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
 
         Long userId = userRepository.save(user);
         Long locationId = locationRepository.save(location);

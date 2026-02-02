@@ -22,7 +22,7 @@ public class SseController {
             @RequestAttribute("userId") Long userId,
 
             // AuthorizationFilter가 관리자 확인 후 넣어준 역할 정보 (null일 수 있음)
-            @RequestAttribute(value = "userRole", required = false) Role userRole,
+            @RequestAttribute(value = "role", required = false) Role userRole,
 
             HttpServletResponse response
     ) {

@@ -1,7 +1,6 @@
 package com.e101.carryporter.global.service.mqtt;
 
 import com.e101.carryporter.domain.mission.entity.Mission;
-import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
 import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
@@ -10,8 +9,6 @@ import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
-import com.e101.carryporter.domain.user.entity.User;
-import com.e101.carryporter.domain.userlocker.repository.UserLockerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,7 +31,6 @@ public class MqttSubscriberService {
     private final ApplicationEventPublisher eventPublisher;
     private final RobotRepository robotRepository;
     private final MissionRepository missionRepository;
-    private final UserLockerRepository userLockerRepository;
     /**
      * MQTT 메시지 수신 처리 (mqttInputChannel로 들어오는 모든 메시지)
      */
@@ -71,8 +67,8 @@ public class MqttSubscriberService {
                 case "error":
                     handleError(mac, payload);
                     break;
-                case "returned":
-                    handleReturned(mac, payload);
+                case "IDLE":
+                    handleIDLE(mac, payload);
                     break;
                 case "locked":
                     handleLocked(mac,payload);
@@ -212,28 +208,24 @@ public class MqttSubscriberService {
 
     /**
      * 관리소 복귀 완료 처리
-     * Topic: robot/{MAC}/returned
+     * Topic: robot/{MAC}/IDLE
      * Payload: {"missionId": 101}
      */
-    private void handleReturned(String mac, String payload) {
+    private void handleIDLE(String mac, String payload) {
         log.info("로봇 관리소 복귀 알림 - MAC: {}", mac);
         try {
             JsonNode node = objectMapper.readTree(payload);
             long missionId = node.has("missionId") ? node.get("missionId").asLong() : -1;
-
-            Robot robot = robotRepository.findByMacAddress(mac)
-                    .orElseThrow(() -> new RuntimeException("로봇을 찾을 수 없습니다: " + mac));
             Mission mission = missionRepository.findById(missionId)
                             .orElseThrow(() -> new RuntimeException("미션을 찾을 수 없습니다" + missionId));
 
-
-            log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, missionId, robot.getId());
-            eventPublisher.publishEvent(new RobotReturnedEvent(missionId, robot.getId(), mac));
+            log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, missionId, mission.getRobot().getId());
+            eventPublisher.publishEvent(new RobotReturnedEvent(missionId, mission.getRobot().getId(), mac));
             eventPublisher.publishEvent(new RobotReturnedAdminEvent(
                     mission.getUser().getId(),
-                    robot.getRobotCode(),
+                    mission.getRobot().getRobotCode(),
                     missionId,
-                    //mission.getLocker().getLockercode()
+                    mission.getLocker().getLockerCode(),
                     "STORAGE_REQUIRED"
                     ));
         } catch (Exception e) {

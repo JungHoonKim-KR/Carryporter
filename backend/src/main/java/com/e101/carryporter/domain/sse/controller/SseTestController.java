@@ -18,50 +18,74 @@ public class SseTestController {
 
     private final SseService sseService;
 
-    // 1. 로봇 배정 알림 테스트 (모달창 뜨는지 확인)
-    // 호출 URL: http://localhost:8080/api/test/sse/assign?code=ROBOT-999
-    @GetMapping("/assign")
-    public String testAssignment(@RequestParam(defaultValue = "TEST-ROBOT-01") String code) {
+    // =================================================================================
+    // 🆕 1. [FIRST] 로봇 배정 알림 (보관 요청 -> 사물함 선택 필요)
+    // URL: http://localhost:8080/api/test/sse/assign/first?robotCode=ROBOT-101
+    // =================================================================================
+    @GetMapping("/assign/first")
+    public String testAssignFirst(@RequestParam(defaultValue = "ROBOT-101") String robotCode) {
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("msg", "로봇 배정이 완료되었습니다."); // 프론트에서 감지하는 핵심 키워드
-        data.put("robotCode", code);
-        data.put("timestamp", LocalDateTime.now());
+        // RobotAssignedEvent (Record) 구조 모의
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("userId", 1004L);
+        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("robotCode", robotCode);
+        eventData.put("callLocationName", "1층 로비");
+        eventData.put("locker_code", null); // FIRST는 사물함이 아직 없음
+        eventData.put("requestType", "FIRST");
 
-        // 이벤트 이름은 프론트엔드 로직에 따라 중요할 수도, 안 중요할 수도 있지만 맞춰줍니다.
-        sseService.broadcastToAdmins("message", data);
-        return "✅ [로봇 배정] 이벤트 전송 완료: " + code;
+        // 관리자에게 전송 (이벤트명: RobotAssignedEvent)
+        sseService.broadcastToAdmins("RobotAssignedEvent", eventData);
+
+        return "✅ [FIRST 배정] 이벤트 전송 완료 (사물함 선택 필요): " + robotCode;
     }
 
-    // 2. 미션 출발 알림 테스트 (토스트 메시지 뜨는지 확인)
-    // 호출 URL: http://localhost:8080/api/test/sse/start?code=ROBOT-999
+    // =================================================================================
+    // 🆕 2. [RECALL] 로봇 배정 알림 (수령/반납 -> 사물함 이미 있음)
+    // URL: http://localhost:8080/api/test/sse/assign/recall?robotCode=ROBOT-202
+    // =================================================================================
+    @GetMapping("/assign/recall")
+    public String testAssignRecall(@RequestParam(defaultValue = "ROBOT-202") String robotCode) {
+
+        // RobotAssignedEvent (Record) 구조 모의
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("userId", 8888L);
+        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("robotCode", robotCode);
+        eventData.put("callLocationName", "3층 회의실");
+        eventData.put("locker_code", "A-12"); // RECALL은 사물함이 이미 있음
+        eventData.put("requestType", "RECALL");
+
+        // 관리자에게 전송
+        sseService.broadcastToAdmins("RobotAssignedEvent", eventData);
+
+        return "🔄 [RECALL 배정] 이벤트 전송 완료 (사물함 A-12 확인): " + robotCode;
+    }
+
+
+    // =================================================================================
+    // 👇 기존 테스트 코드들 (유지)
+    // =================================================================================
+
+    // 3. 미션 출발 알림 테스트
     @GetMapping("/start")
     public String testStart(@RequestParam(defaultValue = "TEST-ROBOT-01") String code) {
-
         Map<String, Object> data = new HashMap<>();
-        data.put("msg", "로봇이 출발했습니다."); // 프론트 감지 키워드
+        data.put("msg", "로봇이 출발했습니다.");
         data.put("robotCode", code);
         data.put("timestamp", LocalDateTime.now());
-
         sseService.broadcastToAdmins("MissionStartedEvent", data);
-
         return "🚀 [미션 출발] 이벤트 전송 완료: " + code;
     }
 
-    // 3. 🏁 [로봇 복귀] 알림 테스트 (최종 점검 모달 확인용)
-    // URL: /test/sse/return?robotId=ROBOT-999
+    // 4. 로봇 복귀 알림 테스트
     @GetMapping("/return")
     public String testReturn(@RequestParam(defaultValue = "ROBOT-999") String robotId) {
-
-        // 실제 handleRobotReturned 메서드와 동일한 데이터 구조 생성
         Map<String, Object> data = new HashMap<>();
-        data.put("missionId", System.currentTimeMillis()); // 임의의 미션 ID 생성
-        data.put("robotId", robotId); // 파라미터로 받은 로봇 ID
-        data.put("message", "로봇이 관리소에 도착했습니다. 최종 점검을 진행해주세요."); // 프론트 감지 키워드 '도착' 포함
-
-        // 이벤트명 "ROBOT_RETURNED"로 전송
+        data.put("missionId", System.currentTimeMillis());
+        data.put("robotId", robotId);
+        data.put("message", "로봇이 관리소에 도착했습니다. 최종 점검을 진행해주세요.");
         sseService.broadcastToAdmins("ROBOT_RETURNED", data);
-
         return "🏁 [로봇 복귀] 이벤트 전송 완료 - ID: " + robotId;
     }
 }
