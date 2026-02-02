@@ -2,6 +2,8 @@ package com.e101.carryporter.domain.admin.controller;
 
 import com.e101.carryporter.domain.admin.controller.dto.request.*;
 import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.MissionResponseDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.RobotResponseDto;
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -86,6 +89,20 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/missions")
+    public ResponseEntity<List<MissionResponseDto>> getAllMissions() {
+        log.debug("관리자 전체 미션 조회 요청 (최대 15개)");
+        List<MissionResponseDto> missions = adminService.getAllMissions(15);
+        return ResponseEntity.ok(missions);
+    }
+
+    @GetMapping("/missions/{missionId}")
+    public ResponseEntity<MissionResponseDto> getMission(@PathVariable Long missionId) {
+        log.debug("관리자 미션 단건 조회 요청 - missionId: {}", missionId);
+        MissionResponseDto mission = adminService.getMission(missionId);
+        return ResponseEntity.ok(mission);
+    }
+
     @GetMapping("/lockers")
     public ResponseEntity<List<LockerResponseDto>> getAllLockers() {
         log.debug("관리자 전체 사물함 조회 요청");
@@ -112,6 +129,34 @@ public class AdminController {
         return ResponseEntity.ok(locker);
     }
 
+    @GetMapping("/users/count")
+    public ResponseEntity<Map<String, Long>> getUserCount() {
+        log.debug("관리자 전체 사용자 수 조회 요청");
+        long count = adminService.getUserCount();
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
+    @GetMapping("/robots")
+    public ResponseEntity<List<RobotResponseDto>> getAllRobots() {
+        log.debug("관리자 전체 로봇 조회 요청");
+        List<RobotResponseDto> robots = adminService.getAllRobots();
+        return ResponseEntity.ok(robots);
+    }
+
+    @GetMapping("/robots/{robotId}")
+    public ResponseEntity<RobotResponseDto> getRobot(@PathVariable Long robotId) {
+        log.debug("관리자 로봇 단건 조회 요청 - robotId: {}", robotId);
+        RobotResponseDto robot = adminService.getRobot(robotId);
+        return ResponseEntity.ok(robot);
+    }
+
+    @GetMapping("/robots/available/count")
+    public ResponseEntity<Map<String, Long>> getAvailableRobotCount() {
+        log.debug("관리자 가용 로봇 수 조회 요청");
+        Long count = adminService.getAvailableRobotCount();
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
     private ResponseCookie createRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
@@ -121,5 +166,7 @@ public class AdminController {
                 .sameSite("None")
                 .build();
     }
+
+
 
 }

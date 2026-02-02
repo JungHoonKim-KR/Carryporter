@@ -5,7 +5,16 @@ import com.e101.carryporter.domain.admin.controller.dto.request.FinalizeRequestD
 import com.e101.carryporter.domain.admin.controller.dto.request.JoinRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.LoginRequestDto;
 import com.e101.carryporter.domain.admin.controller.dto.request.UnlockRobotRequestDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.MissionResponseDto;
+import com.e101.carryporter.domain.admin.controller.dto.response.RobotResponseDto;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
+import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
+import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.user.exception.UserErrorCode;
 import com.e101.carryporter.global.exception.BusinessException;
 import com.e101.carryporter.support.WebMvcTestSupport;
@@ -14,15 +23,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 
 class AdminControllerTest extends WebMvcTestSupport {
@@ -626,6 +641,373 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
+
+    // ==================== 유저 수 조회 테스트 ====================
+
+    @Test
+    @DisplayName("전체 유저 수 조회 시 200 OK와 count를 반환한다")
+    void getUserCount() throws Exception {
+        // given
+        given(adminService.getUserCount()).willReturn(100L);
+
+        // when & then
+        mockMvc.perform(get("/admin/users/count"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(100));
+
+        verify(adminService, times(1)).getUserCount();
+    }
+
+    // ==================== 로봇 조회 테스트 ====================
+
+    @Test
+    @DisplayName("전체 로봇 조회 시 200 OK와 로봇 목록을 반환한다")
+    void getAllRobots() throws Exception {
+        // given
+        List<RobotResponseDto> robots = List.of(
+                RobotResponseDto.builder()
+                        .id(1L)
+                        .robotCode("ROBOT-001")
+                        .macAddress("AA:BB:CC:DD:EE:01")
+                        .robotStatus(RobotStatus.IDLE)
+                        .build(),
+                RobotResponseDto.builder()
+                        .id(2L)
+                        .robotCode("ROBOT-002")
+                        .macAddress("AA:BB:CC:DD:EE:02")
+                        .robotStatus(RobotStatus.BUSY)
+                        .build()
+        );
+
+        given(adminService.getAllRobots()).willReturn(robots);
+
+        // when & then
+        mockMvc.perform(get("/admin/robots"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].robotCode").value("ROBOT-001"))
+                .andExpect(jsonPath("$[0].robotStatus").value("IDLE"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].robotCode").value("ROBOT-002"))
+                .andExpect(jsonPath("$[1].robotStatus").value("BUSY"));
+
+        verify(adminService, times(1)).getAllRobots();
+    }
+
+    @Test
+    @DisplayName("로봇 단건 조회 시 200 OK와 로봇 정보를 반환한다")
+    void getRobot() throws Exception {
+        // given
+        Long robotId = 1L;
+        RobotResponseDto robot = RobotResponseDto.builder()
+                .id(robotId)
+                .robotCode("ROBOT-001")
+                .macAddress("AA:BB:CC:DD:EE:01")
+                .robotStatus(RobotStatus.IDLE)
+                .build();
+
+        given(adminService.getRobot(robotId)).willReturn(robot);
+
+        // when & then
+        mockMvc.perform(get("/admin/robots/{robotId}", robotId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.robotCode").value("ROBOT-001"))
+                .andExpect(jsonPath("$.macAddress").value("AA:BB:CC:DD:EE:01"))
+                .andExpect(jsonPath("$.robotStatus").value("IDLE"));
+
+        verify(adminService, times(1)).getRobot(robotId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 로봇 조회 시 404 Not Found를 반환한다")
+    void getRobot_NotFound() throws Exception {
+        // given
+        Long robotId = 999L;
+
+        given(adminService.getRobot(robotId))
+                .willThrow(new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/admin/robots/{robotId}", robotId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(RobotErrorCode.ROBOT_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminService, times(1)).getRobot(robotId);
+    }
+
+    @Test
+    @DisplayName("가용 로봇 수 조회 시 200 OK와 count를 반환한다")
+    void getAvailableRobotCount() throws Exception {
+        // given
+        given(adminService.getAvailableRobotCount()).willReturn(5L);
+
+        // when & then
+        mockMvc.perform(get("/admin/robots/available/count"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(5));
+
+        verify(adminService, times(1)).getAvailableRobotCount();
+    }
+
+    // ==================== 미션 조회 테스트 ====================
+
+    @Test
+    @DisplayName("전체 미션 조회 시 200 OK와 미션 목록을 반환한다 (최대 15개)")
+    void getAllMissions() throws Exception {
+        // given
+        LocalDateTime now = LocalDateTime.now();
+        List<MissionResponseDto> missions = List.of(
+                MissionResponseDto.builder()
+                        .id(1L)
+                        .userId(10L)
+                        .robotId(1L)
+                        .robotCode("ROBOT-001")
+                        .lockerId(1L)
+                        .lockerCode("LOCKER-001")
+                        .callLocationName("1층 로비")
+                        .missionStatus(MissionStatus.MOVING)
+                        .createdAt(now)
+                        .build(),
+                MissionResponseDto.builder()
+                        .id(2L)
+                        .userId(20L)
+                        .robotId(2L)
+                        .robotCode("ROBOT-002")
+                        .lockerId(null)
+                        .lockerCode(null)
+                        .callLocationName("2층 회의실")
+                        .missionStatus(MissionStatus.REQUESTED)
+                        .createdAt(now.minusHours(1))
+                        .build()
+        );
+
+        given(adminService.getAllMissions(15)).willReturn(missions);
+
+        // when & then
+        mockMvc.perform(get("/admin/missions"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].userId").value(10))
+                .andExpect(jsonPath("$[0].robotCode").value("ROBOT-001"))
+                .andExpect(jsonPath("$[0].missionStatus").value("MOVING"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].missionStatus").value("REQUESTED"));
+
+        verify(adminService, times(1)).getAllMissions(15);
+    }
+
+    @Test
+    @DisplayName("미션 단건 조회 시 200 OK와 미션 정보를 반환한다")
+    void getMission() throws Exception {
+        // given
+        Long missionId = 1L;
+        LocalDateTime now = LocalDateTime.now();
+        MissionResponseDto mission = MissionResponseDto.builder()
+                .id(missionId)
+                .userId(10L)
+                .robotId(1L)
+                .robotCode("ROBOT-001")
+                .lockerId(1L)
+                .lockerCode("LOCKER-001")
+                .callLocationName("1층 로비")
+                .missionStatus(MissionStatus.ARRIVED)
+                .assignedAt(now.minusMinutes(30))
+                .startedAt(now.minusMinutes(25))
+                .arrivedAt(now.minusMinutes(5))
+                .createdAt(now.minusMinutes(35))
+                .build();
+
+        given(adminService.getMission(missionId)).willReturn(mission);
+
+        // when & then
+        mockMvc.perform(get("/admin/missions/{missionId}", missionId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.userId").value(10))
+                .andExpect(jsonPath("$.robotId").value(1))
+                .andExpect(jsonPath("$.robotCode").value("ROBOT-001"))
+                .andExpect(jsonPath("$.lockerId").value(1))
+                .andExpect(jsonPath("$.lockerCode").value("LOCKER-001"))
+                .andExpect(jsonPath("$.callLocationName").value("1층 로비"))
+                .andExpect(jsonPath("$.missionStatus").value("ARRIVED"));
+
+        verify(adminService, times(1)).getMission(missionId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 미션 조회 시 404 Not Found를 반환한다")
+    void getMission_NotFound() throws Exception {
+        // given
+        Long missionId = 999L;
+
+        given(adminService.getMission(missionId))
+                .willThrow(new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/admin/missions/{missionId}", missionId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(MissionErrorCode.MISSION_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminService, times(1)).getMission(missionId);
+    }
+
+    // ==================== 사물함 조회 테스트 ====================
+
+    @Test
+    @DisplayName("전체 사물함 조회 시 200 OK와 사물함 목록을 반환한다")
+    void getAllLockers() throws Exception {
+        // given
+        List<LockerResponseDto> lockers = List.of(
+                LockerResponseDto.builder()
+                        .lockerId(1L)
+                        .lockerCode("LOCKER-001")
+                        .status(LockerStatus.AVAILABLE)
+                        .build(),
+                LockerResponseDto.builder()
+                        .lockerId(2L)
+                        .lockerCode("LOCKER-002")
+                        .status(LockerStatus.OCCUPIED)
+                        .build()
+        );
+
+        given(adminLockerService.getAllLockers()).willReturn(lockers);
+
+        // when & then
+        mockMvc.perform(get("/admin/lockers"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].lockerId").value(1))
+                .andExpect(jsonPath("$[0].lockerCode").value("LOCKER-001"))
+                .andExpect(jsonPath("$[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$[1].lockerId").value(2))
+                .andExpect(jsonPath("$[1].lockerCode").value("LOCKER-002"))
+                .andExpect(jsonPath("$[1].status").value("OCCUPIED"));
+
+        verify(adminLockerService, times(1)).getAllLockers();
+    }
+
+    @Test
+    @DisplayName("사물함 단건 조회 시 200 OK와 사물함 정보를 반환한다")
+    void getLocker() throws Exception {
+        // given
+        Long lockerId = 1L;
+        LockerResponseDto locker = LockerResponseDto.builder()
+                .lockerId(lockerId)
+                .lockerCode("LOCKER-001")
+                .status(LockerStatus.AVAILABLE)
+                .build();
+
+        given(adminLockerService.getLocker(lockerId)).willReturn(locker);
+
+        // when & then
+        mockMvc.perform(get("/admin/lockers/{lockerId}", lockerId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lockerId").value(1))
+                .andExpect(jsonPath("$.lockerCode").value("LOCKER-001"))
+                .andExpect(jsonPath("$.status").value("AVAILABLE"));
+
+        verify(adminLockerService, times(1)).getLocker(lockerId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사물함 조회 시 404 Not Found를 반환한다")
+    void getLocker_NotFound() throws Exception {
+        // given
+        Long lockerId = 999L;
+
+        given(adminLockerService.getLocker(lockerId))
+                .willThrow(new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/admin/lockers/{lockerId}", lockerId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(LockerErrorCode.LOCKER_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminLockerService, times(1)).getLocker(lockerId);
+    }
+
+    @Test
+    @DisplayName("사물함 상태 변경 시 200 OK와 변경된 사물함 정보를 반환한다")
+    void updateLockerStatus() throws Exception {
+        // given
+        Long lockerId = 1L;
+        LockerResponseDto updatedLocker = LockerResponseDto.builder()
+                .lockerId(lockerId)
+                .lockerCode("LOCKER-001")
+                .status(LockerStatus.OCCUPIED)
+                .build();
+
+        given(adminLockerService.updateLockerStatus(eq(lockerId), eq(LockerStatus.OCCUPIED)))
+                .willReturn(updatedLocker);
+
+        // when & then
+        mockMvc.perform(patch("/admin/lockers/{lockerId}/status", lockerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"OCCUPIED\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lockerId").value(1))
+                .andExpect(jsonPath("$.lockerCode").value("LOCKER-001"))
+                .andExpect(jsonPath("$.status").value("OCCUPIED"));
+
+        verify(adminLockerService, times(1)).updateLockerStatus(lockerId, LockerStatus.OCCUPIED);
+    }
+
+    @Test
+    @DisplayName("사물함 상태 변경 시 status가 null이면 400 Bad Request를 반환한다")
+    void updateLockerStatus_NullStatus() throws Exception {
+        // given
+        Long lockerId = 1L;
+
+        // when & then
+        mockMvc.perform(patch("/admin/lockers/{lockerId}/status", lockerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": null}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(adminLockerService, never()).updateLockerStatus(anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사물함 상태 변경 시 404 Not Found를 반환한다")
+    void updateLockerStatus_NotFound() throws Exception {
+        // given
+        Long lockerId = 999L;
+
+        given(adminLockerService.updateLockerStatus(eq(lockerId), eq(LockerStatus.OCCUPIED)))
+                .willThrow(new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(patch("/admin/lockers/{lockerId}/status", lockerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"OCCUPIED\"}"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(LockerErrorCode.LOCKER_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminLockerService, times(1)).updateLockerStatus(lockerId, LockerStatus.OCCUPIED);
+    }
+
+    // ==================== Helper Methods ====================
 
     private UnlockRobotRequestDto createUnlockRobotRequestDto(Long robotId) {
         return new UnlockRobotRequestDto(robotId);
