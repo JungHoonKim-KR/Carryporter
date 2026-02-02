@@ -36,4 +36,8 @@ public class Locker extends BaseEntity {
         this.lockerCode = lockerCode;
         this.lockerStatus = lockerStatus;
     }
+
+    public void updateStatus(LockerStatus status) {
+        this.lockerStatus = status;
+    }
 }
