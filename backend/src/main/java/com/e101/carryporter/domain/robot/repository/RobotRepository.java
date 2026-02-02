@@ -28,4 +28,9 @@ public class RobotRepository {
                 .getResultStream()
                 .findFirst();
     }
+
+    public void clearAll() {
+        em.createQuery("delete from Robot r")
+                .executeUpdate();
+    }
 }
