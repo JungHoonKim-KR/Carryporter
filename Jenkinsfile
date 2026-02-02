@@ -71,9 +71,10 @@ pipeline {
 
                     def jenkinsfileChanged = changes.any { it.contains('Jenkinsfile') }
                     def backendChanged = changes.any { it.startsWith('backend/') }
-                    // frontend/ 하위의 모든 변경 감지 (nginx/ 제외)
-                    def frontendCodeChanged = changes.any { it.startsWith('frontend/') && !it.startsWith('frontend/nginx/') }
-                    def nginxConfChanged = changes.any { it.startsWith('frontend/nginx/') }
+                    // frontend/ 하위의 모든 변경 감지
+                    def frontendCodeChanged = changes.any { it.startsWith('frontend/') }
+                    // nginx/ 설정 변경 감지 (루트의 nginx 폴더)
+                    def nginxConfChanged = changes.any { it.startsWith('nginx/') }
 
                     // Jenkinsfile이 바뀌면 전체 빌드
                     env.BUILD_BACKEND = (jenkinsfileChanged || backendChanged) ? 'true' : 'false'
@@ -191,7 +192,7 @@ pipeline {
 
                     # 1. React 빌드
                     echo "Building React application..."
-                    docker build --no-cache -t frontend-builder -f frontend/nginx/Dockerfile .
+                    docker build --no-cache -t frontend-builder -f nginx/Dockerfile .
 
                     # 2. 빌드 결과물을 대상 디렉토리에 복사
                     echo "Copying build output to dist-$TARGET_COLOR..."
@@ -200,7 +201,7 @@ pipeline {
 
                     # 3. nginx.conf 생성 (placeholder 치환)
                     echo "Generating nginx config for $TARGET_COLOR..."
-                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    cp nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 4. 설정 검증 후 restart
@@ -229,7 +230,7 @@ pipeline {
                     CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color 2>/dev/null || echo "blue")
 
                     # nginx.conf 생성 (placeholder 치환)
-                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    cp nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 설정 검증 후 restart

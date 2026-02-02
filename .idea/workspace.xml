@@ -4,8 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] MQTT 통합테스트(구 버전) 삭제">
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 락커 조회">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/Jenkinsfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/CarryporterApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/CarryporterApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/nginx/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/nginx/default.conf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/store/authStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/store/authStore.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,6 +87,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Gradle.AdminControllerTest.executor": "Run",
+    "Gradle.AdminLockerControllerTest.executor": "Run",
     "Gradle.Build backend.executor": "Run",
     "Gradle.CarryporterApplicationTests.executor": "Run",
     "Gradle.MqttCommandHandlerIntegrationTest.executor": "Run",
@@ -91,7 +97,8 @@
     "Gradle.MqttMissionFlowIntegrationTest.testRobotArrived.executor": "Run",
     "Gradle.MqttMissionFlowIntegrationTest.testRobotRegister.executor": "Run",
     "Gradle.MqttPublisherServiceTest.executor": "Run",
-    "Gradle.MqttSubscriberServiceTest.executor": "Run",
+    "Gradle.MqttRealBrokerTest.testPublish.executor": "Run",
+    "Gradle.MqttRealBrokerTest.testPublishWithoutPayload.executor": "Run",
     "Gradle.RobotRepositoryTest.findByMacAddress.executor": "Run",
     "Gradle.RobotServiceTest.executor": "Run",
     "Gradle.Tests in 'carryporter.test'.executor": "Run",
@@ -109,7 +116,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CarryporterApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "!82 on develop",
+    "git-widget-placeholder": "release",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
@@ -123,18 +130,24 @@
     "project.structure.side.proportion": "0.2",
     "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "ts.external.directory.path": "C:\\Users\\SSAFY\\projects\\S14P11E101\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\SSAFY\projects\S14P11E101" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\SSAFY\projects\S14P11E101" />
       <recent name="C:\Users\SSAFY\projects\S14P11E101\.gitlab\merge_request_templates" />
       <recent name="C:\Users\SSAFY\projects\S14P11E101\backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.Tests in 'carryporter.test'">
-    <configuration name="MqttIntegrationTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+
+  <component name="RunManager" selected="Gradle.AdminLockerControllerTest">
+    <configuration name="AdminLockerControllerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -147,7 +160,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttIntegrationTest&quot;" />
+            <option value="&quot;com.e101.carryporter.domain.admin.controller.AdminLockerControllerTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -161,7 +174,8 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttMissionFlowIntegrationTest.testRobotArrived" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+
+    <configuration name="MqttRealBrokerTest.testPublish" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -174,7 +188,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotArrived&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttRealBrokerTest.testPublish&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -188,7 +202,8 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttMissionFlowIntegrationTest.testRobotRegister" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+
+    <configuration name="MqttRealBrokerTest.testPublishWithoutPayload" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -201,7 +216,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotRegister&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttRealBrokerTest.testPublishWithoutPayload&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -215,33 +230,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttSubscriberServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttSubscriberServiceTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
-      <method v="2" />
-    </configuration>
+
     <configuration name="Tests in 'carryporter.test'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -267,6 +256,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
+
     <configuration name="CarryporterApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="carryporter.main" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.e101.carryporter.CarryporterApplication" />
@@ -274,16 +264,18 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.AdminLockerControllerTest" />
+        <item itemvalue="Gradle.MqttRealBrokerTest.testPublish" />
+        <item itemvalue="Gradle.MqttRealBrokerTest.testPublishWithoutPayload" />
         <item itemvalue="Gradle.Tests in 'carryporter.test'" />
-        <item itemvalue="Gradle.MqttIntegrationTest" />
-        <item itemvalue="Gradle.MqttSubscriberServiceTest" />
-        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotArrived" />
-        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotRegister" />
+        <item itemvalue="Gradle.RobotServiceTest" />
       </list>
     </recent_temporary>
   </component>
+
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -292,6 +284,7 @@
       </set>
     </attachedChunks>
   </component>
+
   <component name="TaskManager">
     <task active="true" id="Default" summary="디폴트 작업">
       <changelist id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="" />
@@ -305,6 +298,7 @@
       <workItem from="1769670842921" duration="14198000" />
       <workItem from="1769989400565" duration="9784000" />
     </task>
+
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
       <created>1769432098911</created>
@@ -313,6 +307,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769432098911</updated>
     </task>
+
     <task id="LOCAL-00002" summary="[Infra] api 경로 변경">
       <option name="closed" value="true" />
       <created>1769588313658</created>
@@ -321,6 +316,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769588313658</updated>
     </task>
+
     <task id="LOCAL-00003" summary="[Infra] gitignore 추가">
       <option name="closed" value="true" />
       <created>1769588556671</created>
@@ -329,6 +325,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769588556671</updated>
     </task>
+
     <task id="LOCAL-00004" summary="[BE] mqttHandler 추가">
       <option name="closed" value="true" />
       <created>1769607777544</created>
@@ -337,6 +334,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769607777544</updated>
     </task>
+
     <task id="LOCAL-00005" summary="[BE] mqttHandler 추가">
       <option name="closed" value="true" />
       <created>1769607944059</created>
@@ -345,6 +343,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769607944059</updated>
     </task>
+
     <task id="LOCAL-00006" summary="[BE] 기타 파일 제거">
       <option name="closed" value="true" />
       <created>1769608086129</created>
@@ -353,6 +352,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769608086129</updated>
     </task>
+
     <task id="LOCAL-00007" summary="MR 템플릿 추가(테스트)">
       <option name="closed" value="true" />
       <created>1769608175823</created>
@@ -361,6 +361,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769608175823</updated>
     </task>
+
     <task id="LOCAL-00008" summary="MR 템플릿 추가(테스트)">
       <option name="closed" value="true" />
       <created>1769608233465</created>
@@ -369,6 +370,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769608233465</updated>
     </task>
+
     <task id="LOCAL-00009" summary="MR 템플릿 위치 변경">
       <option name="closed" value="true" />
       <created>1769608437671</created>
@@ -377,6 +379,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769608437671</updated>
     </task>
+
     <task id="LOCAL-00010" summary="MR 템플릿 위치 변경">
       <option name="closed" value="true" />
       <created>1769608766636</created>
@@ -385,6 +388,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769608766636</updated>
     </task>
+
     <task id="LOCAL-00011" summary="[INFRA] frontend 수정">
       <option name="closed" value="true" />
       <created>1769671117660</created>
@@ -393,6 +397,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769671117660</updated>
     </task>
+
     <task id="LOCAL-00012" summary="[BE] 로봇 반납 로직 + 테스트용 인가필터 빈 추가">
       <option name="closed" value="true" />
       <created>1769683989831</created>
@@ -401,6 +406,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769683989831</updated>
     </task>
+
     <task id="LOCAL-00013" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
       <option name="closed" value="true" />
       <created>1769687149454</created>
@@ -409,6 +415,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769687149454</updated>
     </task>
+
     <task id="LOCAL-00014" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
       <option name="closed" value="true" />
       <created>1769687537956</created>
@@ -417,6 +424,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769687537956</updated>
     </task>
+
     <task id="LOCAL-00015" summary="[INFRA] https : nginx 설정 및 jenkins 설정 변경">
       <option name="closed" value="true" />
       <created>1769689209380</created>
@@ -425,6 +433,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769689209380</updated>
     </task>
+
     <task id="LOCAL-00016" summary="[INFRA] 프론트 배포 테스트">
       <option name="closed" value="true" />
       <created>1769689433858</created>
@@ -433,6 +442,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769689433858</updated>
     </task>
+
     <task id="LOCAL-00017" summary="[INFRA] 프론트 배포 테스트">
       <option name="closed" value="true" />
       <created>1769689797351</created>
@@ -441,6 +451,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769689797351</updated>
     </task>
+
     <task id="LOCAL-00018" summary="[BE] 이벤트 파일 추가">
       <option name="closed" value="true" />
       <created>1769691011986</created>
@@ -449,6 +460,7 @@
       <option name="project" value="LOCAL" />
       <updated>1769691011986</updated>
     </task>
+
     <task id="LOCAL-00019" summary="[BE] 테스트 수정">
       <option name="closed" value="true" />
       <created>1769740221607</created>
@@ -457,36 +469,24 @@
       <option name="project" value="LOCAL" />
       <updated>1769740221607</updated>
     </task>
-    <task id="LOCAL-00020" summary="[BE] MQTT 아키텍처 변경">
+
+    <task id="LOCAL-00020" summary="[BE] 락커 조회">
       <option name="closed" value="true" />
-      <created>1769998522138</created>
+      <created>1769761512177</created>
       <option name="number" value="00020" />
       <option name="presentableId" value="LOCAL-00020" />
       <option name="project" value="LOCAL" />
-      <updated>1769998522138</updated>
+      <updated>1769761512177</updated>
     </task>
-    <task id="LOCAL-00021" summary="[BE] MQTT 통합테스트(구 버전) 삭제">
-      <option name="closed" value="true" />
-      <created>1769998857919</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1769998857919</updated>
-    </task>
-    <task id="LOCAL-00022" summary="[BE] MQTT 통합테스트(구 버전) 삭제">
-      <option name="closed" value="true" />
-      <created>1769999135432</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1769999135432</updated>
-    </task>
-    <option name="localTasksCounter" value="23" />
+
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
+
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[BE] MQTT pub 구현" />
     <MESSAGE value="[Infra] api 경로 변경" />
@@ -501,17 +501,26 @@
     <MESSAGE value="[INFRA] 프론트 배포 테스트" />
     <MESSAGE value="[BE] 이벤트 파일 추가" />
     <MESSAGE value="[BE] 테스트 수정" />
-    <MESSAGE value="[BE] MQTT 아키텍처 변경" />
-    <MESSAGE value="[BE] MQTT 통합테스트(구 버전) 삭제" />
-    <option name="LAST_COMMIT_MESSAGE" value="[BE] MQTT 통합테스트(구 버전) 삭제" />
+    <MESSAGE value="[BE] 락커 조회" />
+    <option name="LAST_COMMIT_MESSAGE" value="[BE] 락커 조회" />
   </component>
+
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
+        <line-breakpoint enabled="true" type="java-method">
+          <url>file://$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttRealBrokerTest.java</url>
+          <line>36</line>
+          <properties class="com.e101.carryporter.global.service.mqtt.MqttRealBrokerTest" method="testPublish">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java</url>
-          <line>28</line>
-          <option name="timeStamp" value="5" />
+          <url>file://$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttRealBrokerTest.java</url>
+          <line>135</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
