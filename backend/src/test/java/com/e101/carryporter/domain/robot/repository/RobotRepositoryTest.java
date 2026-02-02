@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,11 @@ class RobotRepositoryTest extends IntegrationTestSupport {
 
     @Autowired
     EntityManager em;
+
+    @AfterEach
+    void tearDown() {
+        robotRepository.clearAll();
+    }
 
     @DisplayName("로봇을 저장할 수 있다.")
     @Test

@@ -18,6 +18,10 @@ pipeline {
         NGINX_CONTAINER = "nginx"
         NGINX_IMAGE = "nginx-frontend:latest"
 
+        // Admin Frontend
+        ADMIN_NGINX_CONTAINER = "nginx-admin"
+        ADMIN_NGINX_IMAGE = "nginx-admin:latest"
+
         // Infrastructure
         MYSQL_CONTAINER = "mysql"
         REDIS_CONTAINER = "redis"
@@ -71,24 +75,31 @@ pipeline {
 
                     def jenkinsfileChanged = changes.any { it.contains('Jenkinsfile') }
                     def backendChanged = changes.any { it.startsWith('backend/') }
-                    // frontend/ 하위의 모든 변경 감지 (nginx/ 제외)
-                    def frontendCodeChanged = changes.any { it.startsWith('frontend/') && !it.startsWith('frontend/nginx/') }
-                    def nginxConfChanged = changes.any { it.startsWith('frontend/nginx/') }
+                    // frontend/ 하위의 모든 변경 감지
+                    def frontendCodeChanged = changes.any { it.startsWith('frontend/') }
+                    // admin-fronted/ 변경 감지
+                    def adminFrontendChanged = changes.any { it.startsWith('admin-fronted/') }
+                    // nginx/ 설정 변경 감지 (루트의 nginx 폴더)
+                    def nginxConfChanged = changes.any { it.startsWith('nginx/') && !it.startsWith('nginx/admin/') }
+                    // nginx/admin/ 설정 변경 감지
+                    def nginxAdminConfChanged = changes.any { it.startsWith('nginx/admin/') }
 
                     // Jenkinsfile이 바뀌면 전체 빌드
                     env.BUILD_BACKEND = (jenkinsfileChanged || backendChanged) ? 'true' : 'false'
                     // React 코드 변경 → React 빌드 + nginx 이미지 재생성
                     env.BUILD_FRONTEND = (jenkinsfileChanged || frontendCodeChanged) ? 'true' : 'false'
+                    // Admin React 코드 변경 → Admin 빌드
+                    env.BUILD_ADMIN_FRONTEND = (jenkinsfileChanged || adminFrontendChanged || nginxAdminConfChanged) ? 'true' : 'false'
                     // nginx 설정만 변경 → nginx 이미지만 재생성 (React 빌드는 Docker 캐시 사용)
                     env.BUILD_NGINX_CONF = (nginxConfChanged) ? 'true' : 'false'
 
-                    if (!jenkinsfileChanged && !backendChanged && !frontendCodeChanged && !nginxConfChanged) {
+                    if (!jenkinsfileChanged && !backendChanged && !frontendCodeChanged && !adminFrontendChanged && !nginxConfChanged && !nginxAdminConfChanged) {
                         echo "No relevant changes detected. Skipping deployment."
                         currentBuild.result = 'NOT_BUILT'
-                        error("No backend, frontend, or Jenkinsfile changes detected")
+                        error("No backend, frontend, admin-frontend, or Jenkinsfile changes detected")
                     }
 
-                    echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Frontend: ${env.BUILD_FRONTEND}, Nginx Conf: ${env.BUILD_NGINX_CONF}"
+                    echo "Build Triggered - Backend: ${env.BUILD_BACKEND}, Frontend: ${env.BUILD_FRONTEND}, Admin: ${env.BUILD_ADMIN_FRONTEND}, Nginx Conf: ${env.BUILD_NGINX_CONF}"
                 }
             }
         }
@@ -191,7 +202,7 @@ pipeline {
 
                     # 1. React 빌드
                     echo "Building React application..."
-                    docker build --no-cache -t frontend-builder -f frontend/nginx/Dockerfile .
+                    docker build --no-cache -t frontend-builder -f nginx/Dockerfile .
 
                     # 2. 빌드 결과물을 대상 디렉토리에 복사
                     echo "Copying build output to dist-$TARGET_COLOR..."
@@ -200,7 +211,7 @@ pipeline {
 
                     # 3. nginx.conf 생성 (placeholder 치환)
                     echo "Generating nginx config for $TARGET_COLOR..."
-                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    cp nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 4. 설정 검증 후 restart
@@ -229,7 +240,7 @@ pipeline {
                     CURRENT_COLOR=$(cat /home/ubuntu/frontend/active_color 2>/dev/null || echo "blue")
 
                     # nginx.conf 생성 (placeholder 치환)
-                    cp frontend/nginx/default.conf /home/ubuntu/frontend/nginx.conf
+                    cp nginx/default.conf /home/ubuntu/frontend/nginx.conf
                     sed -i "s|__FRONT_ROOT__|/home/ubuntu/frontend/dist-$CURRENT_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 설정 검증 후 restart
@@ -237,6 +248,48 @@ pipeline {
                     docker restart ${NGINX_CONTAINER}
 
                     echo "Nginx config updated (active: $CURRENT_COLOR)"
+                '''
+            }
+        }
+
+        stage('Build & Deploy Admin Frontend (Blue-Green)') {
+            when {
+                expression { env.BUILD_ADMIN_FRONTEND == 'true' }
+            }
+            steps {
+                sh '''
+                    set -euo pipefail
+                    echo "=== Admin Frontend Blue-Green Deployment ==="
+
+                    # 디렉토리 초기화 (최초 실행 시)
+                    mkdir -p /home/ubuntu/admin-frontend/dist-blue
+                    mkdir -p /home/ubuntu/admin-frontend/dist-green
+
+                    # 현재 활성 색상 확인 (없으면 blue가 기본)
+                    CURRENT_COLOR=$(cat /home/ubuntu/admin-frontend/active_color 2>/dev/null || echo "blue")
+
+                    # 배포 대상 색상 결정 (토글)
+                    if [ "$CURRENT_COLOR" = "blue" ]; then
+                        TARGET_COLOR="green"
+                    else
+                        TARGET_COLOR="blue"
+                    fi
+
+                    echo "Current: $CURRENT_COLOR -> Target: $TARGET_COLOR"
+
+                    # 1. Admin React 빌드
+                    echo "Building Admin React application..."
+                    docker build --no-cache -t admin-frontend-builder -f nginx/admin/Dockerfile .
+
+                    # 2. 빌드 결과물을 대상 디렉토리에 복사
+                    echo "Copying build output to dist-$TARGET_COLOR..."
+                    rm -rf /home/ubuntu/admin-frontend/dist-$TARGET_COLOR/*
+                    docker run --rm -v /home/ubuntu/admin-frontend/dist-$TARGET_COLOR:/output admin-frontend-builder sh -c "cp -r /tmp/dist/* /output/"
+
+                    # 3. 활성 색상 업데이트
+                    echo "$TARGET_COLOR" > /home/ubuntu/admin-frontend/active_color
+
+                    echo "=== Admin Frontend deployed to $TARGET_COLOR ==="
                 '''
             }
         }
