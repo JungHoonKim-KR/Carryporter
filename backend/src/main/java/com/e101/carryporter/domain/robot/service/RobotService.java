@@ -15,6 +15,7 @@ import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -150,8 +151,11 @@ public class RobotService {
         eventPublisher.publishEvent(new AdminLockRequestEvent(missionId, robot.getMacAddress()));
     }
 
-    public void unlockByAdmin(Long missionId, Long robotId) {
-        Robot robot = findById(robotId);
+    public void unlockByAdmin(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
+
+        Robot robot = mission.getRobot();
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
     }
 

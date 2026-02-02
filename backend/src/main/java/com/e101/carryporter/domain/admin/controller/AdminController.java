@@ -57,10 +57,10 @@ public class AdminController {
 
 
     @PostMapping("/missions/{missionId}/unlock")
-    public ResponseEntity<Void> unlockRobot(@RequestBody @Valid UnlockRobotRequestDto requestDto, @PathVariable Long missionId) {
-        log.debug("관리자 권한 잠금 해제 요청 robot id = {}", requestDto.getRobotId());
+    public ResponseEntity<Void> unlockRobot( @PathVariable Long missionId) {
+        log.debug("관리자 권한 잠금 해제 요청 mission id = {}", missionId);
 
-        robotService.unlockByAdmin(missionId, requestDto.getRobotId());
+        robotService.unlockByAdmin(missionId);
         return ResponseEntity.noContent().build();
     }
 

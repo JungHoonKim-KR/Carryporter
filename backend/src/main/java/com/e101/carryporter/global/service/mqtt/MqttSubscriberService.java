@@ -191,6 +191,7 @@ public class MqttSubscriberService {
                         mission.getUser().getId(),
                         mission.getRobot().getRobotCode(),
                         mission.getId(),
+                        mission.getLocker().getId(),
                         mission.getLocker().getLockerCode(),
                         "STORAGE_REQUIRED"
                 ));

@@ -51,7 +51,7 @@ public class SseTestController {
         // RobotAssignedEvent (Record) 구조 모의
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("userId", 8888L);
-        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("missionId", "1770000506127");
         eventData.put("robotCode", robotCode);
         eventData.put("callLocationName", "3층 회의실");
         eventData.put("locker_code", "A-12"); // RECALL은 사물함이 이미 있음
@@ -93,7 +93,8 @@ public class SseTestController {
         // RobotReturnedAdminEvent 타입에 맞춘 데이터
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("userId", 3003L);
-        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("missionId", "1770000506127");
+        eventData.put("lockerId", 10L);
         eventData.put("robotCode", robotCode); // 프론트 타입: robotCode (robotId 아님)
         eventData.put("lockerCode", lockerCode); // 관리자가 넣어야 할 사물함
         eventData.put("message", "로봇이 관리소에 도착했습니다.");
