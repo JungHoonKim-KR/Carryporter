@@ -19,7 +19,7 @@ public class RobotMacMappingRepository {
     // mac - pk 저장 메서드
     public void save(String macAddress, Long robotId) {
         try {
-            redisTemplate.opsForValue().set(getKey(macAddress), robotId);
+            redisTemplate.opsForValue().set(getKey(macAddress), robotId.toString());
             log.debug("mac 매핑 저장: macAddress={}, robotId={}", macAddress, robotId);
         } catch (Exception e) {
             log.error("mac 매핑 저장 실패 : macAddress = {}, robotId = {}", macAddress, robotId, e);

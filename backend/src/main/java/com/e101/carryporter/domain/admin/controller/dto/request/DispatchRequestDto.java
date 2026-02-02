@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.admin.controller.dto.request;
 
 import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DispatchRequestDto {
 
     @NotNull(message = "빈값은 허용되지 않습니다.")

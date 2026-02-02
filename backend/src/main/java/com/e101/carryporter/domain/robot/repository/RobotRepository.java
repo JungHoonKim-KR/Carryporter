@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,5 +28,15 @@ public class RobotRepository {
                 .setParameter("macAddress", macAddress)
                 .getResultStream()
                 .findFirst();
+    }
+
+    public List<Robot> findAll() {
+        return em.createQuery("SELECT r FROM Robot r", Robot.class)
+                .getResultList();
+    }
+
+    public void clearAll() {
+        em.createQuery("delete from Robot r")
+                .executeUpdate();
     }
 }

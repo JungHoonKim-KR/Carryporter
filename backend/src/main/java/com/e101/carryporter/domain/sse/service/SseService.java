@@ -9,6 +9,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -20,34 +23,56 @@ public class SseService {
     // 연결 유지 시간: 60분
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
 
-    /**
-     * 클라이언트 연결 (구독)
-     * @param id   사용자 ID (PK: Long)
-     * @param role 사용자의 역할 (Role Enum의 name() 값 전달 권장)
-     */
+    // 하트비트 간격: 45초 (Nginx 기본 타임아웃 60초보다 짧아야 함)
+    private static final Long HEARTBEAT_INTERVAL = 15L;
+
     public SseEmitter subscribe(Long id, String role) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        // 1. 저장소 저장 및 콜백 설정
-        // ✅ 하드코딩된 "ROLE_ADMIN" 대신 Enum의 name()과 비교 (혹은 equalsIgnoreCase)
+        // 1. 하트비트 스케줄러 설정
+        // 각 연결마다 독립적인 하트비트를 보내기 위해 스케줄러를 생성합니다.
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        // 45초마다 빈 이벤트를 전송하여 연결 유지
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("heartbeat")
+                        .data("keep-alive"));
+            } catch (IOException e) {
+                log.debug("[SSE-HEARTBEAT] 연결 종료로 인한 하트비트 중단 | ID: {}", id);
+                scheduler.shutdown();
+            }
+        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+
+        // 2. 콜백 설정 (연결 종료/타임아웃 시 스케줄러도 함께 종료)
         if (Role.ADMIN.name().equals(role)) {
-            emitter.onCompletion(() -> emitterRepository.deleteAdmin(id));
-            emitter.onTimeout(() -> emitterRepository.deleteAdmin(id));
+            emitter.onCompletion(() -> {
+                emitterRepository.deleteAdmin(id);
+                scheduler.shutdown();
+            });
+            emitter.onTimeout(() -> {
+                emitterRepository.deleteAdmin(id);
+                scheduler.shutdown();
+            });
             emitterRepository.saveAdmin(id, emitter);
         } else {
-            // "BASIC"이거나 그 외의 경우
-            emitter.onCompletion(() -> emitterRepository.deleteUser(id));
-            emitter.onTimeout(() -> emitterRepository.deleteUser(id));
+            emitter.onCompletion(() -> {
+                emitterRepository.deleteUser(id);
+                scheduler.shutdown();
+            });
+            emitter.onTimeout(() -> {
+                emitterRepository.deleteUser(id);
+                scheduler.shutdown();
+            });
             emitterRepository.saveUser(id, emitter);
         }
 
-        // 2. 더미 데이터 전송 (503 Service Unavailable 방지)
-        // ✅ SseEventName.CONNECT.getValue() 대신 직관적으로 "CONNECT" 문자열 사용
+        // 3. 최초 연결 더미 데이터 전송
         sendToClient(emitter, id, "CONNECT", "Connected! [Role: " + role + "]");
 
         return emitter;
     }
-
 
     /**
      * [ADMIN] 모든 관리자에게 알림 전송
@@ -93,4 +118,6 @@ public class SseService {
             log.error("[SSE-SERVICE] 알 수 없는 전송 에러 | ID: {}", id, e);
         }
     }
+
+
 }

@@ -30,13 +30,18 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             "/auth/reissue",
             "/api/auth/request",
             "/api/auth/verify",
-            "/api/auth/reissue"
+            "/api/auth/reissue",
+            //프론트 테스트 용
+            "/api/test/sse",
+            "/test/sse"
     );
 
     // 관리자 전용 URL 목록
     private static final List<String> ADMIN_ONLY_PATHS = Arrays.asList(
             "/admin",
-            "/api/admin"
+            "/api/admin",
+            "/admin/join",
+            "/admin/login"
     );
 
     @Override

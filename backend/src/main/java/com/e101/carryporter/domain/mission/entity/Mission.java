@@ -2,6 +2,8 @@ package com.e101.carryporter.domain.mission.entity;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
+import com.e101.carryporter.domain.locker.entity.UserLockerStatus;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.user.entity.User;
@@ -50,7 +52,7 @@ public class Mission extends BaseEntity {
     private MissionStatus missionStatus;
 
     // robot 할당시간
-    private LocalDateTime assignedAt;
+    private LocalDateTime robotAssignedAt;
 
     // robot 주행 시작시간
     private LocalDateTime startedAt;
@@ -61,12 +63,20 @@ public class Mission extends BaseEntity {
     // 미션 완료시간
     private LocalDateTime finishedAt;
 
+    // 사물함 배정 시간
+    private LocalDateTime lockerAssignedAt;
+
+    // 사용자 사물함 상태
+    @Enumerated(EnumType.STRING)
+    private UserLockerStatus userLockerStatus;
+
     // 새로운 미션 생성
     public static Mission createMission(User user, Location callLocation) {
         return Mission.builder()
                 .user(user)
                 .callLocation(callLocation)
                 .missionStatus(MissionStatus.REQUESTED)
+                .userLockerStatus(UserLockerStatus.READY)
                 .build();
     }
 
@@ -75,7 +85,14 @@ public class Mission extends BaseEntity {
         this.robot = robot;
         this.missionStatus = MissionStatus.ASSIGNED;
         robot.changeStatus(RobotStatus.BUSY);
-        this.assignedAt = LocalDateTime.now();
+        this.robotAssignedAt = LocalDateTime.now();
+    }
+
+    // 미션에 사물함 배정
+    public void assignLocker(Locker locker){
+        this.locker = locker;
+        this.lockerAssignedAt = LocalDateTime.now();
+        this.userLockerStatus = UserLockerStatus.OCCUPIED;
     }
 
     // 로봇 주행 시작
@@ -84,10 +101,28 @@ public class Mission extends BaseEntity {
         this.startedAt = LocalDateTime.now();
     }
 
+    // 로봇 목적지 도착 완료
+    public void arrive() {
+        this.missionStatus = MissionStatus.ARRIVED;
+        this.arrivedAt = LocalDateTime.now();
+    }
+
+    // 미션 종료
+    public void finis() {
+        this.missionStatus = MissionStatus.FINISHED;
+        this.userLockerStatus = UserLockerStatus.COMPLETED;
+        this.finishedAt = LocalDateTime.now();
+    }
+
     @Builder
-    private Mission(User user, Location callLocation, MissionStatus missionStatus) {
+    private Mission(User user, Location callLocation, MissionStatus missionStatus, UserLockerStatus userLockerStatus) {
         this.user = user;
         this.callLocation = callLocation;
         this.missionStatus = missionStatus;
+        this.userLockerStatus = userLockerStatus;
+    }
+
+    public void failed() {
+        this.missionStatus = MissionStatus.FAILED;
     }
 }

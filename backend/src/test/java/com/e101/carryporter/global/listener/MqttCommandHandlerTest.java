@@ -66,7 +66,7 @@ class MqttCommandHandlerTest {
     class MissionEvents {
 
         @Test
-        @DisplayName("MissionStartedEvent 발생 시 로봇에게 배송 명령 전송")
+        @DisplayName("MissionStartedEvent 발생 시 로봇에게 이동 명령 전송")
         void handleMissionStarted() {
             // given
             Double destX = 10.5;
@@ -77,7 +77,7 @@ class MqttCommandHandlerTest {
             mqttCommandHandler.handleMissionStarted(event);
 
             // then
-            verify(mqttPublisherService).sendDeliverCommand(TEST_MAC, destX, destY);
+            verify(mqttPublisherService).sendDispatchCommand(TEST_MAC, destX, destY);
         }
 
         @Test

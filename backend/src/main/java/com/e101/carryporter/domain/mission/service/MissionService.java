@@ -2,6 +2,9 @@ package com.e101.carryporter.domain.mission.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
+import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
@@ -9,6 +12,7 @@ import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.user.entity.User;
@@ -18,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -30,6 +35,7 @@ public class MissionService {
     private final UserService userService;
     private final LocationService locationService;
     private final RobotRepository robotRepository;
+    private final LockerRepository lockerRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Mission findById(Long missionId) {
@@ -65,7 +71,12 @@ public class MissionService {
         // robot 이 idle 상태인지 검증
         validateIdleRobot(robot);
 
+        // 이전 상태 저장
+        RobotStatus previousStatus = robot.getRobotStatus();
+
         mission.assignRobot(robot);
+
+        eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(robot.getId(), robot.getRobotCode(), previousStatus, robot.getRobotStatus()));
     }
 
     @Transactional
@@ -76,9 +87,19 @@ public class MissionService {
         mission.dispatch();
     }
 
+    @Transactional
+    public void failMission(Long missionId) {
+        log.debug("미션 실패!! mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        mission.failed();
+    }
+
+
     private void validateIdleRobot(Robot robot) {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
             throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
         }
     }
+
 }

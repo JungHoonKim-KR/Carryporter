@@ -3,7 +3,7 @@ package com.e101.carryporter.global.listener;
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
-import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
+import com.e101.carryporter.domain.mission.event.MissionLockRequestEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
@@ -80,7 +80,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
     class MissionEventsIntegration {
 
         @Test
-        @DisplayName("MissionStartedEvent 발행 시 MQTT deliver 명령 전송")
+        @DisplayName("MissionStartedEvent 발행 시 MQTT move 명령 전송")
         void publishMissionStarted() {
             // given
             Double destX = 10.5;
@@ -91,7 +91,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
             eventPublisher.publishEvent(event);
 
             // then
-            verifyMqttDeliverCommand(TEST_MAC, destX, destY);
+            verifyMqttMoveCommand(TEST_MAC, destX, destY);
         }
 
         @Test
@@ -110,10 +110,10 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("MissionLockedEvent 발행 시 MQTT lock 명령 전송")
-        void publishMissionLocked() {
+        @DisplayName("MissionLockRequestEvent 발행 시 MQTT lock 명령 전송")
+        void publishMissionLockRequest() {
             // given
-            MissionLockedEvent event = new MissionLockedEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
+            MissionLockRequestEvent event = new MissionLockRequestEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
 
             // when
             eventPublisher.publishEvent(event);
@@ -169,7 +169,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         printResult(action, actualTopic, capturedMessage.getPayload());
     }
 
-    private void verifyMqttDeliverCommand(String mac, Double destX, Double destY) {
+    private void verifyMqttMoveCommand(String mac, Double destX, Double destY) {
         ArgumentCaptor<Message<String>> messageCaptor = ArgumentCaptor.forClass(Message.class);
         verify(mqttOutbound, timeout(ASYNC_TIMEOUT_MS)).handleMessage(messageCaptor.capture());
 
@@ -177,13 +177,13 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         String actualTopic = (String) capturedMessage.getHeaders().get(MqttHeaders.TOPIC);
         String actualPayload = capturedMessage.getPayload();
 
-        String expectedTopic = String.format("robot/%s/command/deliver", mac);
+        String expectedTopic = String.format("robot/%s/command/dispatch", mac);
         String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
 
         assertThat(actualTopic).isEqualTo(expectedTopic);
         assertThat(actualPayload).isEqualTo(expectedPayload);
 
-        printResult("deliver", actualTopic, actualPayload);
+        printResult("dispatch", actualTopic, actualPayload);
     }
 
     private void printResult(String action, String topic, String payload) {

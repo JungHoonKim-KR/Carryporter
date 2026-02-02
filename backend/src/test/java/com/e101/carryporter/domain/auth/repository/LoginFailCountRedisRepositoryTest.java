@@ -225,7 +225,7 @@ class LoginFailCountRedisRepositoryTest extends IntegrationTestSupport {
             Long userId = 1L;
 
             // 테스트를 위해 짧은 TTL로 직접 설정
-            redisTemplate.opsForValue().set("auth:fail:count:" + userId, 3, 1, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set("auth:fail:count:" + userId, "3", 1, TimeUnit.SECONDS);
 
             // when
             Thread.sleep(1100); // 1.1초 대기
