@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Database, Bot, Zap, LayoutGrid, Activity } from 'lucide-react'
+import { Database, Bot, Zap, LayoutGrid } from 'lucide-react'
 import { useRobotSSE } from '@/hooks/UserRobotSSE'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -21,7 +21,7 @@ type WorkflowStep = 'IDLE' | 'SELECT_LOCKER' | 'CONFIRM_LOCKER' | 'MISSION_START
 
 export default function RobotsPage() {
   const { robots, isConnected, lastMessage } = useRobotSSE()
-  const [showLockerInfo, setShowLockerInfo] = useState(false)
+  const [, setShowLockerInfo] = useState(false)
   const [selectedTaskRobot, setSelectedTaskRobot] = useState<any>(null)
   const [step, setStep] = useState<WorkflowStep>('IDLE');
   const [assignedRobot, setAssignedRobot] = useState<string | null>(null); 

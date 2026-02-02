@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, User, Box, Lock, Send, CheckCircle, AlertCircle, RefreshCw 
+import {
+  User, Box, Lock, Send, CheckCircle, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { api } from '@/api/axiosConfig'; // ✅ 만들어둔 api 인스턴스 가져오기 (경로는 프로젝트 구조에 맞게)
 import { RobotAssignedEvent } from '@/types/robotEvents';
@@ -28,7 +28,7 @@ export default function MissionProcessModal({ data, onClose, onMissionStart }: M
   );
 
   const [selectedLocker, setSelectedLocker] = useState<string | null>(data.locker_code);
-  const [isLocked, setIsLocked] = useState(false);
+  const [, setIsLocked] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // --- [추가] 사물함 목록 관리 State ---

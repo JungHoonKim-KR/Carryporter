@@ -11,8 +11,8 @@ export default function LoginPage() {
     const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [isLoading, setIsLoading] = useState(false)
-    const [errorMsg, setErrorMsg] = useState('')
+    const [, setIsLoading] = useState(false)
+    const [, setErrorMsg] = useState('')
 
     // LoginPage.tsx 내부 handleSubmit 함수 수정
 

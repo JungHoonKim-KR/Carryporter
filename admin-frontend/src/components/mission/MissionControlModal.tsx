@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { X, Bot, Package, Play, AlertCircle } from 'lucide-react';
+import { X, Bot, Package, Play } from 'lucide-react';
 
 interface MissionControlModalProps {
   robotCode: string;
