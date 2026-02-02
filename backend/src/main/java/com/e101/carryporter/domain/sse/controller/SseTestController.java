@@ -28,7 +28,7 @@ public class SseTestController {
         // RobotAssignedEvent (Record) 구조 모의
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("userId", 1004L);
-        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("missionId", "1770000506127");
         eventData.put("robotCode", robotCode);
         eventData.put("callLocationName", "1층 로비");
         eventData.put("locker_code", null); // FIRST는 사물함이 아직 없음

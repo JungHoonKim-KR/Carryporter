@@ -39,7 +39,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:

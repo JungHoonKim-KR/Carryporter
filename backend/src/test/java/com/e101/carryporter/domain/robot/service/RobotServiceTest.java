@@ -10,7 +10,7 @@ import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
-import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
+// import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto; // ❌ 제거됨
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.exception.BusinessException;
@@ -62,7 +62,6 @@ class RobotServiceTest extends IntegrationTestSupport {
         // then
         assertThat(findRobot.getRobotCode()).isEqualTo(robot.getRobotCode());
         assertThat(findRobot.getMacAddress()).isEqualTo(robot.getMacAddress());
-
     }
 
     @DisplayName("로봇이 없을 경우 예외가 발생한다.")
@@ -75,7 +74,6 @@ class RobotServiceTest extends IntegrationTestSupport {
         assertThatThrownBy(() -> robotService.findById(notExistsRobotId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("해당 로봇을 찾을 수 없습니다.");
-
     }
 
     @DisplayName("관리자 잠금 해제 요청이 들어올 경우 잠금해제 할 수 있다.")
@@ -109,9 +107,7 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
-
     }
-
     @DisplayName("관리자 잠금 요청이 들어올 경우 잠금 할 수 있다.")
     @Test
     void lockByAdmin() {
@@ -126,13 +122,19 @@ class RobotServiceTest extends IntegrationTestSupport {
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
+
+        // 🔥 [중요] 이 부분이 빠져서 NPE가 발생했습니다!
+        // Mission 엔티티에 정의된 로봇 설정 메서드를 사용하세요.
+        // (예: assignRobot, setRobot, updateRobot 등)
+        mission.assignRobot(robot);
+
         missionRepository.save(mission);
 
         flushAndClear();
 
         // when
         System.out.println("robot id " + robot.getId());
-        robotService.lockByAdmin(mission.getId(), robot.getId());
+        robotService.lockByAdmin(mission.getId());
 
         // then
         long publishedCount = events.stream(AdminLockRequestEvent.class).count();
@@ -144,7 +146,6 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
-
     }
 
     @DisplayName("관리자 권한 이동 요청이 들어올 경우 MissionStartedEvent 가 발행된다.")
@@ -161,20 +162,20 @@ class RobotServiceTest extends IntegrationTestSupport {
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
+
+        // ✅ [필수 추가] 서비스 로직에서 mission.getRobot()을 사용하므로, 미션에 로봇을 할당해야 합니다.
+        // Mission 엔티티의 로봇 할당 메서드 이름에 맞춰주세요 (예: assignRobot, setRobot, updateRobot 등)
+        mission.assignRobot(robot);
+
         missionRepository.save(mission);
 
         flushAndClear();
 
-        DispatchServiceRequestDto request = DispatchServiceRequestDto.builder()
-                .robotId(robot.getId())
-                .missionId(mission.getId())
-                .callLocationId(callLocation.getId())
-                .build();
-
-        robotService.move(request);
+        // ❌ [삭제] DispatchServiceRequestDto 생성 로직 제거
 
         // when
-        System.out.println("robot id " + robot.getId());
+        // ✅ [변경] DTO 대신 missionId만 전달
+        robotService.move(mission.getId());
 
         // then
         long publishedCount = events.stream(MissionStartedEvent.class).count();
@@ -186,7 +187,8 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         assertThat(publishedEvent.missionId()).isEqualTo(mission.getId());
         assertThat(publishedEvent.robotMacAddress()).isEqualTo(robot.getMacAddress());
-
+        // 이벤트 생성자에서 user id와 robotCode도 확인 가능
+        assertThat(publishedEvent.robotCode()).isEqualTo(robot.getRobotCode());
     }
 
     @DisplayName("관리자 최종 점검 완료 시 MissionFinalizedEvent가 발행된다.")
@@ -239,5 +241,4 @@ class RobotServiceTest extends IntegrationTestSupport {
         em.flush();
         em.clear();
     }
-
 }

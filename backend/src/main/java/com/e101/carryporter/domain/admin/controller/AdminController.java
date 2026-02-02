@@ -62,18 +62,19 @@ public class AdminController {
     }
 
     @PostMapping("/missions/{missionId}/lock")
-    public ResponseEntity<Void> lockRobot(@RequestBody @Valid LockRequestDto requestDto, @PathVariable Long missionId) {
-        log.debug("관리자 권한 잠금 요청 robot id = {}", requestDto.getRobotId());
+    public ResponseEntity<Void> lockRobot(@PathVariable Long missionId) {
 
-        robotService.lockByAdmin(missionId, requestDto.getRobotId());
+        log.debug("관리자 권한 잠금 요청 mission id = {}", missionId);
+
+        robotService.lockByAdmin(missionId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/missions/{missionId}/dispatch")
-    public ResponseEntity<Void> dispatch(@RequestBody @Valid DispatchRequestDto requestDto, @PathVariable Long missionId) {
-        log.debug("관리자 권한 이동 요청 robot id = {}", requestDto.getRobotId());
+    public ResponseEntity<Void> dispatch(@PathVariable Long missionId) {
+        log.debug("관리자 권한 이동 요청 mission id = {}", missionId);
 
-        robotService.move(requestDto.toServiceRequestDto(missionId));
+        robotService.move(missionId);
         return ResponseEntity.noContent().build();
     }
 
