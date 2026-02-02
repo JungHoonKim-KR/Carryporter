@@ -32,8 +32,7 @@ export function useRobotSSE() {
     const controller = new AbortController();
 
     const fetchData = async () => {
-      // await fetchEventSource('http://localhost:8080/api/sse/subscribe', { // 백엔드 주소
-            await fetchEventSource('http://i14e101.p.ssafy.io/api/sse/subscribe', { // 백엔드 주소
+      await fetchEventSource('/api/sse/subscribe', { // 상대 경로 사용 (프로토콜 자동 따름)
 
         method: 'GET',
         headers: {
