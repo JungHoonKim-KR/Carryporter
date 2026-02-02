@@ -51,6 +51,7 @@ export default function RobotsPage() {
           userId: parsed.userId || parsed.data?.userId,
           robotCode: parsed.robotCode || parsed.data?.robotCode,
           missionId: parsed.missionId || parsed.data?.missionId,
+          lockerId: parsed.lockerId || parsed.data?.lockerId,
           lockerCode: parsed.lockerCode || parsed.data?.lockerCode,
           message: parsed.message || parsed.data?.message
         };
