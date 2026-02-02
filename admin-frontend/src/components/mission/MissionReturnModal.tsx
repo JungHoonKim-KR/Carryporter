@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  X, Unlock, Box, CheckCircle, BatteryCharging, 
-  ArrowRightCircle, Archive, RotateCcw, User 
+import {
+  X, Unlock, CheckCircle, BatteryCharging,
+  Archive, RotateCcw, User
 } from 'lucide-react';
 import { api } from '@/api/axiosConfig'; // ✅ api 인스턴스 사용
 import { RobotReturnedAdminEvent } from '@/types/robotEvents';

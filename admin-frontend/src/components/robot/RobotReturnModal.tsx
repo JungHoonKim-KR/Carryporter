@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { X, CheckCircle, ClipboardCheck, History } from 'lucide-react';
+import { CheckCircle, ClipboardCheck, History } from 'lucide-react';
 
 interface RobotReturnModalProps {
   robotId: string;
