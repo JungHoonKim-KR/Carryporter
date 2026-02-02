@@ -249,7 +249,7 @@ const MissionTrackPage = () => {
       {/* 인증 모달 (ARRIVED 상태) */}
       {showVerifyModal && currentMission && (
         <VerificationModal
-          missionId={currentMission.id}
+          missionId={Number(currentMission.id)}
           onSuccess={handleVerificationSuccess}
           onClose={() => setShowVerifyModal(false)}
         />

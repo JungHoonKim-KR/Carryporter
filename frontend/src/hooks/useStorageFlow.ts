@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/missionStore';
+import { lockMission } from '../api/mission.api';
 import type { StoredLuggage } from '../types/mission.types';
 
 export type StorageStep = 'WEIGHT_CHECK' | 'WEIGHT_RESULT' | 'STORAGE_COMPLETE';
@@ -44,25 +45,39 @@ export const useStorageFlow = () => {
   const handleLock = async () => {
     setIsLocking(true);
 
-    // 잠금 효과음 및 딜레이
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // 🆕 백엔드에 잠금 요청
+      if (currentMission?.id) {
+        const result = await lockMission(Number(currentMission.id));
+        if (import.meta.env.DEV) {
+          console.log('[StorageFlow] 잠금 성공:', result);
+        }
+      }
 
-    // 보관 정보 생성 및 저장
-    const luggageId = `luggage-${Date.now()}`;
-    const storedLuggage: StoredLuggage = {
-      id: luggageId,
-      missionId: currentMission?.id || '',
-      lockerId: currentMission?.lockerInfo?.lockerId || `A-${Math.floor(Math.random() * 200) + 1}`,
-      lockerName: currentMission?.lockerInfo?.lockerName || `Locker A-${Math.floor(Math.random() * 200) + 1}`,
-      weight: currentMission?.weightInfo?.luggageWeight || 14.3,
-      storedAt: new Date().toISOString(),
-      robotCode: currentMission?.robotCode,
-      destination: currentMission?.destination,
-    };
+      // 잠금 효과음 및 딜레이 (UX)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    addStoredLuggage(storedLuggage);
-    setIsLocking(false);
-    setStep('STORAGE_COMPLETE');
+      // 보관 정보 생성 및 저장
+      const luggageId = `luggage-${Date.now()}`;
+      const storedLuggage: StoredLuggage = {
+        id: luggageId,
+        missionId: currentMission?.id || '',
+        lockerId: currentMission?.lockerInfo?.lockerId || `A-${Math.floor(Math.random() * 200) + 1}`,
+        lockerName: currentMission?.lockerInfo?.lockerName || `Locker A-${Math.floor(Math.random() * 200) + 1}`,
+        weight: currentMission?.weightInfo?.luggageWeight || 14.3,
+        storedAt: new Date().toISOString(),
+        robotCode: currentMission?.robotCode,
+        destination: currentMission?.destination,
+      };
+
+      addStoredLuggage(storedLuggage);
+      setStep('STORAGE_COMPLETE');
+    } catch (error) {
+      console.error('[StorageFlow] 잠금 실패:', error);
+      // 에러 처리: 필요시 에러 상태 추가 가능
+    } finally {
+      setIsLocking(false);
+    }
   };
 
   // 홈으로 이동
