@@ -15,6 +15,7 @@ import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
