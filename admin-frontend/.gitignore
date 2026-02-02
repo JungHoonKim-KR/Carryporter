@@ -36,3 +36,6 @@ coverage
 
 # TypeScript
 *.tsbuildinfo
+
+# MQTT/Subscriber persistence directories
+**/carryporter-client-subscriber-tcp*
