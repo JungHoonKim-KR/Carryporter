@@ -52,6 +52,7 @@ class AdminNotificationHandlerTest {
                 1L,        // userId
                 "R-001",   // robotCode
                 10L,       // missionId
+                2L,
                 "L-05",    // lockerCode
                 "로봇이 복귀했습니다. 박스를 사물함에 넣고 상태를 선택하세요." // message
         );

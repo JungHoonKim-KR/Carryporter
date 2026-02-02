@@ -24,7 +24,7 @@ public class SseService {
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
 
     // 하트비트 간격: 45초 (Nginx 기본 타임아웃 60초보다 짧아야 함)
-    private static final Long HEARTBEAT_INTERVAL = 45L;
+    private static final Long HEARTBEAT_INTERVAL = 15L;
 
     public SseEmitter subscribe(Long id, String role) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
