@@ -94,6 +94,7 @@ public class SseTestController {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("userId", 3003L);
         eventData.put("missionId", "1770000506127");
+        eventData.put("lockerId", 10L);
         eventData.put("robotCode", robotCode); // 프론트 타입: robotCode (robotId 아님)
         eventData.put("lockerCode", lockerCode); // 관리자가 넣어야 할 사물함
         eventData.put("message", "로봇이 관리소에 도착했습니다.");
