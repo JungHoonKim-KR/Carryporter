@@ -4,32 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] MQTT 통합테스트(구 버전) 삭제">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/event/RobotAvailabilityChangedEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/listener/RobotRedisSyncHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotRealTimeRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/retry/RetryConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotRealTimeInfoRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitlab-ci.yml" beforeDir="false" />
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] Admin Locker Status Update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/EmailCodeRedisRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/EmailCodeRedisRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/TempPasswordRedisRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/TempPasswordRedisRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/UserPasswordRedisRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/auth/repository/UserPasswordRedisRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/service/MissionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/service/MissionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/entity/RobotState.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/entity/RobotRealTimeInfo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotMacMappingRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotMacMappingRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotStateRepository.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotAssignService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotAssignService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RedisConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RedisConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RobotRedisScriptConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/redis/RobotRedisScriptConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/EmailCodeRedisRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/EmailCodeRedisRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/LoginFailCountRedisRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/UserPasswordRedisRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/auth/repository/UserPasswordRedisRepositoryTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotStateRepositoryTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotAssignServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotAssignServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,7 +93,9 @@
     "Gradle.MqttMissionFlowIntegrationTest.testRobotArrived.executor": "Run",
     "Gradle.MqttMissionFlowIntegrationTest.testRobotRegister.executor": "Run",
     "Gradle.MqttPublisherServiceTest.executor": "Run",
+    "Gradle.MqttRealBrokerTest.testPublish.executor": "Run",
     "Gradle.MqttSubscriberServiceTest.executor": "Run",
+    "Gradle.RobotAssignServiceTest.assignRobotToMission_Success.executor": "Run",
     "Gradle.RobotRepositoryTest.findByMacAddress.executor": "Run",
     "Gradle.RobotServiceTest.executor": "Run",
     "Gradle.Tests in 'carryporter.test'.executor": "Run",
@@ -133,7 +113,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CarryporterApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "Merging feature/backend/mqtt",
+    "git-widget-placeholder": "feature/backend/mqtt",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
@@ -157,7 +137,7 @@
       <recent name="C:\Users\SSAFY\projects\S14P11E101\backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.Tests in 'carryporter.test'">
+  <component name="RunManager" selected="Spring Boot.CarryporterApplication">
     <configuration name="MqttIntegrationTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -185,7 +165,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttMissionFlowIntegrationTest.testRobotArrived" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MqttRealBrokerTest.testPublish" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -198,34 +178,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotArrived&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
-      <method v="2" />
-    </configuration>
-    <configuration name="MqttMissionFlowIntegrationTest.testRobotRegister" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotRegister&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttRealBrokerTest.testPublish&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -253,6 +206,33 @@
             <option value=":test" />
             <option value="--tests" />
             <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttSubscriberServiceTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="RobotAssignServiceTest.assignRobotToMission_Success" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;com.e101.carryporter.domain.robot.service.RobotAssignServiceTest.assignRobotToMission_Success&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -300,11 +280,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.MqttRealBrokerTest.testPublish" />
+        <item itemvalue="Gradle.RobotAssignServiceTest.assignRobotToMission_Success" />
         <item itemvalue="Gradle.Tests in 'carryporter.test'" />
         <item itemvalue="Gradle.MqttIntegrationTest" />
         <item itemvalue="Gradle.MqttSubscriberServiceTest" />
-        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotArrived" />
-        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotRegister" />
       </list>
     </recent_temporary>
   </component>
@@ -327,7 +307,7 @@
       <workItem from="1769413706201" duration="11142000" />
       <workItem from="1769588173564" duration="14727000" />
       <workItem from="1769670842921" duration="14198000" />
-      <workItem from="1769989400565" duration="9784000" />
+      <workItem from="1769989400565" duration="28872000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
@@ -505,11 +485,46 @@
       <option name="project" value="LOCAL" />
       <updated>1769999135432</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="[BE] MQTT 통합테스트(구 버전) 삭제">
+      <option name="closed" value="true" />
+      <created>1769999408071</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1769999408071</updated>
+    </task>
+    <task id="LOCAL-00024" summary="[BE] MQTT 아키텍처 변경으로 인한 Config 수정">
+      <option name="closed" value="true" />
+      <created>1770000098458</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1770000098458</updated>
+    </task>
+    <task id="LOCAL-00025" summary="[BE] Admin Locker Status Update">
+      <option name="closed" value="true" />
+      <created>1770018558392</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1770018558392</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[BE] MQTT pub 구현" />
@@ -527,7 +542,9 @@
     <MESSAGE value="[BE] 테스트 수정" />
     <MESSAGE value="[BE] MQTT 아키텍처 변경" />
     <MESSAGE value="[BE] MQTT 통합테스트(구 버전) 삭제" />
-    <option name="LAST_COMMIT_MESSAGE" value="[BE] MQTT 통합테스트(구 버전) 삭제" />
+    <MESSAGE value="[BE] MQTT 아키텍처 변경으로 인한 Config 수정" />
+    <MESSAGE value="[BE] Admin Locker Status Update" />
+    <option name="LAST_COMMIT_MESSAGE" value="[BE] Admin Locker Status Update" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -42,4 +42,18 @@ public class RobotAvailableQueueRepository {
             throw e;
         }
     }
+
+    /**
+     * 현재 가용한 로봇의 수를 반환합니다.
+     * @return 가용 로봇 수
+     */
+    public Long getAvailableRobotCount() {
+        try {
+            // LLEN robot:available
+            return redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+        } catch (Exception e) {
+            log.error("가용 로봇 수 조회 실패", e);
+            return 0L; // 오류 발생 시 0을 반환
+        }
+    }
 }
