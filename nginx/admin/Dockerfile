@@ -3,10 +3,10 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY admin-fronted/package*.json ./
+COPY admin-frontend/package*.json ./
 RUN npm install
 
-COPY admin-fronted/ .
+COPY admin-frontend/ .
 RUN npm run build
 
 # Production stage - Nginx (설정과 정적파일은 볼륨 마운트)
