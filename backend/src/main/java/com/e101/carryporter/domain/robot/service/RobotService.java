@@ -72,8 +72,11 @@ public class RobotService {
         eventPublisher.publishEvent(new AdminLockRequestEvent(missionId, robot.getMacAddress()));
     }
 
-    public void unlockByAdmin(Long missionId, Long robotId) {
-        Robot robot = findById(robotId);
+    public void unlockByAdmin(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
+
+        Robot robot = mission.getRobot();
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
     }
 

@@ -453,7 +453,7 @@ class AdminControllerTest extends WebMvcTestSupport {
 
         willDoNothing()
                 .given(robotService)
-                .unlockByAdmin(anyLong(), anyLong());
+                .unlockByAdmin(anyLong());
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/unlock", missionId)
@@ -490,49 +490,7 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(status().isNoContent());
     }
 
-    @Test
-    @DisplayName("로봇 잠금 해제 API 호출 시 robotId가 null이면 400 Bad Request를 반환한다")
-    void unlockRobot_WithNullRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        UnlockRobotRequestDto requestDto = createUnlockRobotRequestDto(null);
 
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/unlock", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/unlock");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("로봇 잠금 해제 API 호출 시 robotId가 음수이면 400 Bad Request를 반환한다")
-    void unlockRobot_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        UnlockRobotRequestDto requestDto = createUnlockRobotRequestDto(-1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/unlock", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/unlock");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
 
 
     @Test
