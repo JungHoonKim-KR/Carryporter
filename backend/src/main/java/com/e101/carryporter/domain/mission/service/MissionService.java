@@ -9,7 +9,6 @@ import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
-import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -87,5 +87,13 @@ public class MissionService {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
             throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
         }
+    }
+
+    @Transactional
+    public void failMission(Long missionId) {
+        log.debug("미션 실패!! mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        mission.failed();
     }
 }

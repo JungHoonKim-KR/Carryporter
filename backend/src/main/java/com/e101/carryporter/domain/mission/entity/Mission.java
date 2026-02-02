@@ -95,4 +95,8 @@ public class Mission extends BaseEntity {
         this.callLocation = callLocation;
         this.missionStatus = missionStatus;
     }
+
+    public void failed() {
+        this.missionStatus = MissionStatus.FAILED;
+    }
 }
