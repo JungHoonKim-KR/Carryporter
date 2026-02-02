@@ -2,10 +2,7 @@ package com.e101.carryporter.global.listener;
 
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
-import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
-import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
-import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
-import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
+import com.e101.carryporter.domain.mission.event.*;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import com.e101.carryporter.global.service.mqtt.MqttPublisherService;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +66,7 @@ class MqttCommandHandlerTest {
     class MissionEvents {
 
         @Test
-        @DisplayName("MissionStartedEvent 발생 시 로봇에게 배송 명령 전송")
+        @DisplayName("MissionStartedEvent 발생 시 로봇에게 이동 명령 전송")
         void handleMissionStarted() {
             // given
             Double destX = 10.5;
@@ -80,7 +77,7 @@ class MqttCommandHandlerTest {
             mqttCommandHandler.handleMissionStarted(event);
 
             // then
-            verify(mqttPublisherService).sendDeliverCommand(TEST_MAC, destX, destY);
+            verify(mqttPublisherService).sendDispatchCommand(TEST_MAC, destX, destY);
         }
 
         @Test
@@ -102,7 +99,7 @@ class MqttCommandHandlerTest {
         @DisplayName("MissionLockedEvent 발생 시 로봇에게 lock 명령 전송")
         void handleMissionLocked() {
             // given
-            MissionLockedEvent event = new MissionLockedEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
+            MissionLockRequestEvent event = new MissionLockRequestEvent(TEST_MISSION_ID, TEST_USER_ID, TEST_MAC);
 
             // when
             mqttCommandHandler.handleMissionLocked(event);

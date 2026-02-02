@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.sse.listener;
 
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
+import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.sse.service.SseService;
 import lombok.RequiredArgsConstructor;
@@ -21,63 +22,20 @@ import java.util.Map;
 public class AdminSseNotificationHandler {
     private final SseService sseService;
 
-
-        /**
-         * 1. 로봇 배정 완료 알림 (관리자 전체 공지)
-         */
-        @Async
-        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-        public void handleRobotAssignedEvent(RobotAssignedEvent event) {
-            broadcast(event.getClass().getSimpleName(), "로봇 배정이 완료되었습니다.", event.robotCode());
-        }
-
-        /**
-         * 2. 미션 시작 알림 (관리자 전체 공지)
-         */
-        @Async
-        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-        public void handleMissionStartedEvent(MissionStartedEvent event) {
-            broadcast(event.getClass().getSimpleName(), "로봇이 출발했습니다.", event.robotCode());
-        }
-
-        /** 이벤트가 없어서 모두 주석 해놨어용
-         * 로봇 관리소 도착
-         * RobotReturnedEvent
-         * @param event
-         */
     /**
-     * 로봇 관리소 도착 → 관리자에게 최종 점검 알림
+     * 1. 사용자 호출 후 로봇 배정 완료 알림
      */
-    @Async
     @EventListener
-    public void handleRobotReturned(RobotReturnedEvent event) {
-        log.info("[ADMIN SSE] 로봇 복귀 완료 - missionId: {}, robotId: {}, macAddress: {}",
-                event.missionId(), event.robotId(), event.robotMacAddress());
-
-        sseService.broadcastToAdmins(
-                "ROBOT_RETURNED",
-                Map.of(
-                        "missionId", event.missionId(),
-                        "robotId", event.robotId(),
-                        "message", "로봇이 관리소에 도착했습니다. 최종 점검을 진행해주세요."
-                )
-        );
+    public void handleRobotAssignedEvent(RobotAssignedEvent event){
+        sseService.broadcastToAdmins("RobotAssignedEvent", event);
     }
-
-        /**
-         * [공통] 관리자 전체 브로드캐스트 전송 로직
-         */
-        private void broadcast(String eventName, String msg, String robotCode) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("msg", msg);
-            data.put("robotCode", robotCode);
-            data.put("timestamp", java.time.LocalDateTime.now());
-
-            log.info("[SSE-ADMIN] 브로드캐스트 | 이벤트: {} | 로봇: {} | 내용: {}", eventName, robotCode, msg);
-
-            // 모든 관리자에게 알림 전송
-            sseService.broadcastToAdmins(eventName, data);
-        }
+    /**
+     * 2. 로봇 복귀 알림 -> 관리자 판단 후에 최종적으로 반납 or 보관 선택
+     */
+    @EventListener
+    public void handleRobotReturnedAdminEvent(RobotReturnedAdminEvent event){
+        sseService.broadcastToAdmins("RobotReturnedAdminEvent", event);
+    }
     }
 
 

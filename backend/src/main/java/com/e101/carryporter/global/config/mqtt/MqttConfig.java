@@ -1,19 +1,22 @@
 package com.e101.carryporter.global.config.mqtt;
 
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import com.e101.carryporter.global.service.mqtt.MqttSubscriberService;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.integration.channel.DirectChannel;
+import org.springframework.core.env.Environment;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
-import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
-import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
+import java.util.UUID;
+
+@Slf4j
 @Configuration
 public class MqttConfig {
 
@@ -29,19 +32,22 @@ public class MqttConfig {
     @Value("${mqtt.broker.password:}")
     private String brokerPassword;
 
+    @Autowired
+    private Environment environment;
+
     // 서버가 구독할 토픽 패턴들 (Upstream: 로봇 → 서버)
     private static final String[] SUBSCRIBE_TOPICS = {
             "robot/+/register",   // 기기 등록
-            "robot/+/status",     // 상태 보고
-            "robot/+/arrived",    // 도착 알림
-            "robot/+/delivered",  // 배송 완료
+            "robot/+/arrived",    // 사용자 위치 도착
+            "robot/+/locked",     // 잠금 완료
+            "robot/+/unlocked",   // 잠금 해제 완료
+            "robot/+/returned",   // 스테이션 복귀 완료
+            "robot/+/IDLE",       // 스테이션 복귀 완료 (IDLE 상태)
             "robot/+/error"       // 에러 발생
     };
 
     @Bean
-    public MqttPahoClientFactory mqttClientFactory() {
-        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
-
+    public MqttConnectOptions mqttConnectOptions() {
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[]{brokerUrl});
         options.setCleanSession(true);
@@ -56,7 +62,13 @@ public class MqttConfig {
             options.setPassword(brokerPassword.toCharArray());
         }
 
-        factory.setConnectionOptions(options);
+        return options;
+    }
+
+    @Bean
+    public MqttPahoClientFactory mqttClientFactory(MqttConnectOptions mqttConnectOptions) {
+        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
+        factory.setConnectionOptions(mqttConnectOptions);
         return factory;
     }
 
@@ -71,33 +83,54 @@ public class MqttConfig {
         return handler;
     }
 
-    // ==================== Inbound (메시지 구독: 로봇 → 서버) ====================
+    // ==================== Inbound (메시지 구독: 로봇 → 서버) - 직접 Paho 사용 ====================
 
     @Bean
-    @ConditionalOnMissingBean(name = "mqttInputChannel")
-    public MessageChannel mqttInputChannel() {
-        return new DirectChannel();
-    }
+    public MqttClient mqttSubscriberClient(MqttConnectOptions mqttConnectOptions,
+                                           MqttSubscriberService mqttSubscriberService) throws MqttException {
+        log.info("MQTT 브로커 연결: {}", brokerUrl);
+        log.info("MQTT 구독 토픽 목록:");
+        for (String topic : SUBSCRIBE_TOPICS) {
+            log.info("  - {}", topic);
+        }
 
-    @Bean
-    public MqttPahoMessageDrivenChannelAdapter mqttInbound(
-            MqttPahoClientFactory mqttClientFactory,
-            MessageChannel mqttInputChannel) {
+        String subscriberClientId = clientId + "-subscriber";
+        // 테스트 환경에서는 Client ID가 중복되지 않도록 UUID 추가
+        if (Arrays.asList(environment.getActiveProfiles()).contains("test")) {
+            subscriberClientId += "-" + UUID.randomUUID();
+        }
 
-        // Spring Integration MQTT 6.x에서는 URL을 명시적으로 전달하는 생성자 사용 필요
-        // clientId만 전달하는 생성자는 내부 URL이 null이 되어 연결되지 않음
-        String[] serverURIs = mqttClientFactory.getConnectionOptions().getServerURIs();
-        String url = serverURIs != null && serverURIs.length > 0 ? serverURIs[0] : null;
+        MqttClient client = new MqttClient(brokerUrl, subscriberClientId);
 
-        // 위의 채널들 다 구독
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
-                url, clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
+        client.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+                log.error("MQTT 연결 끊김: {}", cause.getMessage());
+            }
 
-        adapter.setCompletionTimeout(5000);
-        adapter.setConverter(new DefaultPahoMessageConverter());
-        adapter.setQos(1);
-        adapter.setOutputChannel(mqttInputChannel);
+            @Override
+            public void messageArrived(String topic, MqttMessage message) {
+                String payload = new String(message.getPayload());
+                // Paho 콜백 스레드는 Spring의 트랜잭션 관리 밖에 있으므로,
+                // 서비스 레이어에서 TransactionTemplate 등을 사용하여 트랜잭션을 수동으로 관리해야 함.
+                mqttSubscriberService.handleMqttMessage(topic, payload);
+            }
 
-        return adapter;
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+                // 발행 완료 시 호출 (구독자에서는 사용 안 함)
+            }
+        });
+
+        client.connect(mqttConnectOptions);
+        log.info("MQTT 구독자 연결 성공 - Client ID: {}", subscriberClientId);
+
+        // 토픽 구독
+        for (String topic : SUBSCRIBE_TOPICS) {
+            client.subscribe(topic, 1);
+            log.info("MQTT 토픽 구독: {}", topic);
+        }
+
+        return client;
     }
 }

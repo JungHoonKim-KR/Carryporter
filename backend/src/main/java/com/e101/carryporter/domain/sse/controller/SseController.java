@@ -1,6 +1,8 @@
 package com.e101.carryporter.domain.sse.controller;
 import com.e101.carryporter.domain.sse.service.SseService;
+import com.e101.carryporter.domain.user.entity.Role;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -9,25 +11,33 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/sse")
 @RequiredArgsConstructor
+@Slf4j
 public class SseController {
 
     private final SseService sseService;
 
     @GetMapping(value = "/subscribe", produces = "text/event-stream;charset=UTF-8")
     public SseEmitter subscribe(
-            // [변경 전] @RequestAttribute String userId -> jwt 구현 전 필터가 주는 값 대신 해둠(임시!!!)
-            // [변경 후] 테스트용으로 URL 파라미터로 받습니다.
-            @RequestParam(value = "userId") Long userId,
+            // JwtAuthenticationFilter가 헤더를 파싱해서 넣어준 userId
+            @RequestAttribute("userId") Long userId,
 
-            // role은 안 넣으면 기본값 "ROLE_USER"로 들어가게 설정
-            @RequestParam(value = "role", defaultValue = "ROLE_USER") String role,
+            // AuthorizationFilter가 관리자 확인 후 넣어준 역할 정보 (null일 수 있음)
+            @RequestAttribute(value = "role", required = false) Role userRole,
+
             HttpServletResponse response
     ) {
-        // Nginx 버퍼링 방지
+        // 1. Nginx 버퍼링 방지 (실시간 전송을 위해 필수)
         response.addHeader("X-Accel-Buffering", "no");
 
-        // 바로 서비스로 넘김
-        return sseService.subscribe(userId, role);
+        // 2. Role 정보 결정
+        // 필터에서 관리자 확인을 거쳐 userRole을 넣어줬다면 그 값을 쓰고, 아니면 기본 ROLE_USER 사용
+        // 1. 권한 확정 로직
+        String roleName = userRole.name();
+
+        log.info("[SSE-SUBSCRIBE] 구독 시작 - userId: {}, role: {}", userId, roleName);
+
+        // 3. 서비스 호출
+        return sseService.subscribe(userId, roleName);
     }
 
     /**

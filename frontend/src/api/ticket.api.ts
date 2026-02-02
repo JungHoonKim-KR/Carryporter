@@ -15,12 +15,22 @@ export const scanTicket = async (imageFile: File): Promise<TicketInfo> => {
   // axios가 FormData를 자동으로 감지하고 올바른 Content-Type 설정
   // (multipart/form-data; boundary=----WebKitFormBoundary...)
   // 수동으로 헤더를 설정하면 boundary 정보가 누락되어 405 에러 발생
-  const { data } = await apiClient.post<TicketInfo>(
+  const { data } = await apiClient.post<any>(
     '/api/tickets/scan',
     formData
   );
 
-  return data;
+  // 백엔드 응답이 snake_case일 경우를 대비하여 camelCase로 변환
+  return {
+    ticketId: data.ticket_id ?? data.ticketId,
+    flight: data.flight,
+    gate: data.gate,
+    seat: data.seat,
+    boardingTime: data.boarding_time ?? data.boardingTime,
+    departureTime: data.departure_time ?? data.departureTime,
+    origin: data.origin,
+    destination: data.destination,
+  };
 };
 
 /**
@@ -40,12 +50,22 @@ export const getLatestTicket = async (): Promise<TicketInfo> => {
 
   // GET 요청에 body 포함 (백엔드 요구사항)
   // 주의: HTTP 표준과 맞지 않지만, 백엔드 스펙에 따름
-  const { data } = await apiClient.get<TicketInfo>(
+  const { data } = await apiClient.get<any>(
     '/api/me/tickets/latest',
     {
       data: { ticketId: Number(ticketId) }
     }
   );
 
-  return data;
+  // 백엔드 응답이 snake_case일 경우를 대비하여 camelCase로 변환
+  return {
+    ticketId: data.ticket_id ?? data.ticketId,
+    flight: data.flight,
+    gate: data.gate,
+    seat: data.seat,
+    boardingTime: data.boarding_time ?? data.boardingTime,
+    departureTime: data.departure_time ?? data.departureTime,
+    origin: data.origin,
+    destination: data.destination,
+  };
 };

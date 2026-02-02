@@ -1,147 +1,237 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import AuthLayout from '../components/layouts/AuthLayout';
-import Input from '../components/common/Input';
-import Checkbox from '../components/common/Checkbox';
-import { Button } from '@/components/ui/button';
-import { sendCodeSchema, type SendCodeFormData } from '../utils/validation';
-import { sendCode } from '../api/auth.api';
-import { useAuthStore } from '../store/authStore';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
+import { sendCodeSchema, type SendCodeFormData } from "../utils/validation";
+import { sendCode } from "../api/auth.api";
+import { setMockPassword } from "../api/mission.api.mock";
+import { useAuthStore } from "../store/authStore";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PasswordInputField } from "@/components/auth/PasswordInputField";
+import { TermsCheckbox } from "@/components/auth/TermsCheckbox";
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, clearAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+    const navigate = useNavigate();
+    const { isAuthenticated, clearAuth } = useAuthStore();
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState("");
+    const [logoError, setLogoError] = useState(false);
 
-  // 로그인 페이지 진입 시 기존 인증 정보 클리어
-  // (뒤로가기로 왔을 때 처음부터 다시 시작하도록)
-  useEffect(() => {
-    if (isAuthenticated) {
-      clearAuth();
-    }
-  }, []); // 마운트 시 1회만 실행
+    // 로그인 페이지 진입 시 기존 인증 정보 클리어
+    useEffect(() => {
+        if (isAuthenticated) {
+            clearAuth();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SendCodeFormData>({
-    resolver: zodResolver(sendCodeSchema),
-  });
+    const {
+        register,
+        handleSubmit,
+        control,
+        watch,
+        formState: { errors, isValid },
+    } = useForm<SendCodeFormData>({
+        resolver: zodResolver(sendCodeSchema),
+        mode: 'onChange',
+    });
 
-  const onSubmit = async (data: SendCodeFormData) => {
-    try {
-      setIsLoading(true);
-      setApiError('');
+    // 폼 값 감시 (비밀번호 일치 확인용)
+    const password = watch('password');
+    const passwordConfirm = watch('passwordConfirm');
+    const agreeTerms = watch('agreeTerms');
+    const agreePrivacy = watch('agreePrivacy');
 
-      // 인증번호 발송 API 호출
-      const response = await sendCode({
-        email: data.email,
-        password: parseInt(data.password, 10), // string을 number로 변환
-      });
+    // 폼 전체 유효성 검사
+    const isFormValid = isValid && agreeTerms && agreePrivacy;
 
-      console.log('=== 1단계 인증번호 발송 성공 ===');
-      console.log('응답 데이터:', response);
-      console.log('받은 CODE:', response.code, '(type:', typeof response.code, ')');
+    const onSubmit = async (data: SendCodeFormData) => {
+        try {
+            setIsLoading(true);
+            setApiError("");
 
-      // CODE 선택 페이지로 이동 (email, code 전달)
-      navigate('/login/verify', {
-        state: {
-          email: data.email,
-          code: response.code, // 실제 CODE 번호 (예: 35)
-        },
-        replace: true, // 히스토리 스택을 대체하여 뒤로가기 방지
-      });
-    } catch (error: any) {
-      console.error('Send code error:', error);
-      setApiError(
-        error.response?.data?.message || '인증번호 발송에 실패했습니다. 다시 시도해주세요.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+            // 인증번호 발송 API 호출
+            const response = await sendCode({
+                email: data.email,
+                password: parseInt(data.password, 10),
+            });
 
-  return (
-    <AuthLayout>
-      {/* 카드 컨테이너 */}
-      <div className="bg-white rounded-3xl shadow-2xl p-10">
-        {/* 제목 */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-left">로그인</h2>
+            // Mock API용: 비밀번호 저장
+            setMockPassword(parseInt(data.password, 10));
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* MM 이메일 */}
-          <Input
-            label="MM 이메일"
-            type="email"
-            placeholder="example@email.com"
-            error={errors.email?.message}
-            {...register('email')}
-            required
-          />
+            if (import.meta.env.DEV) console.log("=== 1단계 인증번호 발송 성공 ===");
+            if (import.meta.env.DEV) console.log("응답 데이터:", response);
 
-          {/* 비밀번호 */}
-          <Input
-            label="비밀번호"
-            type="password"
-            placeholder="숫자 4자리 입력"
-            error={errors.password?.message}
-            {...register('password')}
-            required
-            maxLength={4}
-          />
+            // CODE 선택 페이지로 이동
+            navigate("/login/verify", {
+                state: {
+                    email: data.email,
+                    code: response.code,
+                },
+            });
+        } catch (error: any) {
+            console.error("Send code error:", error);
+            setApiError(
+                error.response?.data?.message ||
+                "인증번호 발송에 실패했습니다. 다시 시도해주세요.",
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-          {/* 비밀번호 확인 */}
-          <Input
-            label="비밀번호 확인"
-            type="password"
-            placeholder="비밀번호 재입력"
-            error={errors.passwordConfirm?.message}
-            {...register('passwordConfirm')}
-            required
-            maxLength={4}
-          />
+    return (
+        <div className="min-h-screen bg-gray-50">
+            {/* 헤더 */}
+            <header className="bg-gray-50 pt-safe">
+                <div className="max-w-md mx-auto px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                            <img
+                                src="/images/logo.png"
+                                alt="CARRY PORTER Logo"
+                                className={cn("w-6 h-6", logoError && "hidden")}
+                                onError={() => setLogoError(true)}
+                            />
+                        </div>
+                        <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                    </div>
+                </div>
+            </header>
 
-          {/* 약관 동의 박스 */}
-          <div className="bg-gray-100 rounded-lg p-4 space-y-3">
-            <Checkbox
-              label="회수되지 않은 짐은 7일간 보관되는 것에 동의합니다."
-              error={errors.agreeTerms?.message}
-              {...register('agreeTerms')}
-              required
-            />
+            {/* 메인 컨텐츠 */}
+            <main className="max-w-md mx-auto px-6 py-6">
+                {/* 환영 메시지 */}
+                <div className="mb-8 animate-fade-in-up">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        환영합니다! 👋
+                    </h2>
+                    <p className="text-gray-500">
+                        편리한 짐 운반 서비스를 시작하세요
+                    </p>
+                </div>
 
-            <Checkbox
-              label="서비스 이용약관 및 개인정보 처리 방침에 동의합니다."
-              error={errors.agreePrivacy?.message}
-              {...register('agreePrivacy')}
-              required
-            />
-          </div>
+                {/* 로그인 폼 카드 */}
+                <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        {/* 폼 제목 */}
+                        <div className="text-center space-y-2">
+                            <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+                            <p className="text-sm text-gray-600">
+                                CARRY PORTER 이용을 위해 정보를 입력해주세요
+                            </p>
+                        </div>
 
-          {/* API 에러 메시지 */}
-          {apiError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-600">{apiError}</p>
-            </div>
-          )}
+                        {/* 모든 입력 필드 */}
+                        <div className="space-y-5">
+                            {/* 1. 이메일 필드 */}
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="email"
+                                    className="block text-sm font-medium text-gray-700"
+                                >
+                                    Mattermost 이메일
+                                </label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="example@email.com"
+                                    {...register("email")}
+                                    className={errors.email ? "border-red-500" : ""}
+                                />
+                                {errors.email && (
+                                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                                )}
+                            </div>
 
-          {/* 로그인 버튼 */}
-          <Button
-            type="submit"
-            size="lg"
-            disabled={isLoading}
-            className="w-full mt-6"
-          >
-            {isLoading ? '전송 중...' : '로그인'}
-          </Button>
-        </form>
-      </div>
-    </AuthLayout>
-  );
+                            {/* 2. 비밀번호 필드 */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    비밀번호 (4자리 숫자)
+                                </label>
+                                <PasswordInputField
+                                    register={register}
+                                    errors={errors}
+                                    name="password"
+                                    label=""
+                                    placeholder="4자리 숫자"
+                                />
+                            </div>
+
+                            {/* 3. 비밀번호 확인 필드 */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    비밀번호 확인
+                                </label>
+                                <PasswordInputField
+                                    register={register}
+                                    errors={errors}
+                                    name="passwordConfirm"
+                                    label=""
+                                    placeholder="4자리 숫자"
+                                />
+                                {passwordConfirm && password && passwordConfirm === password && !errors.passwordConfirm && (
+                                    <p className="text-sm text-green-600">
+                                        ✓ 비밀번호가 일치합니다
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* 4. 약관 동의 */}
+                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                                <TermsCheckbox
+                                    control={control}
+                                    name="agreeTerms"
+                                    label="보관 정책에 동의합니다 (필수)"
+                                    errors={errors}
+                                />
+                                <TermsCheckbox
+                                    control={control}
+                                    name="agreePrivacy"
+                                    label="서비스 이용약관에 동의합니다 (필수)"
+                                    errors={errors}
+                                />
+                            </div>
+
+                            {/* 약관 설명 */}
+                            <div className="text-xs text-gray-500 space-y-1">
+                                <p>· 보관 정책: 짐 보관 시 안전 및 책임 범위에 대한 내용입니다.</p>
+                                <p>· 서비스 이용약관: 로봇 호출 서비스 이용 시 준수사항입니다.</p>
+                            </div>
+                        </div>
+
+                        {/* API 에러 메시지 */}
+                        {apiError && (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-red-600">{apiError}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 단일 제출 버튼 */}
+                        <Button
+                            type="submit"
+                            disabled={!isFormValid || isLoading}
+                            className="w-full"
+                        >
+                            {isLoading ? "처리 중..." : "회원가입"}
+                        </Button>
+                    </form>
+                </div>
+
+                {/* 안내 텍스트 */}
+                <p className="text-center text-sm text-gray-500 mt-6 animate-fade-in-up">
+                    가장 낮은 눈높이에서, 가장 높은 서비스를
+                </p>
+            </main>
+        </div>
+    );
 };
 
 export default LoginPage;

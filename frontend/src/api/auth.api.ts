@@ -19,22 +19,11 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 };
 
 // 토큰 재발급
+// refreshToken은 httpOnly 쿠키로 관리되며 withCredentials: true로 자동 전송됨
 export const reissue = async (): Promise<{ accessToken: string }> => {
-  // localStorage에서 refreshToken 조회
-  const refreshToken = localStorage.getItem('refreshToken');
-
-  if (!refreshToken) {
-    throw new Error('Refresh token not found');
-  }
-
   const response = await apiClient.post<{ accessToken: string; tokenType: string; expiresIn: number }>(
     '/api/auth/reissue',
-    null,
-    {
-      headers: {
-        'Authorization-Refresh': `Bearer ${refreshToken}`,
-      },
-    }
+    null
   );
 
   return {

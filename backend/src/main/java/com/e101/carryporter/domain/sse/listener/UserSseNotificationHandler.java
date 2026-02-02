@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.sse.listener;
 import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
 import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
+import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.sse.service.SseService;
@@ -56,14 +57,26 @@ public class UserSseNotificationHandler {
     }
 
     /**
-     * 4. 비밀번호 인증 성공
+     * 4. 비밀번호 인증 요청 성공
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void handleUserAuthSuccessEvent(UserAuthSuccessEvent event) {
         sendNotification(event.userId(), event.getClass().getSimpleName(),
-                "인증 성공! 문이 열립니다.", null);
+                "인증에 성공했습니다. 로봇을 여는 중입니다.", null);
     }
+
+    /**
+     * 4-1. 로봇 실제 해제 완료 (하드웨어 응답 시)
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleMissionUnlockedEvent(MissionUnlockedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(),
+                "로봇의 문이 열렸습니다. 물건을 확인해 주세요!", event.robotMacAddress());
+    }
+
+
 
     /**
      * 5. 미션 중단 (인증 실패 횟수 초과 등)

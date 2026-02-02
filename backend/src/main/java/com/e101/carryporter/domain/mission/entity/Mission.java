@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.mission.entity;
 
 import com.e101.carryporter.domain.location.entity.Location;
+import com.e101.carryporter.domain.locker.entity.Locker;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.user.entity.User;
@@ -40,7 +41,9 @@ public class Mission extends BaseEntity {
     @JoinColumn(name ="call_location_id", nullable = false)
     private Location callLocation;
 
-    private Double finalWeight;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "locker_id")
+    private Locker locker;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -67,18 +70,29 @@ public class Mission extends BaseEntity {
                 .build();
     }
 
+    // 로봇을 미션에 할당
+    public void assignRobot(Robot robot) {
+        this.robot = robot;
+        this.missionStatus = MissionStatus.ASSIGNED;
+        robot.changeStatus(RobotStatus.BUSY);
+        this.assignedAt = LocalDateTime.now();
+    }
+
+    public void assignLocker(Locker locker){
+        this.locker = locker;
+        this.assignedAt = LocalDateTime.now();
+    }
+
+    // 로봇 주행 시작
+    public void dispatch() {
+        this.missionStatus = MissionStatus.MOVING;
+        this.startedAt = LocalDateTime.now();
+    }
+
     @Builder
     private Mission(User user, Location callLocation, MissionStatus missionStatus) {
         this.user = user;
         this.callLocation = callLocation;
         this.missionStatus = missionStatus;
     }
-
-    public void assignRobot(Robot robot) {
-        this.robot = robot;
-        this.missionStatus = MissionStatus.ASSIGNED;
-        robot.changeStatus(RobotStatus.RESERVED);
-        this.assignedAt = LocalDateTime.now();
-    }
-
 }

@@ -1,6 +1,6 @@
 package com.e101.carryporter.domain.robot.repository;
 
-import com.e101.carryporter.domain.robot.entity.RobotState;
+import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.AfterEach;
@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,12 +23,13 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
     RobotAvailableQueueRepository robotAvailableQueueRepository;
 
     @Autowired
-    RobotStateRepository robotStateRepository;
+    RobotRealTimeRepository robotRealTimeRepository;
 
     @Autowired
     RedisTemplate<String, Object> redisTemplate;
 
     private static final String AVAILABLE_ROBOTS_KEY = "robot:available";
+    private static final String ROBOT_STATUS_PREFIX = "robot:status:";
 
     @AfterEach
     void tearDown() {
@@ -37,34 +38,52 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
                 .ifPresent(conn -> conn.serverCommands().flushDb());
     }
 
+    private void initRobotHash(Long robotId, String macAddress, RobotStatus status, int battery) {
+        String key = ROBOT_STATUS_PREFIX + robotId;
+
+        // RedisTemplate을 사용해 Map으로 한 번에 저장 (Config에 설정된 StringSerializer가 자동 적용됨)
+        Map<String, String> data = Map.of(
+                "macAddress", macAddress,
+                "status", status.name(),
+                "battery", String.valueOf(battery),
+                "updatedAt", LocalDateTime.now().toString() // 날짜도 넣어주면 더 완벽
+        );
+
+        redisTemplate.opsForHash().putAll(key, data);
+    }
+
     @Nested
-    @DisplayName("로봇 배정")
+    @DisplayName("로봇 배정 (acquireRobotScript)")
     class AcquireRobotIdTest {
 
-        @DisplayName("큐에 로봇이 있으면 로봇 ID를 반환하고 상태를 RESERVED로 변경한다")
+        @DisplayName("큐에 로봇이 있으면 Lua 스크립트가 LPOP으로 로봇 ID를 반환하고 상태를 BUSY로 변경한다")
         @Test
         void acquireRobotIdSuccess() {
             // given
             Long robotId = 1L;
-            String macAddress = "AA:BB:CC:DD";
-            RobotState robotState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, robotState);
+            initRobotHash(robotId, "AA:BB:CC:DD", RobotStatus.BUSY, 100);
 
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
+            // updateStatusOnly로 IDLE 상태로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
 
-            // when
+            // when - Lua 스크립트 실행 (LPOP -> HSET status BUSY)
             Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
 
             // then
             assertThat(result).isPresent();
             assertThat(result.get()).isEqualTo(robotId);
 
-            Optional<RobotState> updatedState = robotStateRepository.findById(robotId);
+            // Lua 스크립트가 상태를 BUSY로 변경했는지 확인
+            Optional<RobotRealTimeInfo> updatedState = robotRealTimeRepository.findById(robotId);
             assertThat(updatedState).isPresent();
-            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+
+            // 큐에서 제거되었는지 확인
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(0);
         }
 
-        @DisplayName("큐에 여러 로봇이 있으면 먼저 들어온 로봇을 반환한다 (FIFO)")
+        @DisplayName("큐에 여러 로봇이 있으면 Lua 스크립트가 FIFO 순서로 반환한다")
         @Test
         void acquireRobotIdFifo() {
             // given
@@ -72,163 +91,76 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             Long robotId2 = 2L;
             Long robotId3 = 3L;
 
-            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.IDLE, 90);
-            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.IDLE, 80);
+            initRobotHash(robotId1, "AA:BB:CC:DD", RobotStatus.BUSY, 100);
+            initRobotHash(robotId2, "EE:FF:GG:HH", RobotStatus.BUSY, 90);
+            initRobotHash(robotId3, "II:JJ:KK:LL", RobotStatus.BUSY, 80);
 
-            robotStateRepository.save(robotId1, robotState1);
-            robotStateRepository.save(robotId2, robotState2);
-            robotStateRepository.save(robotId3, robotState3);
+            // updateStatusOnly로 IDLE 상태로 변경 (순서대로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId1, RobotStatus.IDLE);
+            robotRealTimeRepository.updateStatusOnly(robotId2, RobotStatus.IDLE);
+            robotRealTimeRepository.updateStatusOnly(robotId3, RobotStatus.IDLE);
 
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId1);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId2);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId3);
-
-            // when
+            // when - Lua 스크립트가 LPOP으로 앞에서부터 꺼냄
             Optional<Long> first = robotAvailableQueueRepository.acquireRobotId();
             Optional<Long> second = robotAvailableQueueRepository.acquireRobotId();
             Optional<Long> third = robotAvailableQueueRepository.acquireRobotId();
 
-            // then
+            // then - FIFO 순서 확인
             assertThat(first).contains(robotId1);
             assertThat(second).contains(robotId2);
             assertThat(third).contains(robotId3);
+
+            // 모든 로봇이 BUSY 상태로 변경되었는지 확인
+            assertThat(robotRealTimeRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotRealTimeRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotRealTimeRepository.findById(robotId3).get().getStatus()).isEqualTo(RobotStatus.BUSY);
+
+            // 큐가 비어있는지 확인
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(0);
         }
 
-        @DisplayName("큐가 비어있으면 타임아웃 후 빈 Optional을 반환한다")
+        @DisplayName("큐가 비어있으면 Lua 스크립트가 nil을 반환하고 Java에서는 빈 Optional로 변환된다")
         @Test
-        void acquireRobotIdTimeout() {
-            // given
-            // 큐에 아무것도 없음
+        void acquireRobotIdWhenQueueEmpty() {
+            // given - 큐에 아무것도 없음
 
-            // when
-            long startTime = System.currentTimeMillis();
+            // when - Lua 스크립트가 LPOP -> nil 반환
             Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
 
             // then
             assertThat(result).isEmpty();
-            assertThat(duration).isGreaterThanOrEqualTo(20000); // 20초 이상 대기
-            assertThat(duration).isLessThan(25000); // 25초 이내
         }
 
-        @DisplayName("큐에서 대기 중일 때 로봇이 추가되면 즉시 반환한다")
+        @DisplayName("로봇을 배정받은 후 다시 반환하면 재배정할 수 있다 (IDLE로 변경)")
         @Test
-        void acquireRobotIdWithDelayedPush() throws InterruptedException {
+        void acquireAndReturnCycle() {
             // given
             Long robotId = 1L;
-            RobotState robotState = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, robotState);
+            initRobotHash(robotId, "AA:BB:CC:DD", RobotStatus.BUSY, 100);
 
-            // 비동기로 2초 후에 큐에 로봇 추가
-            CompletableFuture.runAsync(() -> {
-                try {
-                    Thread.sleep(2000);
-                    redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
+            // updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
 
-            // when
-            long startTime = System.currentTimeMillis();
-            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            // when - 첫 번째 배정 (acquireRobotScript)
+            Optional<Long> firstAcquire = robotAvailableQueueRepository.acquireRobotId();
+            assertThat(firstAcquire).contains(robotId);
+            assertThat(robotRealTimeRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.BUSY);
 
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get()).isEqualTo(robotId);
-            assertThat(duration).isGreaterThanOrEqualTo(2000); // 2초 이상
-            assertThat(duration).isLessThan(5000); // 5초 이내 (즉시 반환)
-        }
-    }
+            // 로봇 반환 (updateRobotInfoScript로 IDLE로 변경 -> 큐에 추가)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
+            assertThat(robotRealTimeRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.IDLE);
 
-    @Nested
-    @DisplayName("로봇 반환")
-    class ReturnRobotToQueueTest {
-
-        @DisplayName("로봇을 큐에 반환하면 상태가 IDLE로 변경된다")
-        @Test
-        void returnRobotToQueue() {
-            // given
-            Long robotId = 1L;
-            String macAddress = "AA:BB:CC:DD";
-            RobotState robotState = RobotState.of(macAddress, RobotStatus.RESERVED, 100);
-            robotStateRepository.save(robotId, robotState);
-
-            // when
-            robotAvailableQueueRepository.returnRobotToQueue(robotId);
-
-            // then
-            Optional<RobotState> updatedState = robotStateRepository.findById(robotId);
-            assertThat(updatedState).isPresent();
-            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.IDLE);
-        }
-
-        @DisplayName("여러 로봇을 반환하면 모두 IDLE 상태로 변경된다")
-        @Test
-        void returnMultipleRobots() {
-            // given
-            Long robotId1 = 1L;
-            Long robotId2 = 2L;
-            Long robotId3 = 3L;
-
-            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.RESERVED, 100);
-            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.MOVING, 90);
-            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.WAITING_AUTH, 80);
-
-            robotStateRepository.save(robotId1, robotState1);
-            robotStateRepository.save(robotId2, robotState2);
-            robotStateRepository.save(robotId3, robotState3);
-
-            // when
-            robotAvailableQueueRepository.returnRobotToQueue(robotId1);
-            robotAvailableQueueRepository.returnRobotToQueue(robotId2);
-            robotAvailableQueueRepository.returnRobotToQueue(robotId3);
-
-            // then
-            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.IDLE);
-            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.IDLE);
-            assertThat(robotStateRepository.findById(robotId3).get().getStatus()).isEqualTo(RobotStatus.IDLE);
+            // then - 다시 배정 가능
+            Optional<Long> secondAcquire = robotAvailableQueueRepository.acquireRobotId();
+            assertThat(secondAcquire).contains(robotId);
+            assertThat(robotRealTimeRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.BUSY);
         }
     }
 
     @Nested
     @DisplayName("통합 시나리오")
     class IntegrationScenarioTest {
-
-        @DisplayName("로봇을 배정받고 사용 후 반환하면 다시 배정받을 수 있다")
-        @Test
-        void fullCycle() {
-            // given
-            Long robotId = 1L;
-            String macAddress = "AA:BB:CC:DD";
-            RobotState robotState = RobotState.of(macAddress, RobotStatus.IDLE, 100);
-            robotStateRepository.save(robotId, robotState);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
-
-            // when - 첫 번째 배정
-            Optional<Long> firstAcquire = robotAvailableQueueRepository.acquireRobotId();
-            assertThat(firstAcquire).contains(robotId);
-            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
-
-            // 로봇 반환
-            robotAvailableQueueRepository.returnRobotToQueue(robotId);
-            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.IDLE);
-
-            // Lua Script가 IDLE로 변경 시 큐에 추가한다고 가정하고, 수동으로 큐에 추가
-            // (실제로는 Lua Script가 처리)
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
-
-            // 두 번째 배정
-            Optional<Long> secondAcquire = robotAvailableQueueRepository.acquireRobotId();
-
-            // then
-            assertThat(secondAcquire).contains(robotId);
-            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
-        }
 
         @DisplayName("여러 로봇을 동시에 배정하고 반환할 수 있다")
         @Test
@@ -237,28 +169,108 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             Long robotId1 = 1L;
             Long robotId2 = 2L;
 
-            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
-            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.IDLE, 90);
+            initRobotHash(robotId1, "AA:BB:CC:DD", RobotStatus.BUSY, 100);
+            initRobotHash(robotId2, "EE:FF:GG:HH", RobotStatus.BUSY, 90);
 
-            robotStateRepository.save(robotId1, robotState1);
-            robotStateRepository.save(robotId2, robotState2);
+            // updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId1, RobotStatus.IDLE);
+            robotRealTimeRepository.updateStatusOnly(robotId2, RobotStatus.IDLE);
 
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId1);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId2);
-
-            // when
+            // when - 두 로봇 배정
             Optional<Long> robot1 = robotAvailableQueueRepository.acquireRobotId();
             Optional<Long> robot2 = robotAvailableQueueRepository.acquireRobotId();
 
             // then
             assertThat(robot1).contains(robotId1);
             assertThat(robot2).contains(robotId2);
-            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
-            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(robotRealTimeRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotRealTimeRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.BUSY);
 
             // 큐가 비어있어야 함
             Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
             assertThat(queueSize).isEqualTo(0);
+
+            // 로봇들을 다시 IDLE로 반환
+            robotRealTimeRepository.updateStatusOnly(robotId1, RobotStatus.IDLE);
+            robotRealTimeRepository.updateStatusOnly(robotId2, RobotStatus.IDLE);
+
+            // 큐에 다시 추가되었는지 확인
+            Long queueSizeAfterReturn = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSizeAfterReturn).isEqualTo(2);
+        }
+
+        @DisplayName("Lua 스크립트가 원자적으로 로봇을 배정한다 (LPOP + HSET)")
+        @Test
+        void atomicAcquire() {
+            // given
+            Long robotId = 1L;
+            initRobotHash(robotId, "AA:BB:CC:DD", RobotStatus.BUSY, 100);
+
+            // updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
+
+            Long initialQueueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(initialQueueSize).isEqualTo(1);
+
+            // when - Lua 스크립트가 원자적으로 실행
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+
+            // then - 큐에서 제거되고 상태가 변경되는 것이 원자적으로 수행됨
+            assertThat(result).contains(robotId);
+
+            Long finalQueueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(finalQueueSize).isEqualTo(0);
+
+            Optional<RobotRealTimeInfo> robotState = robotRealTimeRepository.findById(robotId);
+            assertThat(robotState.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+        }
+
+        @DisplayName("acquireRobotScript는 macAddress와 battery는 유지하고 status와 updatedAt만 변경한다")
+        @Test
+        void acquireScriptPreservesOtherFields() {
+            // given
+            Long robotId = 1L;
+            String originalMacAddress = "AA:BB:CC:DD";
+            int originalBattery = 75;
+
+            initRobotHash(robotId, originalMacAddress, RobotStatus.BUSY, originalBattery);
+
+            // updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
+
+            // when - Lua 스크립트 실행
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+
+            // then - macAddress와 battery는 유지됨
+            assertThat(result).contains(robotId);
+
+            Optional<RobotRealTimeInfo> robotState = robotRealTimeRepository.findById(robotId);
+            assertThat(robotState).isPresent();
+            assertThat(robotState.get().getMacAddress()).isEqualTo(originalMacAddress);
+            assertThat(robotState.get().getBattery()).isEqualTo(originalBattery);
+            assertThat(robotState.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotState.get().getUpdatedAt()).isNotNull();
+        }
+
+        @DisplayName("존재하지 않는 로봇 ID가 큐에 있어도 배정은 성공한다 (상태만 새로 생성됨)")
+        @Test
+        void acquireNonExistentRobotCreatesNewState() {
+            // given - 큐에만 로봇 ID가 있고 실제 해시는 없음
+            Long robotId = 999L;
+
+            // updateStatusOnly로 생성하고 IDLE로 변경 (자동으로 큐에 추가됨)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
+
+            // when - Lua 스크립트가 LPOP -> HSET (새로 생성)
+            Optional<Long> result = robotAvailableQueueRepository.acquireRobotId();
+
+            // then
+            assertThat(result).contains(robotId);
+
+            Optional<RobotRealTimeInfo> robotState = robotRealTimeRepository.findById(robotId);
+            assertThat(robotState).isPresent();
+            assertThat(robotState.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotState.get().getUpdatedAt()).isNotNull();
         }
     }
 }

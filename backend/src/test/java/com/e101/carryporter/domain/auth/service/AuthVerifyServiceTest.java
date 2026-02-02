@@ -60,7 +60,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
         Long userId = userRepository.save(user);
 
         // 2. 위치 저장
-        Location location = Location.createLocation("Loc-" + UUID.randomUUID(), "테스트", 37.0, 127.0);
+        Location location = Location.createLocation("Loc-" + UUID.randomUUID(), "테스트");
         locationRepository.save(location);
 
         // 3. 로봇 저장 (Robot.createRobot 팩토리 메서드 사용)
@@ -92,7 +92,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
         );
 
         // when
-        userAuthService.verifyPassword(request);
+        userAuthService.unlockRequest(request);
 
         // then
         long eventCount = events.stream(UserAuthSuccessEvent.class).count();
@@ -109,7 +109,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
                 .build();
         Long userId = userRepository.save(user);
 
-        Location location = Location.createLocation("Loc-Fail", "desc", 0.0, 0.0);
+        Location location = Location.createLocation("Loc-Fail", "desc");
         locationRepository.save(location);
 
         // 로봇 저장
@@ -137,7 +137,7 @@ class UserAuthServiceTest extends IntegrationTestSupport {
         );
 
         // when & then
-        assertThatThrownBy(() -> userAuthService.verifyPassword(request))
+        assertThatThrownBy(() -> userAuthService.unlockRequest(request))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AuthLayout from '../components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { login } from '../api/auth.api';
 import { useAuthStore } from '../store/authStore';
@@ -107,19 +106,19 @@ const CodeVerificationPage = () => {
         email,
         code: selectedCode,
       };
-      console.log('=== CODE 인증 요청 데이터 ===');
-      console.log('Email:', email);
-      console.log('Selected Code:', selectedCode, '(type:', typeof selectedCode, ')');
-      console.log('Correct Code:', correctCode, '(type:', typeof correctCode, ')');
-      console.log('Request Data:', requestData);
+      if (import.meta.env.DEV) console.log('=== CODE 인증 요청 데이터 ===');
+      if (import.meta.env.DEV) console.log('Email:', email);
+      if (import.meta.env.DEV) console.log('Selected Code:', selectedCode, '(type:', typeof selectedCode, ')');
+      if (import.meta.env.DEV) console.log('Correct Code:', correctCode, '(type:', typeof correctCode, ')');
+      if (import.meta.env.DEV) console.log('Request Data:', requestData);
 
       // CODE 인증 API 호출 (이메일 + 선택한 CODE)
+      // refreshToken은 백엔드가 httpOnly 쿠키로 설정하므로 응답 body에서 처리 불필요
       const response = await login(requestData);
 
-      // Zustand 스토어에 토큰 저장 (accessToken + refreshToken)
+      // Zustand 스토어에 accessToken 저장
       loginStore(
         response.accessToken,
-        response.refreshToken,
         {
           id: '', // 토큰에서 추출 또는 임시값
           email,
@@ -140,60 +139,86 @@ const CodeVerificationPage = () => {
   };
 
   return (
-    <AuthLayout>
-      {/* 카드 컨테이너 */}
-      <div className="bg-white rounded-3xl shadow-2xl p-10">
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <header className="bg-gray-50 pt-safe">
+        <div className="max-w-md mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                <img
+                  src="/images/logo.png"
+                  alt="CARRY PORTER Logo"
+                  className="w-6 h-6 object-contain brightness-0 invert"
+                />
+              </div>
+              <div>
+                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">CARRY PORTER</h1>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 메인 컨텐츠 */}
+      <main className="max-w-md mx-auto px-6 py-6">
         {/* 제목 */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-left">
-          같은 번호 선택
-        </h2>
-
-        {/* 설명 텍스트 */}
-        <p className="text-sm text-gray-600 mb-8">
-          Mattermost에서 받은 숫자와 같은 번호를 선택해주세요
-        </p>
-
-        {/* CODE 버튼들 */}
-        <div className="space-y-4 mb-6">
-          {codeOptions.map((code) => (
-            <button
-              key={code}
-              onClick={() => handleCodeSelect(code)}
-              className={`
-                w-full h-28
-                text-6xl font-extrabold
-                rounded-2xl
-                border-3
-                transition-all duration-200
-                ${selectedCode === code
-                  ? 'bg-blue-50 border-blue-400 text-gray-900 shadow-md'
-                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                }
-              `}
-            >
-              {code}
-            </button>
-          ))}
+        <div className="mb-6 animate-fade-in-up">
+          <h2 className="text-gray-900 text-2xl font-bold mb-1">
+            같은 번호 선택 🔢
+          </h2>
+          <p className="text-gray-600 text-sm">
+            Mattermost에서 받은 숫자와 같은 번호를 선택해주세요
+          </p>
         </div>
 
-        {/* API 에러 메시지 */}
-        {apiError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-red-600">{apiError}</p>
-          </div>
-        )}
+        {/* CODE 선택 카드 */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm animate-fade-in-up">
+          <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+            </svg>
+            인증 코드
+          </h3>
 
-        {/* 로그인 버튼 */}
-        <Button
-          onClick={handleSubmit}
-          size="lg"
-          disabled={isLoading || selectedCode === null}
-          className="w-full"
-        >
-          {isLoading ? '인증 중...' : '로그인'}
-        </Button>
-      </div>
-    </AuthLayout>
+          {/* CODE 버튼들 */}
+          <div className="space-y-3 mb-6">
+            {codeOptions.map((code) => (
+              <button
+                key={code}
+                onClick={() => handleCodeSelect(code)}
+                className={`
+                  w-full h-24 text-5xl font-extrabold rounded-xl border-2 transition-all
+                  ${selectedCode === code
+                    ? 'bg-toss-blue-500 border-toss-blue-500 text-white shadow-md'
+                    : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
+                  }
+                `}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+
+          {/* API 에러 메시지 */}
+          {apiError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+              <p className="text-sm text-red-600">{apiError}</p>
+            </div>
+          )}
+
+          {/* 로그인 버튼 */}
+          <Button
+            onClick={handleSubmit}
+            size="lg"
+            disabled={isLoading || selectedCode === null}
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
+          >
+            {isLoading ? '인증 중...' : '로그인'}
+          </Button>
+        </div>
+      </main>
+    </div>
   );
 };
 

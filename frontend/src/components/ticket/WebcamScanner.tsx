@@ -13,11 +13,11 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
 
-  // 웹캠 설정 (모바일 후면 카메라 사용)
+  // 웹캠 설정 (PC와 모바일 모두 호환)
   const videoConstraints = {
-    facingMode: 'environment', // 후면 카메라 선호 (없으면 전면 카메라 사용)
-    width: 1920,
-    height: 1080,
+    facingMode: { ideal: 'environment' }, // 후면 카메라 선호, 없으면 전면 카메라
+    width: { min: 640, ideal: 1920, max: 1920 }, // 유연한 해상도
+    height: { min: 480, ideal: 1080, max: 1080 },
   };
 
   // 웹캠 에러 핸들러
@@ -77,12 +77,21 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
             설정에서 카메라 접근을 활성화할 수 있습니다.
           </p>
 
-          <Button
-            onClick={() => window.location.reload()}
-            className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] rounded-xl"
-          >
-            다시 시도
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={() => setHasError(false)}
+              className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl"
+            >
+              다시 시도
+            </Button>
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="w-full h-14 text-lg font-semibold rounded-xl"
+            >
+              홈으로 돌아가기
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -101,76 +110,10 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
         className="absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* 디밍 오버레이 + 스캔 프레임 (하나의 컨테이너로 통합) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {/* 상단 디밍 영역 */}
-        <div className="absolute top-0 left-0 right-0 bg-black/70" style={{ bottom: 'calc(50% + 100px)' }} />
-
-        {/* 하단 디밍 영역 */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/70" style={{ top: 'calc(50% + 100px)' }} />
-
-        {/* 중앙 영역: 좌측 디밍 + 스캔 영역 + 우측 디밍 */}
-        <div
-          className="absolute left-0 right-0 flex items-center justify-center"
-          style={{
-            top: 'calc(50% - 100px)',
-            bottom: 'calc(50% - 100px)',
-            height: '200px'
-          }}
-        >
-          {/* 좌측 디밍 */}
-          <div className="absolute top-0 bottom-0 left-0 bg-black/70" style={{ right: 'calc(50% + 158px)' }} />
-
-          {/* 우측 디밍 */}
-          <div className="absolute top-0 bottom-0 right-0 bg-black/70" style={{ left: 'calc(50% + 158px)' }} />
-        </div>
-
-        {/* 스캔 프레임 */}
-        <div
-          className="relative rounded-2xl overflow-hidden"
-          style={{
-            width: '316px',
-            height: '200px',
-          }}
-        >
-          {/* 테두리 */}
-          <div className="absolute inset-0 border-2 border-[#0064FF] rounded-2xl" />
-
-          {/* 모서리 장식 - 좌상단 */}
-          <div className="absolute top-0 left-0 w-10 h-10">
-            <div className="absolute top-0 left-0 w-10 h-1 bg-[#0064FF]" />
-            <div className="absolute top-0 left-0 w-1 h-10 bg-[#0064FF]" />
-          </div>
-
-          {/* 모서리 장식 - 우상단 */}
-          <div className="absolute top-0 right-0 w-10 h-10">
-            <div className="absolute top-0 right-0 w-10 h-1 bg-[#0064FF]" />
-            <div className="absolute top-0 right-0 w-1 h-10 bg-[#0064FF]" />
-          </div>
-
-          {/* 모서리 장식 - 좌하단 */}
-          <div className="absolute bottom-0 left-0 w-10 h-10">
-            <div className="absolute bottom-0 left-0 w-10 h-1 bg-[#0064FF]" />
-            <div className="absolute bottom-0 left-0 w-1 h-10 bg-[#0064FF]" />
-          </div>
-
-          {/* 모서리 장식 - 우하단 */}
-          <div className="absolute bottom-0 right-0 w-10 h-10">
-            <div className="absolute bottom-0 right-0 w-10 h-1 bg-[#0064FF]" />
-            <div className="absolute bottom-0 right-0 w-1 h-10 bg-[#0064FF]" />
-          </div>
-
-          {/* 스캔 라인 애니메이션 */}
-          {isScanning && (
-            <div className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-[#0064FF] to-transparent animate-scan-line" />
-          )}
-        </div>
-      </div>
-
       {/* 상단 헤더 영역 */}
       <div className="absolute top-0 left-0 right-0 z-20 pt-safe">
         <div className="flex items-center justify-end px-6 py-6">
-          {/* 닫기 버튼 (X 아이콘만 유지) */}
+          {/* 닫기 버튼 */}
           <button
             onClick={handleClose}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm transition-all hover:bg-black/50"
@@ -185,10 +128,10 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
       {/* 안내 타이틀 */}
       <div className="absolute top-24 left-0 right-0 z-20 text-center px-6 animate-fade-in-up">
         <h1 className="text-white text-2xl font-bold mb-2 drop-shadow-lg">
-          탑승권을 스캔해주세요!
+          탑승권을 촬영해주세요
         </h1>
         <p className="text-white/80 text-sm">
-          프레임 안에 탑승권을 맞춰주세요
+          탑승권이 화면에 잘 보이도록 조정해주세요
         </p>
       </div>
 
@@ -197,13 +140,13 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
         <div className="px-6 pb-8 pt-6">
           {/* 보딩패스 가이드 텍스트 */}
           <p className="text-white/60 text-xs text-center mb-4">
-            💡 보딩패스 전체가 프레임 안에 들어오도록 해주세요
+            💡 탑승권 전체가 화면에 선명하게 보이도록 해주세요
           </p>
 
           <Button
             onClick={handleScan}
             disabled={isScanning}
-            className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] disabled:bg-[#0064FF]/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:bg-toss-blue-500/50 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
           >
             {isScanning ? (
               <div className="flex items-center gap-3">
@@ -211,7 +154,7 @@ const WebcamScanner = ({ onCapture, isScanning = false }: WebcamScannerProps) =>
                 스캔 중...
               </div>
             ) : (
-              '스캔하기'
+              '촬영하기'
             )}
           </Button>
         </div>

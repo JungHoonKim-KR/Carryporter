@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +21,11 @@ public class LockerRepository {
 
     public Optional<Locker> findById(Long lockerId) {
         return Optional.ofNullable(em.find(Locker.class, lockerId));
+    }
+
+    public List<Locker> findAll() {
+        return em.createQuery("SELECT l FROM Locker l ORDER BY l.lockerCode", Locker.class)
+                .getResultList();
     }
 
 }

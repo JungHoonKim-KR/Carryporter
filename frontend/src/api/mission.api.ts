@@ -1,10 +1,11 @@
 import apiClient from './axios';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import type {
   CreateMissionRequest,
   CreateMissionResponse,
-  MissionStatusEvent,
-  MissionStatus,
+  SSEEventData,
 } from '../types/mission.types';
+import { useAuthStore } from '../store/authStore';
 
 /**
  * 미션 생성 API
@@ -15,58 +16,123 @@ import type {
 export const createMission = async (
   data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
-  const response = await apiClient.post<CreateMissionResponse>('/api/missions', data);
+  // userId를 명시적으로 number로 변환 (User.id는 string이지만 API는 number 필요)
+  const requestData = {
+    userId: Number(data.userId),
+    startLocation: data.startLocation,  // 키 이름 변경
+    endLocation: data.endLocation,      // 키 이름 변경
+  };
+
+  const response = await apiClient.post<CreateMissionResponse>(
+    '/api/missions',
+    requestData
+  );
   return response.data;
 };
 
 /**
- * 미션 SSE 구독
- * EventSource를 사용하여 실시간으로 미션 상태를 구독합니다.
+ * SSE 구독 - 실시간 이벤트 수신
+ * EventSourcePolyfill을 사용하여 Bearer Token 헤더와 함께 SSE를 구독합니다.
  *
- * @param missionId - 구독할 미션 ID
- * @param callbacks - SSE 이벤트 콜백 함수들
+ * @param callbacks - SSE 이벤트별 콜백 함수
  * @returns cleanup 함수 (EventSource.close())
  */
 export const subscribeMissionUpdates = (
-  missionId: string,
   callbacks: {
     onConnect?: () => void;
-    onStatus?: (status: MissionStatusEvent) => void;
+    onRobotAssigned?: (data: SSEEventData) => void;
+    onMissionStarted?: (data: SSEEventData) => void;
+    onRobotArrival?: (data: SSEEventData) => void;
+    onAuthSuccess?: (data: SSEEventData) => void;
+    onUnlocked?: (data: SSEEventData) => void;
+    onAborted?: (data: SSEEventData) => void;
+    onLocked?: (data: SSEEventData) => void;
     onError?: (error: Error) => void;
   }
 ): (() => void) => {
-  const eventSource = new EventSource(
-    `${import.meta.env.VITE_API_BASE_URL}/api/missions/${missionId}/subscribe`,
-    { withCredentials: true }
+  // AccessToken 가져오기
+  const token = useAuthStore.getState().accessToken;
+
+  if (!token) {
+    throw new Error('AccessToken이 없습니다. 로그인이 필요합니다.');
+  }
+
+  // EventSourcePolyfill 생성 (Bearer Token 포함)
+  const eventSource = new EventSourcePolyfill(
+    `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      heartbeatTimeout: 60000, // 1분
+    }
   );
 
-  // CONNECT 이벤트: SSE 연결 성공 시
-  eventSource.addEventListener('CONNECT', () => {
-    console.log('[SSE] Connected to mission:', missionId);
+  // 1. Connect 이벤트
+  eventSource.addEventListener('Connect', (e: any) => {
+    if (import.meta.env.DEV) console.log('[SSE] Connected:', e.data);
     callbacks.onConnect?.();
   });
 
-  // STATUS 이벤트: 미션 상태 변경 시
-  eventSource.addEventListener('STATUS', (e) => {
-    const status = e.data; // "REQUESTED", "ASSIGNED", "ARRIVED", etc.
-    console.log('[SSE] Status update:', status);
+  // 2. RobotAssignedEvent
+  eventSource.addEventListener('RobotAssignedEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Robot Assigned:', data);
+    callbacks.onRobotAssigned?.(data);
+  });
 
-    callbacks.onStatus?.({
-      missionId,
-      status: status as MissionStatus,
-      timestamp: new Date().toISOString(),
-    });
+  // 3. MissionStartedEvent
+  eventSource.addEventListener('MissionStartedEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Mission Started:', data);
+    callbacks.onMissionStarted?.(data);
+  });
+
+  // 4. RobotArrivalEvent
+  eventSource.addEventListener('RobotArrivalEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Robot Arrival:', data);
+    callbacks.onRobotArrival?.(data);
+  });
+
+  // 5. UserAuthSuccessEvent
+  eventSource.addEventListener('UserAuthSuccessEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Auth Success:', data);
+    callbacks.onAuthSuccess?.(data);
+  });
+
+  // 6. MissionUnlockedEvent
+  eventSource.addEventListener('MissionUnlockedEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Unlocked:', data);
+    callbacks.onUnlocked?.(data);
+  });
+
+  // 7. MissionAbortedEvent
+  eventSource.addEventListener('MissionAbortedEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Aborted:', data);
+    callbacks.onAborted?.(data);
+  });
+
+  // 8. MissionLockedEvent
+  eventSource.addEventListener('MissionLockedEvent', (e: any) => {
+    const data: SSEEventData = JSON.parse(e.data);
+    if (import.meta.env.DEV) console.log('[SSE] Locked:', data);
+    callbacks.onLocked?.(data);
   });
 
   // 에러 처리
   eventSource.onerror = (error) => {
-    console.error('[SSE] Connection error:', error);
+    if (import.meta.env.DEV) console.error('[SSE] Connection error:', error);
     callbacks.onError?.(new Error('SSE connection error'));
+    eventSource.close();
   };
 
-  // Cleanup 함수 반환
+  // Cleanup 함수
   return () => {
-    console.log('[SSE] Disconnecting from mission:', missionId);
+    if (import.meta.env.DEV) console.log('[SSE] Disconnecting');
     eventSource.close();
   };
 };

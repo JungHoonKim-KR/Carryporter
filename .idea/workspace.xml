@@ -33,7 +33,7 @@
             <expand>
               <path>
                 <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="SSETest" type="f1a62948:ProjectNode" />
+                <item name="carryporter" type="f1a62948:ProjectNode" />
               </path>
             </expand>
             <select />
@@ -92,6 +92,10 @@
     "Gradle.CarryporterApplicationTests.executor": "Run",
     "Gradle.MqttCommandHandlerIntegrationTest.executor": "Run",
     "Gradle.MqttCommandHandlerTest.executor": "Run",
+    "Gradle.MqttIntegrationTest.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.testRobotArrived.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.testRobotRegister.executor": "Run",
     "Gradle.MqttPublisherServiceTest.executor": "Run",
     "Gradle.MqttRealBrokerTest.testPublish.executor": "Run",
     "Gradle.MqttRealBrokerTest.testPublishWithoutPayload.executor": "Run",
@@ -222,33 +226,6 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="RobotServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.domain.robot.service.RobotServiceTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
-      <method v="2" />
-    </configuration>
     <configuration name="Tests in 'carryporter.test'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -310,6 +287,7 @@
       <workItem from="1769413706201" duration="11142000" />
       <workItem from="1769588173564" duration="14727000" />
       <workItem from="1769670842921" duration="14198000" />
+      <workItem from="1769989400565" duration="9784000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />

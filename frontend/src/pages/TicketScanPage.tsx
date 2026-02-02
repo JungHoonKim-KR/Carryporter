@@ -25,7 +25,7 @@ const TicketScanPage = () => {
       // 성공 모달 표시
       setShowSuccess(true);
     } catch (error) {
-      console.error('티켓 스캔 실패:', error);
+      if (import.meta.env.DEV) console.error('티켓 스캔 실패:', error);
       setScanning(false);
 
       // 에러 알림 (향후 Toast 컴포넌트로 대체 가능)
@@ -41,7 +41,7 @@ const TicketScanPage = () => {
 
   return (
     <>
-      {/* 웹캠 스캐너 */}
+      {/* 풀화면 카메라 */}
       <WebcamScanner onCapture={handleCapture} isScanning={isScanning} />
 
       {/* 스캔 완료 모달 */}

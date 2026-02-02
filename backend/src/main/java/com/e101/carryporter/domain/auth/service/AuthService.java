@@ -1,6 +1,7 @@
 package com.e101.carryporter.domain.auth.service;
 
 import com.e101.carryporter.domain.auth.service.dto.request.AuthServiceReqeustDto;
+import com.e101.carryporter.domain.auth.service.dto.request.LockServiceRequestDto;
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyCodeServiceRequestDto;
 import com.e101.carryporter.domain.auth.repository.*;
 import com.e101.carryporter.domain.auth.controller.dto.response.AuthResponseDto;
@@ -8,6 +9,7 @@ import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto
 import com.e101.carryporter.domain.auth.service.dto.request.VerifyPasswordServiceRequestDto;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
+import com.e101.carryporter.domain.mission.event.MissionLockRequestEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.event.UserAuthFailedEvent;
@@ -97,7 +99,7 @@ public class AuthService {
         userPasswordRepository.save(savedId, tempPassword);
 
         // 4. 토큰 발급 (Access & Refresh 둘 다 생성)
-        String accessToken = jwtUtils.createAccessToken(email, savedId);
+        String accessToken = jwtUtils.createAccessToken(email, savedId, user.getRole());
         String refreshToken = jwtUtils.createRefreshToken(savedId);
 
         // 5. Refresh Token Redis 저장
@@ -118,31 +120,41 @@ public class AuthService {
     /**
      * 3-3. 토큰 재발급
      */
+    /**
+     * 3-3. 토큰 재발급 (수정됨)
+     */
     public TokenResponseDto reissue(String refreshToken) {
+        // 1. 유효성 검사
         if (!jwtUtils.validateToken(refreshToken)) {
             throw new IllegalArgumentException("AUTH_003:유효하지 않은 Refresh Token입니다.");
         }
 
+        // 2. 유저 ID 추출 및 Redis 조회
         Long userId = jwtUtils.getUserIdFromToken(refreshToken);
         String savedToken = refreshTokenRepository.get(userId)
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_004:로그인 정보가 없거나 만료되었습니다."));
 
+        // 3. 토큰 일치 여부 확인 (탈취 감지)
         if (!savedToken.equals(refreshToken)) {
             throw new IllegalArgumentException("AUTH_005:토큰 정보가 일치하지 않습니다.");
         }
 
+        // 4. 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_006:존재하지 않는 유저입니다."));
 
-        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId());
+        // 5. 새 토큰 생성 (Rotation)
+        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId(), user.getRole());
+        String newRefreshToken = jwtUtils.createRefreshToken(user.getId()); // 여기서 새로 만듦
 
-        String newRefreshToken = jwtUtils.createRefreshToken(user.getId());
-
+        // 6. Redis 업데이트 (기존 키에 덮어쓰기)
+        // Tip: 저장할 때 TTL(만료시간)도 같이 설정해주는 것이 좋습니다.
         refreshTokenRepository.save(user.getId(), newRefreshToken);
 
+        // 7. 응답 반환
         return TokenResponseDto.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(refreshToken) // 기존 리프레시 토큰 유지
+                .refreshToken(newRefreshToken) // ★ 수정완료: 반드시 '새 토큰'을 내려줘야 함!
                 .grantType("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenValidityInSeconds())
                 .build();
@@ -152,7 +164,7 @@ public class AuthService {
      * 모바일에서 입력한 비밀번호 검증 후 로봇 문열림
      */
 
-    public void verifyPassword(VerifyPasswordServiceRequestDto command){
+    public void unlockRequest(VerifyPasswordServiceRequestDto command){
         //미션 조회
         Mission mission = missionRepository.findById(command.missionId())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 미션입니다."));
@@ -192,5 +204,20 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
 
         }
+    }
+    @Transactional
+    public void lockRequest(LockServiceRequestDto command){
+
+        Mission mission = missionRepository.findById(command.missionId())
+                .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 미션입니다."));
+        String robotMacAddress = mission.getRobot().getMacAddress();
+
+        //성공 이벤트 발행->Mqtt로봇 문을 잠금 요청을 보낸다
+        eventPublisher.publishEvent(new MissionLockRequestEvent(
+                command.missionId(),
+                command.userId(),
+                robotMacAddress
+        ));
+        log.info("[LOCK-SERVICE] 미션 {}에 대한 로봇 {} 잠금 요청 발행", mission.getId(), robotMacAddress);
     }
 }

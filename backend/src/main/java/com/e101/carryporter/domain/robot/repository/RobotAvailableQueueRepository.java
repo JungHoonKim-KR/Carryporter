@@ -4,10 +4,12 @@ import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Repository
 @Slf4j
@@ -15,35 +17,29 @@ import java.util.concurrent.TimeUnit;
 public class RobotAvailableQueueRepository {
 
     private static final String AVAILABLE_ROBOTS_KEY = "robot:available";
-    private static final int TIME_OUT_SEC = 20;
+    private static final String ROBOT_STATUS_PREFIX = "robot:status:";
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RobotStateRepository robotStateRepository;
+    private final RedisScript<Long> acquireRobotScript;
 
     public Optional<Long> acquireRobotId() {
-
         try {
-            log.debug("로봇 배정 대기 중 ... ");
+            Long robotId = redisTemplate.execute(
+                    acquireRobotScript,
+                    List.of(AVAILABLE_ROBOTS_KEY),
+                    ROBOT_STATUS_PREFIX,
+                    RobotStatus.BUSY.name(),
+                    LocalDateTime.now().toString()
+            );
 
-            // 최대 20초간 blocking
-            Object result = redisTemplate.opsForList()
-                    .leftPop(AVAILABLE_ROBOTS_KEY, TIME_OUT_SEC, TimeUnit.SECONDS);
-
-            if (result == null) {
+            if (robotId == null) {
                 return Optional.empty();
             }
 
-            Long robotId = Long.valueOf(result.toString());
-            robotStateRepository.updateStatusOnly(robotId, RobotStatus.RESERVED);
-
             return Optional.of(robotId);
-
         } catch (Exception e) {
+            log.error("로봇 획득 실패", e);
             throw e;
         }
-    }
-
-    public void returnRobotToQueue(Long robotId) {
-        robotStateRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
     }
 }

@@ -46,6 +46,7 @@ lerna-debug.log*
 # ===== AI Tools & Extensions =====
 .claude/
 .cursor/
+.serena/
 .mcp.json
 CLAUDE.md
 
