@@ -9,6 +9,8 @@ import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
+import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.user.entity.User;
@@ -65,7 +67,12 @@ public class MissionService {
         // robot 이 idle 상태인지 검증
         validateIdleRobot(robot);
 
+        // 이전 상태 저장
+        RobotStatus previousStatus = robot.getRobotStatus();
+
         mission.assignRobot(robot);
+
+        eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(robot.getId(), robot.getRobotCode(), previousStatus, robot.getRobotStatus()));
     }
 
     @Transactional

@@ -69,6 +69,9 @@ dependencies {
     // BCrypt 암호화용 (순수 BCrypt 라이브러리)
     implementation 'org.mindrot:jbcrypt:0.4'
 
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // AOP 필수
+    implementation 'org.springframework.retry:spring-retry' // Retry 기능 필수
+
 }
 
 tasks.named('test') {
