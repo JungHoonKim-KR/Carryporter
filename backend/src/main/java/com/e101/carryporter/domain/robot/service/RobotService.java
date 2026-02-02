@@ -20,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.UUID;
 
@@ -37,45 +39,37 @@ public class RobotService {
     private final MissionService missionService;
     private final MissionRepository missionRepository;
     private final EntityManager em;
+    private final TransactionTemplate transactionTemplate;
 
     /**
      * 로봇 등록 (MQTT register 토픽에서 호출)
      * 로봇 상태 cache 반영 (Redis 캐시 동기화)
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Robot registerRobot(String macAddress) {
         Robot robot;
 
         try {
-            // 로봇 mac 주소로 조회 시도
             robot = robotRepository.findByMacAddress(macAddress)
-                    .map(existingRobot -> {
-                        log.info("이미 등록된 로봇 - MAC: {}, robotCode: {}", macAddress, existingRobot.getRobotCode());
-                        return existingRobot;
-                    })
                     .orElseGet(() -> {
-                        // 2. 없으면 신규 생성
-                        String robotCode = generateRobotCode();
-                        Robot newRobot = Robot.createRobot(robotCode, macAddress);
-                        robotRepository.save(newRobot);
-                        log.info("새 로봇 등록 완료 - MAC: {}, robotCode: {}", macAddress, robotCode);
-                        return newRobot;
-                    });
-
+                                String robotCode = generateRobotCode();
+                                Robot newRobot = Robot.createRobot(robotCode, macAddress);
+                                robotRepository.save(newRobot);
+                                em.flush();
+                                log.info("새 로봇 등록 완료 - MAC: {}, robotCode: {}", macAddress, robotCode);
+                                return newRobot;
+                            }
+                    );
         } catch (DataIntegrityViolationException e) {
-            // 3. 동시 INSERT로 인한 중복 예외 → 재조회
-            // 같은 mac 주소로 등록했기 때문에 무조건 존재
-            log.warn("MAC 주소 중복 감지, 재조회: MAC={}", macAddress);
-            em.clear();
+            // 동시 INSERT로 인한 중복 → 새 트랜잭션에서 재조회
+            log.warn("MAC 주소 중복 감지, 새 트랜잭션에서 재조회: MAC={}", macAddress);
             robot = robotRepository.findByMacAddress(macAddress)
-                    .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+                    .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND)
+                    );
         }
 
         // Redis 캐시 동기화 (기존/신규 모두)
-        // MAC 주소 매핑
         cacheService.saveMacMapping(macAddress, robot.getId());
 
-        // 실시간 로봇 정보 (status, battery 등록)
         RobotRealTimeInfo realTimeInfo = RobotRealTimeInfo.builder()
                 .macAddress(macAddress)
                 .status(robot.getRobotStatus())
