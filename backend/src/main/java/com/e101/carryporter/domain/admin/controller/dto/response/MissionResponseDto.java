@@ -19,7 +19,8 @@ public class MissionResponseDto {
     private String lockerCode;
     private String callLocationName;
     private MissionStatus missionStatus;
-    private LocalDateTime assignedAt;
+    private LocalDateTime robotAssignedAt;
+    private LocalDateTime lockerAssignedAt;
     private LocalDateTime startedAt;
     private LocalDateTime arrivedAt;
     private LocalDateTime finishedAt;
@@ -35,7 +36,8 @@ public class MissionResponseDto {
                 .lockerCode(mission.getLocker() != null ? mission.getLocker().getLockerCode() : null)
                 .callLocationName(mission.getCallLocation().getLocationName())
                 .missionStatus(mission.getMissionStatus())
-                .assignedAt(mission.getAssignedAt())
+                .robotAssignedAt(mission.getRobotAssignedAt())
+                .lockerAssignedAt(mission.getLockerAssignedAt())
                 .startedAt(mission.getStartedAt())
                 .arrivedAt(mission.getArrivedAt())
                 .finishedAt(mission.getFinishedAt())

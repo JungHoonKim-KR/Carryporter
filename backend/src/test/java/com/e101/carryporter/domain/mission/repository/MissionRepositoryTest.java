@@ -2,6 +2,8 @@ package com.e101.carryporter.domain.mission.repository;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.UserLockerStatus;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.user.entity.User;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,6 +70,141 @@ class MissionRepositoryTest extends IntegrationTestSupport {
 
         // then
         assertThat(missionOpt).isEmpty();
+    }
+
+    @DisplayName("사용자 ID로 미션 목록을 조회한다")
+    @Test
+    void findByUserId() {
+        // given
+        User user1 = User.createUser("user1@example.com");
+        User user2 = User.createUser("user2@example.com");
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        Location location1 = Location.createLocation("Location1", "Test Location 1");
+        Location location2 = Location.createLocation("Location2", "Test Location 2");
+        locationRepository.save(location1);
+        locationRepository.save(location2);
+
+        Locker locker1 = Locker.createLocker("L001");
+        Locker locker2 = Locker.createLocker("L002");
+        Locker locker3 = Locker.createLocker("L003");
+        em.persist(locker1);
+        em.persist(locker2);
+        em.persist(locker3);
+
+        Mission mission1 = Mission.createMission(user1, location1);
+        mission1.assignLocker(locker1);
+        Mission mission2 = Mission.createMission(user1, location2);
+        mission2.assignLocker(locker2);
+        Mission mission3 = Mission.createMission(user2, location1);
+        mission3.assignLocker(locker3);
+
+        missionRepository.save(mission1);
+        missionRepository.save(mission2);
+        missionRepository.save(mission3);
+        flushAndClear();
+
+        // when
+        List<Mission> missions = missionRepository.findByUserId(user1.getId());
+
+        // then
+        assertThat(missions).hasSize(2)
+                .extracting("user.id")
+                .containsOnly(user1.getId());
+    }
+
+    @DisplayName("사용자 ID로 미션을 조회할 때 사물함 정보를 포함한다")
+    @Test
+    void findByUserIdWithLocker() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Locker locker = Locker.createLocker("L001");
+        em.persist(locker);
+
+        Mission mission = Mission.createMission(user, location);
+        mission.assignLocker(locker);
+        missionRepository.save(mission);
+        flushAndClear();
+
+        // when
+        List<Mission> missions = missionRepository.findByUserId(user.getId());
+
+        // then
+        assertThat(missions).hasSize(1);
+        Mission foundMission = missions.get(0);
+        assertThat(foundMission.getLocker()).isNotNull();
+        assertThat(foundMission.getLocker().getId()).isEqualTo(locker.getId());
+        assertThat(foundMission.getUserLockerStatus()).isEqualTo(UserLockerStatus.OCCUPIED);
+        assertThat(foundMission.getLockerAssignedAt()).isNotNull();
+    }
+
+    @DisplayName("사용자 ID로 미션 조회 시 해당 사용자의 미션이 없으면 빈 리스트를 반환한다")
+    @Test
+    void findByUserIdWithNoMissions() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+        flushAndClear();
+
+        // when
+        List<Mission> missions = missionRepository.findByUserId(user.getId());
+
+        // then
+        assertThat(missions).isEmpty();
+    }
+
+    @DisplayName("사용자 ID로 미션을 조회할 때 여러 사물함 상태를 가진 미션들을 조회한다")
+    @Test
+    void findByUserIdWithDifferentLockerStatuses() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Locker locker1 = Locker.createLocker("L001");
+        Locker locker2 = Locker.createLocker("L002");
+        Locker locker3 = Locker.createLocker("L003");
+        em.persist(locker1);
+        em.persist(locker2);
+        em.persist(locker3);
+
+        // READY 상태
+        Mission mission1 = Mission.createMission(user, location);
+        missionRepository.save(mission1);
+
+        // OCCUPIED 상태
+        Mission mission2 = Mission.createMission(user, location);
+        mission2.assignLocker(locker2);
+        missionRepository.save(mission2);
+
+        // COMPLETED 상태
+        Mission mission3 = Mission.createMission(user, location);
+        mission3.assignLocker(locker3);
+        mission3.finis();
+        missionRepository.save(mission3);
+
+        flushAndClear();
+
+        // when
+        List<Mission> missions = missionRepository.findByUserId(user.getId());
+
+        // then
+        assertThat(missions).hasSize(3);
+        assertThat(missions)
+                .extracting("userLockerStatus")
+                .containsExactlyInAnyOrder(
+                        UserLockerStatus.READY,
+                        UserLockerStatus.OCCUPIED,
+                        UserLockerStatus.COMPLETED
+                );
     }
 
     private void flushAndClear() {

@@ -1,5 +1,7 @@
 package com.e101.carryporter.domain.mission.entity;
 
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
+
 public enum MissionStatus {
     REQUESTED("미션 요청 접수"),
     ASSIGNED("로봇 배정 완료"),
