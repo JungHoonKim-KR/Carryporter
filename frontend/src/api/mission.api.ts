@@ -146,11 +146,29 @@ export const subscribeMissionUpdates = (
  *
  * @param missionId - 인증할 미션 ID
  * @param password - 4자리 비밀번호
+ * @returns 성공 메시지
  */
 export const verifyMission = async (
-  missionId: string,
+  missionId: number,
   password: number
-): Promise<void> => {
-  await apiClient.patch(`/api/missions/${missionId}/verify`, { password });
-  // Response: 204 No Content
+): Promise<string> => {
+  const response = await apiClient.post<string>('/auth/unlock', {
+    missionId,
+    password
+  });
+  return response.data; // "비밀번호 인증 요청 성공"
+};
+
+/**
+ * 미션 잠금 API
+ * UNLOCKED 상태에서 사용자가 짐을 넣은 후 호출하여 로봇을 잠금합니다.
+ *
+ * @param missionId - 잠금할 미션 ID
+ * @returns 성공 메시지
+ */
+export const lockMission = async (missionId: number): Promise<string> => {
+  const response = await apiClient.post<string>('/auth/lock', {
+    missionId
+  });
+  return response.data; // "잠금 요청 성공"
 };

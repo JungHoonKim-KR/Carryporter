@@ -9,7 +9,7 @@ import { LocationSelector } from '@/components/mission/LocationSelector';
 import { STATIONS, BOARDING_GATES, ALL_LOCATIONS } from '../constants/locations';
 
 // 중앙 사물함 (고정 도착지)
-const CENTRAL_LOCKER_ID = 999;
+// const CENTRAL_LOCKER_ID = 999; // 미사용
 
 const MissionCreatePage = () => {
   const navigate = useNavigate();
@@ -41,10 +41,23 @@ const MissionCreatePage = () => {
         callLocationId: locationId,
       });
 
+      // 🔍 디버깅: 백엔드 응답 확인
+      if (import.meta.env.DEV) {
+        console.log('[MissionCreate] 백엔드 응답:', response);
+        console.log('[MissionCreate] missionId:', response.missionId);
+      }
+
+      // 응답 검증
+      if (!response || !response.missionId) {
+        throw new Error('백엔드 응답에 missionId가 없습니다. 응답: ' + JSON.stringify(response));
+      }
+
       // 미션 생성 성공 → 스토어에 저장
       setCurrentMission({
         id: response.missionId.toString(),
-        callLocationId: locationId,
+        userId: 0, // JWT에서 추출되므로 임시값
+        startLocation: locationId, // 호출 위치 = 시작 위치
+        endLocation: 0, // 목적지는 SSE로 받음 (임시값)
         status: 'REQUESTED',
         destination: selectedLocation?.name, // 목적지 이름 저장
         createdAt: new Date().toISOString(),
