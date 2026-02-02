@@ -45,3 +45,8 @@ out/
 *.log
 logs/
 /docs/
+/DOCKER_README.md
+/docker-compose.yml
+/.env.example
+/mosquitto/data/mosquitto.db
+/mosquitto/config/mosquitto.conf

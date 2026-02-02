@@ -1,5 +1,6 @@
 package com.e101.carryporter.global.config.web;
 
+import com.e101.carryporter.global.filter.AuthorizationFilter;
 import com.e101.carryporter.global.filter.CorsFilter;
 import com.e101.carryporter.global.filter.JwtAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -24,6 +25,13 @@ public class WebConfig {
     public FilterRegistrationBean<Filter> jwtFilterRegistration(JwtAuthenticationFilter jwtFilter) {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(jwtFilter);
         registration.setOrder(2); // CORS 다음에 실행
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<Filter> authorizationFilterRegistration(AuthorizationFilter authorizationFilter) {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(authorizationFilter);
+        registration.setOrder(3); // 인증 다음에 실행
         return registration;
     }
 }

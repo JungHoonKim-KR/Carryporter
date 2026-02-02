@@ -34,5 +34,9 @@ public class UserRepository {
     }
 
 
-
+    public Optional<User> findByMmEmailWithAdminCredential(String email) {
+        return em.createQuery("select u from User u join fetch u.adminCredential where u.mmEmail = :email", User.class)
+                .setParameter("email", email)
+                .getResultList().stream().findAny();
+    }
 }

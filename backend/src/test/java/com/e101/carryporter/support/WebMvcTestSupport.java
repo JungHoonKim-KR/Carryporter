@@ -2,6 +2,7 @@ package com.e101.carryporter.support;
 
 import com.e101.carryporter.domain.admin.controller.AdminController;
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
+import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.auth.controller.AuthController;
 import com.e101.carryporter.domain.auth.service.AuthService;
 import com.e101.carryporter.domain.mission.controller.MissionController;
@@ -53,6 +54,9 @@ public abstract class WebMvcTestSupport {
 
     @MockitoBean
     protected AdminLockerService adminLockerService;
+
+    @MockitoBean
+    protected AdminService adminService;
 
     @MockitoBean
     protected TicketService ticketService;

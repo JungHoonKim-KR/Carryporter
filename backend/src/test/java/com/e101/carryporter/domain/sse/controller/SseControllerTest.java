@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.sse.controller;
 
+import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,22 +16,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class SseControllerTest extends WebMvcTestSupport {
 
-
-    @DisplayName("SSE 구독 성공 테스트 (Role 포함)")
+    @DisplayName("인증된 사용자가 SSE 구독을 요청하면 성공한다.")
     @Test
     void subscribe() throws Exception {
-        // given: 파라미터 2개를 받는 subscribe 메서드 Mocking
+        // given
+        Long userId = 1L;
+        String role = "BASIC";
+
+        // sseService.subscribe(userId, role) 호출 시 SseEmitter 반환하도록 설정
         given(sseService.subscribe(anyLong(), anyString()))
                 .willReturn(new SseEmitter());
 
         // when & then
         mockMvc.perform(get("/sse/subscribe")
-                        .param("userId", "1")
-                        .param("role", "ROLE_USER") // ★ Role 파라미터 필수!
+                        // ★ 필터가 userId와 userRole을 세팅해준 상황을 시뮬레이션합니다.
+                        .requestAttr("userId", userId)
+                        .requestAttr("userRole", Role.BASIC)
                         .accept(MediaType.TEXT_EVENT_STREAM))
                 .andDo(print())
                 .andExpect(status().isOk())
-                // 비동기 시작 확인 (Content-Type null 에러 방지)
+                // 비동기 요청이 시작되었는지 확인
                 .andExpect(request().asyncStarted());
     }
 }

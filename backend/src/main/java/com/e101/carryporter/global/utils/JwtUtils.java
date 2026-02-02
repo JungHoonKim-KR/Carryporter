@@ -1,5 +1,6 @@
 package com.e101.carryporter.global.utils;
 
+import com.e101.carryporter.domain.user.entity.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -35,12 +36,14 @@ public class JwtUtils {
      * Access Token 생성
      * @param mmEmail 사용자 이메일 (Subject로 사용)
      * @param userId 사용자 DB ID (Claim으로 추가 정보 저장)
+     * @param role 사용자 권한 (Claim으로 추가 정보 저장)
      * @return 생성된 JWT 토큰 문자열
      */
-    public String createAccessToken(String mmEmail, Long userId) {
+    public String createAccessToken(String mmEmail, Long userId, Role role) {
         return Jwts.builder()
                 .setSubject(mmEmail) // 토큰 제목(주인) = 이메일
                 .claim("userId", userId) // 추가 정보 = userId
+                .claim("role", role.name()) // 추가 정보 = role (BASIC 또는 ADMIN)
                 .setIssuedAt(new Date(System.currentTimeMillis())) // 발행 시간
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpTime)) // 만료 시간
                 .signWith(key, SignatureAlgorithm.HS256) // 암호화 알고리즘
@@ -73,6 +76,14 @@ public class JwtUtils {
      */
     public Long getUserIdFromToken(String token) {
         return parseClaims(token).get("userId", Long.class);
+    }
+
+    /**
+     * 토큰에서 Role 추출
+     */
+    public Role getRoleFromToken(String token) {
+        String roleString = parseClaims(token).get("role", String.class);
+        return Role.valueOf(roleString);
     }
 
     /**

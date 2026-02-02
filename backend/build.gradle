@@ -65,6 +65,9 @@ dependencies {
     // HTTP Client (Mattermost용)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // BCrypt 암호화용 (순수 BCrypt 라이브러리)
+    implementation 'org.mindrot:jbcrypt:0.4'
+
 }
 
 tasks.named('test') {

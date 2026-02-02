@@ -99,7 +99,7 @@ public class AuthService {
         userPasswordRepository.save(savedId, tempPassword);
 
         // 4. 토큰 발급 (Access & Refresh 둘 다 생성)
-        String accessToken = jwtUtils.createAccessToken(email, savedId);
+        String accessToken = jwtUtils.createAccessToken(email, savedId, user.getRole());
         String refreshToken = jwtUtils.createRefreshToken(savedId);
 
         // 5. Refresh Token Redis 저장
@@ -120,31 +120,41 @@ public class AuthService {
     /**
      * 3-3. 토큰 재발급
      */
+    /**
+     * 3-3. 토큰 재발급 (수정됨)
+     */
     public TokenResponseDto reissue(String refreshToken) {
+        // 1. 유효성 검사
         if (!jwtUtils.validateToken(refreshToken)) {
             throw new IllegalArgumentException("AUTH_003:유효하지 않은 Refresh Token입니다.");
         }
 
+        // 2. 유저 ID 추출 및 Redis 조회
         Long userId = jwtUtils.getUserIdFromToken(refreshToken);
         String savedToken = refreshTokenRepository.get(userId)
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_004:로그인 정보가 없거나 만료되었습니다."));
 
+        // 3. 토큰 일치 여부 확인 (탈취 감지)
         if (!savedToken.equals(refreshToken)) {
             throw new IllegalArgumentException("AUTH_005:토큰 정보가 일치하지 않습니다.");
         }
 
+        // 4. 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("AUTH_006:존재하지 않는 유저입니다."));
 
-        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId());
+        // 5. 새 토큰 생성 (Rotation)
+        String newAccessToken = jwtUtils.createAccessToken(user.getMmEmail(), user.getId(), user.getRole());
+        String newRefreshToken = jwtUtils.createRefreshToken(user.getId()); // 여기서 새로 만듦
 
-        String newRefreshToken = jwtUtils.createRefreshToken(user.getId());
-
+        // 6. Redis 업데이트 (기존 키에 덮어쓰기)
+        // Tip: 저장할 때 TTL(만료시간)도 같이 설정해주는 것이 좋습니다.
         refreshTokenRepository.save(user.getId(), newRefreshToken);
 
+        // 7. 응답 반환
         return TokenResponseDto.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(refreshToken) // 기존 리프레시 토큰 유지
+                .refreshToken(newRefreshToken) // ★ 수정완료: 반드시 '새 토큰'을 내려줘야 함!
                 .grantType("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenValidityInSeconds())
                 .build();

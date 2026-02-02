@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -29,7 +28,7 @@ class AdminNotificationHandlerTest {
 
     @DisplayName("RobotReturnedEvent를 처리하면 관리자에게 SSE 알림이 전송된다")
     @Test
-    void handleRobotReturned() {
+    void handleRobotIDLE() {
         // given
         Long missionId = 1L;
         Long robotId = 2L;
@@ -41,7 +40,7 @@ class AdminNotificationHandlerTest {
 
         // then
         ArgumentCaptor<Map> dataCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(sseService).broadcastToAdmins(eq("ROBOT_RETURNED"), dataCaptor.capture());
+        verify(sseService).broadcastToAdmins(eq("ROBOT_IDLE"), dataCaptor.capture());
 
         Map<String, Object> capturedData = dataCaptor.getValue();
         assertThat(capturedData.get("missionId")).isEqualTo(missionId);

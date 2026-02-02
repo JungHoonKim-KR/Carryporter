@@ -41,7 +41,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
     @DisplayName("로봇 배정")
     class AcquireRobotIdTest {
 
-        @DisplayName("큐에 로봇이 있으면 로봇 ID를 반환하고 상태를 RESERVED로 변경한다")
+        @DisplayName("큐에 로봇이 있으면 로봇 ID를 반환하고 상태를 BUSY로 변경한다")
         @Test
         void acquireRobotIdSuccess() {
             // given
@@ -61,7 +61,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
 
             Optional<RobotState> updatedState = robotStateRepository.findById(robotId);
             assertThat(updatedState).isPresent();
-            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(updatedState.get().getStatus()).isEqualTo(RobotStatus.BUSY);
         }
 
         @DisplayName("큐에 여러 로봇이 있으면 먼저 들어온 로봇을 반환한다 (FIFO)")
@@ -155,7 +155,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             // given
             Long robotId = 1L;
             String macAddress = "AA:BB:CC:DD";
-            RobotState robotState = RobotState.of(macAddress, RobotStatus.RESERVED, 100);
+            RobotState robotState = RobotState.of(macAddress, RobotStatus.BUSY, 100);
             robotStateRepository.save(robotId, robotState);
 
             // when
@@ -175,9 +175,9 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             Long robotId2 = 2L;
             Long robotId3 = 3L;
 
-            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.RESERVED, 100);
-            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.MOVING, 90);
-            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.WAITING_AUTH, 80);
+            RobotState robotState1 = RobotState.of("AA:BB:CC:DD", RobotStatus.BUSY, 100);
+            RobotState robotState2 = RobotState.of("EE:FF:GG:HH", RobotStatus.BUSY, 90);
+            RobotState robotState3 = RobotState.of("II:JJ:KK:LL", RobotStatus.BUSY, 80);
 
             robotStateRepository.save(robotId1, robotState1);
             robotStateRepository.save(robotId2, robotState2);
@@ -212,7 +212,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             // when - 첫 번째 배정
             Optional<Long> firstAcquire = robotAvailableQueueRepository.acquireRobotId();
             assertThat(firstAcquire).contains(robotId);
-            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.BUSY);
 
             // 로봇 반환
             robotAvailableQueueRepository.returnRobotToQueue(robotId);
@@ -227,7 +227,7 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
 
             // then
             assertThat(secondAcquire).contains(robotId);
-            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(robotStateRepository.findById(robotId).get().getStatus()).isEqualTo(RobotStatus.BUSY);
         }
 
         @DisplayName("여러 로봇을 동시에 배정하고 반환할 수 있다")
@@ -253,8 +253,8 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             // then
             assertThat(robot1).contains(robotId1);
             assertThat(robot2).contains(robotId2);
-            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
-            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.RESERVED);
+            assertThat(robotStateRepository.findById(robotId1).get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(robotStateRepository.findById(robotId2).get().getStatus()).isEqualTo(RobotStatus.BUSY);
 
             // 큐가 비어있어야 함
             Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
