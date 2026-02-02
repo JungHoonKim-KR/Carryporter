@@ -1,7 +1,7 @@
 package com.e101.carryporter.domain.robot.listener;
 
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
-import com.e101.carryporter.domain.robot.service.RobotAssignService;
+import com.e101.carryporter.domain.robot.service.RobotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -14,11 +14,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class RobotAssignmentHandler {
 
-    private final RobotAssignService robotAssignService;
+    private final RobotService robotService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionCreatedEvent(MissionCreatedEvent event) {
-        robotAssignService.assignRobotToMission(event.missionId());
+        robotService.assignRobotToMission(event.missionId());
     }
 }

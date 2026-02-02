@@ -2,14 +2,15 @@ package com.e101.carryporter.domain.robot.service;
 
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
-import com.e101.carryporter.domain.location.entity.Location;
-import com.e101.carryporter.domain.location.service.LocationService;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequestDto;
@@ -31,6 +32,7 @@ import java.util.Optional;
 public class RobotService {
 
     private final RobotRepository robotRepository;
+    private final RobotCacheService cacheService;
     private final ApplicationEventPublisher eventPublisher;
     private final MissionService missionService;
     private final MissionRepository missionRepository;
@@ -69,6 +71,7 @@ public class RobotService {
                 .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
 
         Robot robot = mission.getRobot();
+
         eventPublisher.publishEvent(new AdminLockRequestEvent(missionId, robot.getMacAddress()));
     }
 
