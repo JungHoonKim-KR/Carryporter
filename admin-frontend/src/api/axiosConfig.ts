@@ -3,7 +3,9 @@ import axios from 'axios';
 
 // 1. Axios 인스턴스 생성
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api', // 상대 경로 사용 (프로토콜 자동 따름)
+  // 개발 환경: Vite 프록시 사용 (빈 문자열)
+  // 프로덕션 환경: 환경 변수의 API 서버 URL 사용
+  baseURL: import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || ''),
 
   timeout: 10000, // 10초 타임아웃
   withCredentials: true, // 🚨 중요: 쿠키(Refresh Token)를 주고받기 위한 설정

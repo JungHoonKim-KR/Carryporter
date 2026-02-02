@@ -3,8 +3,8 @@ import api from './axiosConfig';
 import type { JoinRequest, LoginRequest, TokenResponse } from '@/types/auth';
 
 // URL Prefix (백엔드 컨트롤러의 @RequestMapping 확인 필요)
-// 예: @RequestMapping("/api/admin") 이라면 아래처럼 설정
-const ADMIN_URL = 'api/admin'; 
+// 전체 경로 사용 (frontend 패턴과 동일)
+const ADMIN_URL = '/api/admin'; 
 
 /**
  * 관리자 회원가입
