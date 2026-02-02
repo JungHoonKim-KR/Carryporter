@@ -20,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -45,6 +43,7 @@ public class RobotService {
      * 로봇 등록 (MQTT register 토픽에서 호출)
      * 로봇 상태 cache 반영 (Redis 캐시 동기화)
      */
+    @Transactional
     public Robot registerRobot(String macAddress) {
         Robot robot;
 
