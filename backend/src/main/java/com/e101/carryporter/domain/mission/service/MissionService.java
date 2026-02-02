@@ -2,6 +2,9 @@ package com.e101.carryporter.domain.mission.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
+import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
@@ -32,6 +35,7 @@ public class MissionService {
     private final UserService userService;
     private final LocationService locationService;
     private final RobotRepository robotRepository;
+    private final LockerRepository lockerRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Mission findById(Long missionId) {
@@ -83,12 +87,6 @@ public class MissionService {
         mission.dispatch();
     }
 
-    private void validateIdleRobot(Robot robot) {
-        if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
-            throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
-        }
-    }
-
     @Transactional
     public void failMission(Long missionId) {
         log.debug("미션 실패!! mission id = {}", missionId);
@@ -96,4 +94,22 @@ public class MissionService {
                 .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
         mission.failed();
     }
+
+    @Transactional
+    public void assignLocker(Long missionId, Long lockerId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        Locker locker = lockerRepository.findById(lockerId)
+                .orElseThrow(() -> new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND));
+
+        mission.assignLocker(locker);
+    }
+
+    private void validateIdleRobot(Robot robot) {
+        if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
+            throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
+        }
+    }
+
 }

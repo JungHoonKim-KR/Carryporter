@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.admin.controller;
 import com.e101.carryporter.domain.admin.controller.dto.response.LockerResponseDto;
 import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
+import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
 import com.e101.carryporter.global.exception.BusinessException;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,11 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -83,5 +88,68 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("사물함을 찾을 수 없습니다."));
+    }
+
+    // ==================== 사물함 배정 테스트 ====================
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 204 No Content를 반환한다")
+    void assignLockerToMission() throws Exception {
+        // given
+        Long missionId = 1L;
+        Long lockerId = 1L;
+
+        willDoNothing()
+                .given(missionService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(missionService, times(1)).assignLocker(missionId, lockerId);
+    }
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 미션이 존재하지 않으면 404 Not Found를 반환한다")
+    void assignLockerToMission_MissionNotFound() throws Exception {
+        // given
+        Long missionId = 999L;
+        Long lockerId = 1L;
+
+        doThrow(new BusinessException(MissionErrorCode.MISSION_NOT_FOUND))
+                .when(missionService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(MissionErrorCode.MISSION_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(missionService, times(1)).assignLocker(missionId, lockerId);
+    }
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 사물함이 존재하지 않으면 404 Not Found를 반환한다")
+    void assignLockerToMission_LockerNotFound() throws Exception {
+        // given
+        Long missionId = 1L;
+        Long lockerId = 999L;
+
+        doThrow(new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND))
+                .when(missionService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(LockerErrorCode.LOCKER_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(missionService, times(1)).assignLocker(missionId, lockerId);
     }
 }
