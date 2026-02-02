@@ -217,8 +217,9 @@ const LoginPage = () => {
                         {/* 단일 제출 버튼 */}
                         <Button
                             type="submit"
+                            size="lg"
                             disabled={!isFormValid || isLoading}
-                            className="w-full"
+                            className="w-full bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
                         >
                             {isLoading ? "처리 중..." : "회원가입"}
                         </Button>

@@ -16,12 +16,15 @@ import { useAuthStore } from '../store/authStore';
 export const createMission = async (
   data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
-  // userId를 명시적으로 number로 변환 (User.id는 string이지만 API는 number 필요)
+  // 백엔드는 callLocationId만 필요 (userId는 JWT에서 자동 추출)
   const requestData = {
-    userId: Number(data.userId),
-    startLocation: data.startLocation,  // 키 이름 변경
-    endLocation: data.endLocation,      // 키 이름 변경
+    callLocationId: data.callLocationId,
   };
+
+  // 🔍 디버깅: 전송되는 데이터 확인
+  if (import.meta.env.DEV) {
+    console.log('[createMission] 전송 데이터:', JSON.stringify(requestData, null, 2));
+  }
 
   const response = await apiClient.post<CreateMissionResponse>(
     '/api/missions',

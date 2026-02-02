@@ -36,18 +36,15 @@ const MissionCreatePage = () => {
       setCreating(true);
       setError('');
 
+      // 백엔드는 callLocationId만 필요 (userId는 JWT에서 자동 추출)
       const response = await createMission({
-        userId: Number(user.id),
-        startLocation: locationId,        // 키 이름 변경
-        endLocation: CENTRAL_LOCKER_ID,   // 키 이름 변경
+        callLocationId: locationId,
       });
 
       // 미션 생성 성공 → 스토어에 저장
       setCurrentMission({
         id: response.missionId.toString(),
-        userId: Number(user.id),
-        startLocation: locationId,        // 키 이름 변경
-        endLocation: CENTRAL_LOCKER_ID,   // 키 이름 변경
+        callLocationId: locationId,
         status: 'REQUESTED',
         destination: selectedLocation?.name, // 목적지 이름 저장
         createdAt: new Date().toISOString(),
@@ -56,8 +53,12 @@ const MissionCreatePage = () => {
 
       // 미션 추적 페이지로 이동
       navigate('/mission/track');
-    } catch (err) {
-      if (import.meta.env.DEV) console.error('미션 생성 실패:', err);
+    } catch (err: any) {
+      if (import.meta.env.DEV) {
+        console.error('미션 생성 실패:', err);
+        console.error('에러 응답:', err.response?.data);
+        console.error('에러 상태:', err.response?.status);
+      }
       setError('미션 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setCreating(false);
