@@ -12,7 +12,7 @@ import JoinPage from './pages/JoinPage'
  */
 function App() {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename="/admin">
             <Routes>
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<LoginPage />} />
