@@ -166,9 +166,9 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
         @Test
         void getCountWhenMultipleRobots() {
             // given
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 1L);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 2L);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 3L);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, "1");
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, "2");
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, "3");
 
             // when
             Long count = robotAvailableQueueRepository.getAvailableRobotCount();
@@ -196,8 +196,8 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
             assertThat(robotAvailableQueueRepository.getAvailableRobotCount()).isEqualTo(0);
 
             // when - 로봇 2대 추가
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 1L);
-            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 2L);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, "1");
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, "2");
 
             // then
             assertThat(robotAvailableQueueRepository.getAvailableRobotCount()).isEqualTo(2);
