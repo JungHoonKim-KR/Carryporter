@@ -102,6 +102,16 @@ public class AdminController {
         return ResponseEntity.ok(locker);
     }
 
+    @PatchMapping("/lockers/{lockerId}/status")
+    public ResponseEntity<LockerResponseDto> updateLockerStatus(
+            @PathVariable Long lockerId,
+            @RequestBody @Valid LockerStatusUpdateRequestDto requestDto) {
+        log.debug("관리자 사물함 상태 변경 요청 - lockerId: {}, status: {}", lockerId, requestDto.getStatus());
+
+        LockerResponseDto locker = adminLockerService.updateLockerStatus(lockerId, requestDto.getStatus());
+        return ResponseEntity.ok(locker);
+    }
+
     private ResponseCookie createRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
