@@ -46,7 +46,7 @@ public class RobotRedisScriptConfig {
                 -- [KEYS]
                 local hashKey = KEYS[1]      -- robot:status:{id}
                 local queueKey = KEYS[2]     -- robot:available (List)
-                
+
                 -- [ARGV]
                 local robotId = ARGV[1]
                 local status = ARGV[2]
@@ -71,7 +71,7 @@ public class RobotRedisScriptConfig {
                 if status == 'IDLE' then
                     redis.call('RPUSH', queueKey, robotId)
                 end
-                
+
                 -- BUSY, WORKING 등 다른 상태라면?
                 -- 위에서 LREM으로 이미 지워졌으므로 아무것도 안 하면 됨 (큐에서 사라짐)
 
@@ -79,6 +79,40 @@ public class RobotRedisScriptConfig {
                 """;
 
         // 반환 타입 Long (성공 시 1)
+        return new DefaultRedisScript<>(script, Long.class);
+    }
+
+    @Bean("registerRobotScript")
+    public RedisScript<Long> registerRobotScript() {
+        String script = """
+                -- [KEYS]
+                local hashKey = KEYS[1]      -- robot:status:{id}
+                local queueKey = KEYS[2]     -- robot:available (List)
+
+                -- [ARGV]
+                local robotId = ARGV[1]
+                local macAddress = ARGV[2]
+                local status = ARGV[3]
+                local battery = ARGV[4]
+                local updatedAt = ARGV[5]
+
+                -- 1. Redis Hash 생성 (초기 로봇 정보 저장)
+                redis.call('HSET', hashKey,
+                    'macAddress', macAddress,
+                    'status', status,
+                    'battery', battery,
+                    'updatedAt', updatedAt)
+
+                -- 2. 상태가 IDLE이면 가용 큐에 추가 (중복 방지를 위해 먼저 제거)
+                redis.call('LREM', queueKey, 0, robotId)
+
+                if status == 'IDLE' then
+                    redis.call('RPUSH', queueKey, robotId)
+                end
+
+                return 1
+                """;
+
         return new DefaultRedisScript<>(script, Long.class);
     }
 }

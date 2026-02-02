@@ -2,7 +2,6 @@ package com.e101.carryporter.domain.robot.repository;
 
 import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,15 +24,43 @@ public class RobotRealTimeRepository {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final RedisScript<Long> updateRobotInfoScript;
+    private final RedisScript<Long> registerRobotScript;
 
     public RobotRealTimeRepository(
             RedisTemplate<String, Object> redisTemplate,
             ObjectMapper objectMapper,
-            @Qualifier("updateRobotInfoScript") RedisScript<Long> updateRobotInfoScript
+            @Qualifier("updateRobotInfoScript") RedisScript<Long> updateRobotInfoScript,
+            @Qualifier("registerRobotScript") RedisScript<Long> registerRobotScript
     ) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.updateRobotInfoScript = updateRobotInfoScript;
+        this.registerRobotScript = registerRobotScript;
+    }
+
+    // redis 상태저장소와 hash 에 로봇 상태 원자적으로 저장
+    public void registerRobotStatus(Long robotId, RobotRealTimeInfo robotRealTimeInfo) {
+        String key = ROBOT_STATUS_PREFIX + robotId;
+
+        try {
+            // Lua Script 실행 (원자적으로 Hash 생성 + 큐 추가)
+            redisTemplate.execute(
+                    registerRobotScript,
+                    List.of(key, AVAILABLE_ROBOTS_KEY),           // KEYS
+                    String.valueOf(robotId),                      // ARGV[1]
+                    robotRealTimeInfo.getMacAddress(),            // ARGV[2]
+                    robotRealTimeInfo.getStatus().name(),         // ARGV[3]
+                    String.valueOf(robotRealTimeInfo.getBattery()), // ARGV[4]
+                    LocalDateTime.now().toString()                // ARGV[5]
+            );
+
+            log.info("신규 로봇 등록 완료: robotId={}, macAddress={}, status={}",
+                    robotId, robotRealTimeInfo.getMacAddress(), robotRealTimeInfo.getStatus());
+
+        } catch (Exception e) {
+            log.error("신규 로봇 등록 실패: robotId={}", robotId, e);
+            throw e;
+        }
     }
 
     // status 만 업데이트

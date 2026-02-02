@@ -235,6 +235,172 @@ class RobotRealTimeInfoRepositoryTest extends IntegrationTestSupport {
     }
 
     @Nested
+    @DisplayName("신규 로봇 등록 (registerRobotScript)")
+    class RegisterRobotTest {
+
+        @DisplayName("IDLE 상태로 신규 로봇을 등록하면 Redis Hash가 생성되고 가용 큐에 추가된다")
+        @Test
+        void registerRobotWithIdleStatus() {
+            // given
+            Long robotId = 1L;
+            RobotRealTimeInfo info = RobotRealTimeInfo.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+
+            // when
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // then - Redis Hash 생성 확인
+            Optional<RobotRealTimeInfo> result = robotRealTimeRepository.findById(robotId);
+            assertThat(result).isPresent();
+            assertThat(result.get().getMacAddress()).isEqualTo("AA:BB:CC:DD");
+            assertThat(result.get().getStatus()).isEqualTo(RobotStatus.IDLE);
+            assertThat(result.get().getBattery()).isEqualTo(100);
+            assertThat(result.get().getUpdatedAt()).isNotNull();
+
+            // then - 가용 큐에 추가 확인
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(1);
+
+            Object robotIdInQueue = redisTemplate.opsForList().index(AVAILABLE_ROBOTS_KEY, 0);
+            assertThat(robotIdInQueue.toString()).isEqualTo(robotId.toString());
+        }
+
+        @DisplayName("BUSY 상태로 신규 로봇을 등록하면 Redis Hash만 생성되고 가용 큐에는 추가되지 않는다")
+        @Test
+        void registerRobotWithBusyStatus() {
+            // given
+            Long robotId = 2L;
+            RobotRealTimeInfo info = RobotRealTimeInfo.of("EE:FF:GG:HH", RobotStatus.BUSY, 85);
+
+            // when
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // then - Redis Hash 생성 확인
+            Optional<RobotRealTimeInfo> result = robotRealTimeRepository.findById(robotId);
+            assertThat(result).isPresent();
+            assertThat(result.get().getMacAddress()).isEqualTo("EE:FF:GG:HH");
+            assertThat(result.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(result.get().getBattery()).isEqualTo(85);
+
+            // then - 가용 큐에는 추가되지 않음
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(0);
+        }
+
+        @DisplayName("OFFLINE 상태로 신규 로봇을 등록하면 Redis Hash만 생성되고 가용 큐에는 추가되지 않는다")
+        @Test
+        void registerRobotWithOfflineStatus() {
+            // given
+            Long robotId = 3L;
+            RobotRealTimeInfo info = RobotRealTimeInfo.of("II:JJ:KK:LL", RobotStatus.OFFLINE, 0);
+
+            // when
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // then - Redis Hash 생성 확인
+            Optional<RobotRealTimeInfo> result = robotRealTimeRepository.findById(robotId);
+            assertThat(result).isPresent();
+            assertThat(result.get().getStatus()).isEqualTo(RobotStatus.OFFLINE);
+
+            // then - 가용 큐에는 추가되지 않음
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(0);
+        }
+
+        @DisplayName("같은 robotId로 여러 번 등록하면 Lua Script가 중복을 방지한다 (LREM 후 RPUSH)")
+        @Test
+        void registerRobotPreventsDuplicateInQueue() {
+            // given
+            Long robotId = 1L;
+            RobotRealTimeInfo info = RobotRealTimeInfo.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+
+            // when - 같은 로봇을 여러 번 등록 (실수로 중복 호출)
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // then - Lua Script의 LREM 덕분에 큐에 한 번만 존재
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(1);
+        }
+
+        @DisplayName("여러 로봇을 등록하면 FIFO 순서로 큐에 추가된다")
+        @Test
+        void registerMultipleRobotsInFifoOrder() {
+            // given
+            Long robotId1 = 1L;
+            Long robotId2 = 2L;
+            Long robotId3 = 3L;
+
+            RobotRealTimeInfo info1 = RobotRealTimeInfo.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+            RobotRealTimeInfo info2 = RobotRealTimeInfo.of("EE:FF:GG:HH", RobotStatus.IDLE, 90);
+            RobotRealTimeInfo info3 = RobotRealTimeInfo.of("II:JJ:KK:LL", RobotStatus.BUSY, 80);
+
+            // when
+            robotRealTimeRepository.registerRobotStatus(robotId1, info1);
+            robotRealTimeRepository.registerRobotStatus(robotId2, info2);
+            robotRealTimeRepository.registerRobotStatus(robotId3, info3); // BUSY는 큐에 추가 안됨
+
+            // then - IDLE 상태인 로봇만 큐에 추가됨
+            Long queueSize = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSize).isEqualTo(2);
+
+            // FIFO 순서 확인
+            Object first = redisTemplate.opsForList().index(AVAILABLE_ROBOTS_KEY, 0);
+            Object second = redisTemplate.opsForList().index(AVAILABLE_ROBOTS_KEY, 1);
+            assertThat(first.toString()).isEqualTo(robotId1.toString());
+            assertThat(second.toString()).isEqualTo(robotId2.toString());
+        }
+
+        @DisplayName("신규 등록 후 상태 업데이트가 정상 작동한다 (등록 -> BUSY 변경)")
+        @Test
+        void registerThenUpdateStatus() {
+            // given - IDLE 상태로 등록
+            Long robotId = 1L;
+            RobotRealTimeInfo info = RobotRealTimeInfo.of("AA:BB:CC:DD", RobotStatus.IDLE, 100);
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // 큐에 추가되었는지 확인
+            Long queueSizeBefore = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSizeBefore).isEqualTo(1);
+
+            // when - BUSY로 상태 변경 (Lua Script가 큐에서 제거)
+            robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.BUSY);
+
+            // then
+            Optional<RobotRealTimeInfo> result = robotRealTimeRepository.findById(robotId);
+            assertThat(result).isPresent();
+            assertThat(result.get().getStatus()).isEqualTo(RobotStatus.BUSY);
+            assertThat(result.get().getBattery()).isEqualTo(100); // 배터리는 유지됨
+
+            // 큐에서 제거되었는지 확인
+            Long queueSizeAfter = redisTemplate.opsForList().size(AVAILABLE_ROBOTS_KEY);
+            assertThat(queueSizeAfter).isEqualTo(0);
+        }
+
+        @DisplayName("신규 등록 시 macAddress가 올바르게 저장된다")
+        @Test
+        void registerRobotSavesMacAddressCorrectly() {
+            // given
+            Long robotId = 1L;
+            String expectedMacAddress = "12:34:56:78:90:AB";
+            RobotRealTimeInfo info = RobotRealTimeInfo.of(expectedMacAddress, RobotStatus.IDLE, 100);
+
+            // when
+            robotRealTimeRepository.registerRobotStatus(robotId, info);
+
+            // then - macAddress가 Redis Hash에 올바르게 저장되었는지 확인
+            String key = ROBOT_STATUS_PREFIX + robotId;
+            Object savedMacAddress = redisTemplate.opsForHash().get(key, "macAddress");
+            assertThat(savedMacAddress).isEqualTo(expectedMacAddress);
+
+            // findById로도 확인
+            Optional<RobotRealTimeInfo> result = robotRealTimeRepository.findById(robotId);
+            assertThat(result).isPresent();
+            assertThat(result.get().getMacAddress()).isEqualTo(expectedMacAddress);
+        }
+    }
+
+    @Nested
     @DisplayName("상태 조회")
     class FindByIdTest {
 
