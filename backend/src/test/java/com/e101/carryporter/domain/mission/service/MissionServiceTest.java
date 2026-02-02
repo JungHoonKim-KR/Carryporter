@@ -76,6 +76,32 @@ class MissionServiceTest extends IntegrationTestSupport {
         assertThat(publishedEvent.missionId()).isEqualTo(missionId);
     }
 
+    @DisplayName("미션 실패 시 미션 상태가 FAILED로 변경된다.")
+    @Test
+    void failMission() {
+        // given
+        User user = User.createUser("test@mm.com");
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
+
+        Long userId = userRepository.save(user);
+        Long locationId = locationRepository.save(location);
+
+        CreateMissionServiceRequestDto request = CreateMissionServiceRequestDto.builder()
+                .callLocationId(locationId)
+                .build();
+
+        Long missionId = missionService.createMission(userId, request);
+        flushAndClear();
+
+        // when
+        missionService.failMission(missionId);
+        flushAndClear();
+
+        // then
+        Mission failedMission = missionRepository.findById(missionId).orElseThrow();
+        assertThat(failedMission.getMissionStatus()).isEqualTo(com.e101.carryporter.domain.mission.entity.MissionStatus.FAILED);
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
