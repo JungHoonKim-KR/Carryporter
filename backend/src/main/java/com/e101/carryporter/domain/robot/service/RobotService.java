@@ -115,7 +115,7 @@ public class RobotService {
                     mission.getId(),
                     mission.getRobot().getRobotCode(),
                     mission.getCallLocation().getLocationName(),
-                    mission.getLocker().getLockerCode(),
+                    null,
                     "FIRST"
             ));
 
