@@ -95,6 +95,14 @@ public class MissionService {
         mission.failed();
     }
 
+    @Transactional
+    public void completeArrival(Long missionId) {
+        log.debug("로봇 목적지에 도착!! mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        mission.arrive();
+    }
 
     private void validateIdleRobot(Robot robot) {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
