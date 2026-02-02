@@ -47,7 +47,7 @@ export const useSessionRestore = () => {
         const restoreSession = async () => {
             // 한 번도 로그인한 적 없으면 세션 복원 스킵
             if (!getHasLoggedInBefore()) {
-                console.log('첫 방문 사용자 - 세션 복원 스킵');
+                if (import.meta.env.DEV) console.log('첫 방문 사용자 - 세션 복원 스킵');
                 setInitialized(true);
                 isRestoringRef.current = false;
                 return;
@@ -57,10 +57,10 @@ export const useSessionRestore = () => {
                 const response = await reissue();
                 setAccessToken(response.accessToken);
                 setAuthenticated(true);
-                console.log('세션 복원 성공');
+                if (import.meta.env.DEV) console.log('세션 복원 성공');
             } catch (error) {
                 // 로그 레벨 낮춤 (에러가 아닌 정상 동작)
-                console.log('세션 복원 실패 (refreshToken 만료):', error);
+                if (import.meta.env.DEV) console.log('세션 복원 실패 (refreshToken 만료):', error);
                 // refreshToken이 만료된 경우 정리
                 clearAuth();
             } finally {

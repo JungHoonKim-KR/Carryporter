@@ -1,5 +1,6 @@
 import { formatCityName, formatTime } from '../../utils/imageUtils';
 import type { TicketInfo, TicketCardVariant } from '../../types/ticket.types';
+import { cn } from '@/lib/utils';
 
 interface TicketCardProps {
   ticket: TicketInfo;
@@ -12,11 +13,14 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl ${onClick ? 'cursor-pointer' : ''} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
+      className={cn(
+        'relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
+        onClick && 'cursor-pointer'
+      )}
       onClick={onClick}
     >
       {/* 배경 그라데이션 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0064FF] via-[#3B8CFF] to-[#4DA3FF]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-toss-blue-500 via-[#3B8CFF] to-toss-blue-light" />
 
       {/* 장식용 원형 */}
       <div className="absolute -top-20 -right-20 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
@@ -29,10 +33,10 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
           <div className="flex items-center gap-2">
             {/* 항공사 로고 (KOREAN) */}
             <div className="bg-white rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-              <div className="w-5 h-5 bg-[#0064FF] rounded-sm flex items-center justify-center">
+              <div className="w-5 h-5 bg-toss-blue-500 rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">K</span>
               </div>
-              <span className="text-[#0064FF] font-bold text-sm tracking-tight">KOREAN</span>
+              <span className="text-toss-blue-500 font-bold text-sm tracking-tight">KOREAN</span>
             </div>
           </div>
 
@@ -88,12 +92,12 @@ const TicketCard = ({ ticket, variant = 'compact', onClick }: TicketCardProps) =
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs text-white/60 mb-1">Boarding</div>
-            <div className="text-lg font-semibold">{formatTime(ticket.boarding_time)}</div>
+            <div className="text-lg font-semibold">{formatTime(ticket.boardingTime)}</div>
           </div>
 
           <div>
             <div className="text-xs text-white/60 mb-1">Departs</div>
-            <div className="text-lg font-semibold">{formatTime(ticket.departure_time)}</div>
+            <div className="text-lg font-semibold">{formatTime(ticket.departureTime)}</div>
           </div>
 
           {!isCompact && (

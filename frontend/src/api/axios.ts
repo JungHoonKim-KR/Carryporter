@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
 
         // reissue 요청 자체가 401을 받은 경우 무한 루프 방지
         if (originalRequest.url?.includes("/api/auth/reissue")) {
-            console.log("Reissue 요청 실패 - 인증 상태 초기화");
+            if (import.meta.env.DEV) console.log("Reissue 요청 실패 - 인증 상태 초기화");
             useAuthStore.getState().clearAuth();
             // window.location.href 대신 에러만 반환 (무한 새로고침 방지)
             // 리다이렉트는 ProtectedRoute 또는 useSessionRestore에서 처리
@@ -106,7 +106,7 @@ apiClient.interceptors.response.use(
             return apiClient(originalRequest);
         } catch (reissueError) {
             // Refresh Token도 만료된 경우 인증 상태만 초기화
-            console.log("Token reissue failed:", reissueError);
+            if (import.meta.env.DEV) console.log("Token reissue failed:", reissueError);
             useAuthStore.getState().clearAuth();
             // window.location.href 대신 에러만 반환 (무한 새로고침 방지)
             // 리다이렉트는 ProtectedRoute에서 처리

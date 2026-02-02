@@ -5,7 +5,6 @@ import type { Mission, MissionStatusEvent, MissionType, StoredLuggage } from '..
 interface MissionState {
   // 미션 정보
   currentMission: Mission | null;
-  missionStatus: MissionStatusEvent | null;
 
   // 보관된 짐 목록 (localStorage에 영구 저장)
   storedLuggages: StoredLuggage[];
@@ -47,7 +46,6 @@ export const useMissionStore = create<MissionState>()(
   persist(
     (set, get) => ({
       currentMission: null,
-      missionStatus: null,
       storedLuggages: [],
       isConnected: false,
       connectionError: null,
@@ -59,7 +57,6 @@ export const useMissionStore = create<MissionState>()(
 
       updateMissionStatus: (status) =>
         set((state) => ({
-          missionStatus: status,
           currentMission: state.currentMission
             ? {
               ...state.currentMission,
@@ -75,7 +72,6 @@ export const useMissionStore = create<MissionState>()(
       clearMission: () =>
         set({
           currentMission: null,
-          missionStatus: null,
           isConnected: false,
           connectionError: null,
           isWeightAnimating: false,
@@ -91,14 +87,10 @@ export const useMissionStore = create<MissionState>()(
        */
       generateWeightInfo: () =>
         set((state) => {
-          const initialWeight = 3.7; // 카트 자체 무게 (고정)
           const luggageWeight = Math.random() * 20 + 5; // 5-25kg 랜덤
-          const finalWeight = initialWeight + luggageWeight;
 
-          console.log('[MissionStore] 무게 정보 생성:', {
-            initialWeight,
+          if (import.meta.env.DEV) console.log('[MissionStore] 무게 정보 생성:', {
             luggageWeight: luggageWeight.toFixed(1),
-            finalWeight: finalWeight.toFixed(1),
           });
 
           return {
@@ -106,8 +98,8 @@ export const useMissionStore = create<MissionState>()(
               ? {
                 ...state.currentMission,
                 weightInfo: {
-                  initialWeight,
-                  finalWeight: parseFloat(finalWeight.toFixed(1)),
+                  initialWeight: 0, // 카트 무게 제거
+                  finalWeight: parseFloat(luggageWeight.toFixed(1)),
                   luggageWeight: parseFloat(luggageWeight.toFixed(1)),
                 },
               }
