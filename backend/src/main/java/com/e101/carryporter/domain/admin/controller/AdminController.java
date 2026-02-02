@@ -73,7 +73,7 @@ public class AdminController {
     public ResponseEntity<Void> dispatch(@RequestBody @Valid DispatchRequestDto requestDto, @PathVariable Long missionId) {
         log.debug("관리자 권한 이동 요청 robot id = {}", requestDto.getRobotId());
 
-        robotService.move(requestDto.toServiceRequestDto(missionId));
+        robotService.dispatch(requestDto.toServiceRequestDto(missionId));
         return ResponseEntity.noContent().build();
     }
 

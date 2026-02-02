@@ -36,7 +36,9 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     // 관리자 전용 URL 목록
     private static final List<String> ADMIN_ONLY_PATHS = Arrays.asList(
             "/admin",
-            "/api/admin"
+            "/api/admin",
+            "/admin/join",
+            "/admin/login"
     );
 
     @Override

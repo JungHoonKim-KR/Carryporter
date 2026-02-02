@@ -1,20 +1,19 @@
 package com.e101.carryporter.global.config.mqtt;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
-import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Configuration
 public class MqttConfig {
 
@@ -32,17 +31,17 @@ public class MqttConfig {
 
     // 서버가 구독할 토픽 패턴들 (Upstream: 로봇 → 서버)
     private static final String[] SUBSCRIBE_TOPICS = {
-            "robot/+/register",   // 기기 등록
-            "robot/+/status",     // 상태 보고
-            "robot/+/arrived",    // 도착 알림
-            "robot/+/delivered",  // 배송 완료
-            "robot/+/error"       // 에러 발생
+        "robot/+/register",   // 기기 등록
+        "robot/+/arrived",    // 사용자 위치 도착
+        "robot/+/locked",     // 잠금 완료
+        "robot/+/unlocked",   // 잠금 해제 완료
+        "robot/+/returned",   // 스테이션 복귀 완료
+        "robot/+/IDLE",       // 스테이션 복귀 완료 (IDLE 상태)
+        "robot/+/error"       // 에러 발생
     };
 
     @Bean
-    public MqttPahoClientFactory mqttClientFactory() {
-        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
-
+    public MqttConnectOptions mqttConnectOptions() {
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[]{brokerUrl});
         options.setCleanSession(true);
@@ -57,7 +56,13 @@ public class MqttConfig {
             options.setPassword(brokerPassword.toCharArray());
         }
 
-        factory.setConnectionOptions(options);
+        return options;
+    }
+
+    @Bean
+    public MqttPahoClientFactory mqttClientFactory(MqttConnectOptions mqttConnectOptions) {
+        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
+        factory.setConnectionOptions(mqttConnectOptions);
         return factory;
     }
 
@@ -66,7 +71,7 @@ public class MqttConfig {
     @Bean
     public MqttPahoMessageHandler mqttOutbound(MqttPahoClientFactory mqttClientFactory) {
         MqttPahoMessageHandler handler = new MqttPahoMessageHandler(
-                clientId + "-publisher", mqttClientFactory);
+            clientId + "-publisher", mqttClientFactory);
         handler.setAsync(true);
         handler.setDefaultTopic("default");
         return handler;
@@ -75,30 +80,18 @@ public class MqttConfig {
     // ==================== Inbound (메시지 구독: 로봇 → 서버) ====================
 
     @Bean
-    @ConditionalOnMissingBean(name = "mqttInputChannel")
     public MessageChannel mqttInputChannel() {
         return new DirectChannel();
     }
 
     @Bean
-    public MqttPahoMessageDrivenChannelAdapter mqttInbound(
-            MqttPahoClientFactory mqttClientFactory,
-            @Qualifier("mqttInputChannel") MessageChannel mqttInputChannel) {
-
-        // Spring Integration MQTT 6.x에서는 URL을 명시적으로 전달하는 생성자 사용 필요
-        // clientId만 전달하는 생성자는 내부 URL이 null이 되어 연결되지 않음
-        String[] serverURIs = mqttClientFactory.getConnectionOptions().getServerURIs();
-        String url = serverURIs != null && serverURIs.length > 0 ? serverURIs[0] : null;
-
-        // 위의 채널들 다 구독
+    public MqttPahoMessageDrivenChannelAdapter mqttInbound(MqttPahoClientFactory mqttClientFactory) {
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
-                url, clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
-
+            clientId + "-subscriber", mqttClientFactory, SUBSCRIBE_TOPICS);
         adapter.setCompletionTimeout(5000);
-        adapter.setConverter(new DefaultPahoMessageConverter());
+        adapter.setConverter(new org.springframework.integration.mqtt.support.DefaultPahoMessageConverter());
         adapter.setQos(1);
-        adapter.setOutputChannel(mqttInputChannel);
-
+        adapter.setOutputChannel(mqttInputChannel());
         return adapter;
     }
 }
