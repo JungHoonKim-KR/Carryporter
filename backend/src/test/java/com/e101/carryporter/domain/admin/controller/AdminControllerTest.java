@@ -29,6 +29,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -964,6 +965,69 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"));
 
         verify(adminLockerService, times(1)).updateLockerStatus(lockerId, LockerStatus.OCCUPIED);
+    }
+
+    // ==================== 사물함 배정 테스트 ====================
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 204 No Content를 반환한다")
+    void assignLockerToMission() throws Exception {
+        // given
+        Long missionId = 1L;
+        Long lockerId = 1L;
+
+        willDoNothing()
+                .given(adminLockerService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
+    }
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 미션이 존재하지 않으면 404 Not Found를 반환한다")
+    void assignLockerToMission_MissionNotFound() throws Exception {
+        // given
+        Long missionId = 999L;
+        Long lockerId = 1L;
+
+        doThrow(new BusinessException(MissionErrorCode.MISSION_NOT_FOUND))
+                .when(adminLockerService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(MissionErrorCode.MISSION_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
+    }
+
+    @Test
+    @DisplayName("미션에 사물함 배정 시 사물함이 존재하지 않으면 404 Not Found를 반환한다")
+    void assignLockerToMission_LockerNotFound() throws Exception {
+        // given
+        Long missionId = 1L;
+        Long lockerId = 999L;
+
+        doThrow(new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND))
+                .when(adminLockerService)
+                .assignLocker(missionId, lockerId);
+
+        // when & then
+        mockMvc.perform(post("/admin/missions/{missionId}/lockers/{lockerId}", missionId, lockerId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(LockerErrorCode.LOCKER_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
     }
 
     // ==================== Helper Methods ====================
