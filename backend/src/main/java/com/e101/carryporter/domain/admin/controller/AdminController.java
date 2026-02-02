@@ -7,6 +7,7 @@ import com.e101.carryporter.domain.admin.controller.dto.response.RobotResponseDt
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class AdminController {
     private final RobotService robotService;
     private final AdminService adminService;
     private final AdminLockerService adminLockerService;
+    private final MissionService missionService;
 
     @PostMapping("/join")
     public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
@@ -117,6 +119,12 @@ public class AdminController {
 
         LockerResponseDto locker = adminLockerService.getLocker(lockerId);
         return ResponseEntity.ok(locker);
+    }
+
+    @PostMapping("/missions/{missionId}/lockers/{lockerId}")
+    public ResponseEntity<Void> assignLockerToMission(@PathVariable Long missionId, @PathVariable Long lockerId) {
+        adminLockerService.assignLocker(missionId, lockerId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/lockers/{lockerId}/status")
