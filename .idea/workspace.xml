@@ -4,12 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 테스트 수정">
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[Infra] 배포 테스트">
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/controller/TicketController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/repository/TicketRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/ticket/service/TicketService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/ticket/controller/TicketControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/controller/AdminController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/admin/controller/AdminController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/repository/MissionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/mission/repository/MissionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotAssignService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotAssignService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/service/RobotService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/mqtt/MqttConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/config/mqtt/MqttConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/filter/AuthorizationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/filter/AuthorizationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/listener/MqttCommandHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttPublisherService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/admin/controller/AdminControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/admin/controller/AdminControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/service/RobotServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/listener/MqttCommandHandlerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttPublisherServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/test-robot-publisher-1769775853460-tcplocalhost49936/.lck" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +48,7 @@
             <expand>
               <path>
                 <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="SSETest" type="f1a62948:ProjectNode" />
+                <item name="carryporter" type="f1a62948:ProjectNode" />
               </path>
             </expand>
             <select />
@@ -90,7 +106,12 @@
     "Gradle.CarryporterApplicationTests.executor": "Run",
     "Gradle.MqttCommandHandlerIntegrationTest.executor": "Run",
     "Gradle.MqttCommandHandlerTest.executor": "Run",
+    "Gradle.MqttIntegrationTest.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.testRobotArrived.executor": "Run",
+    "Gradle.MqttMissionFlowIntegrationTest.testRobotRegister.executor": "Run",
     "Gradle.MqttPublisherServiceTest.executor": "Run",
+    "Gradle.MqttSubscriberServiceTest.executor": "Run",
     "Gradle.RobotRepositoryTest.findByMacAddress.executor": "Run",
     "Gradle.RobotServiceTest.executor": "Run",
     "Gradle.Tests in 'carryporter.test'.executor": "Run",
@@ -108,7 +129,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CarryporterApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "feature/backend/ocr",
+    "git-widget-placeholder": "feature/backend/mqtt",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/SSAFY/projects/S14P11E101",
@@ -133,7 +154,7 @@
     </key>
   </component>
   <component name="RunManager" selected="Gradle.Tests in 'carryporter.test'">
-    <configuration name="AdminControllerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MqttIntegrationTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -146,7 +167,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.domain.admin.controller.AdminControllerTest&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttIntegrationTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -160,7 +181,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="MqttCommandHandlerIntegrationTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MqttMissionFlowIntegrationTest.testRobotArrived" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -173,7 +194,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.global.listener.MqttCommandHandlerIntegrationTest&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotArrived&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -187,7 +208,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="RobotRepositoryTest.findByMacAddress" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MqttMissionFlowIntegrationTest.testRobotRegister" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -200,7 +221,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.domain.robot.repository.RobotRepositoryTest.findByMacAddress&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttMissionFlowIntegrationTest.testRobotRegister&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -214,7 +235,7 @@
       <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
-    <configuration name="RobotServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MqttSubscriberServiceTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/backend" />
@@ -227,7 +248,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;com.e101.carryporter.domain.robot.service.RobotServiceTest&quot;" />
+            <option value="&quot;com.e101.carryporter.global.service.mqtt.MqttSubscriberServiceTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -276,10 +297,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Gradle.Tests in 'carryporter.test'" />
-        <item itemvalue="Gradle.RobotServiceTest" />
-        <item itemvalue="Gradle.AdminControllerTest" />
-        <item itemvalue="Gradle.RobotRepositoryTest.findByMacAddress" />
-        <item itemvalue="Gradle.MqttCommandHandlerIntegrationTest" />
+        <item itemvalue="Gradle.MqttIntegrationTest" />
+        <item itemvalue="Gradle.MqttSubscriberServiceTest" />
+        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotArrived" />
+        <item itemvalue="Gradle.MqttMissionFlowIntegrationTest.testRobotRegister" />
       </list>
     </recent_temporary>
   </component>
@@ -302,6 +323,7 @@
       <workItem from="1769413706201" duration="11142000" />
       <workItem from="1769588173564" duration="14727000" />
       <workItem from="1769670842921" duration="14198000" />
+      <workItem from="1769989400565" duration="8979000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
@@ -476,5 +498,21 @@
     <MESSAGE value="[BE] 이벤트 파일 추가" />
     <MESSAGE value="[BE] 테스트 수정" />
     <option name="LAST_COMMIT_MESSAGE" value="[BE] 테스트 수정" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttSubscriberServiceTest.java</url>
+          <line>28</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/global/service/mqtt/MqttIntegrationTest.java</url>
+          <line>20</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

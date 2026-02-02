@@ -587,7 +587,7 @@ class AdminControllerTest extends WebMvcTestSupport {
 
         willDoNothing()
                 .given(robotService)
-                .move(any());
+                .dispatch(any());
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)

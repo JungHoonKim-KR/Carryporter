@@ -171,7 +171,7 @@ class RobotServiceTest extends IntegrationTestSupport {
                 .callLocationId(callLocation.getId())
                 .build();
 
-        robotService.move(request);
+        robotService.dispatch(request);
 
         // when
         System.out.println("robot id " + robot.getId());

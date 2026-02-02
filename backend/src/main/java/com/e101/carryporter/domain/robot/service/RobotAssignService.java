@@ -29,7 +29,7 @@ public class RobotAssignService {
                     .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_AVAILABLE));
 
             // db 에 mission, robot 상태 변경
-            missionService.assignRobot(missionId, availableRobotId);
+            missionService.assignRobot(missionId, 1L);
 
             // mission 조회
             Mission findMission = missionService.findById(missionId);
