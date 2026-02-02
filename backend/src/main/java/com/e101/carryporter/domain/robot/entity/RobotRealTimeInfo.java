@@ -9,15 +9,15 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RobotState {
+public class RobotRealTimeInfo {
 
     private String macAddress;
     private RobotStatus status;
     private int battery;
     private LocalDateTime updatedAt;
 
-    public static RobotState of(String macAddress, RobotStatus status, int battery) {
-        return RobotState.builder()
+    public static RobotRealTimeInfo of(String macAddress, RobotStatus status, int battery) {
+        return RobotRealTimeInfo.builder()
                 .macAddress(macAddress)
                 .status(status)
                 .battery(battery)
@@ -26,7 +26,7 @@ public class RobotState {
     }
 
     @Builder
-    private RobotState(String macAddress, RobotStatus status, int battery, LocalDateTime updatedAt) {
+    private RobotRealTimeInfo(String macAddress, RobotStatus status, int battery, LocalDateTime updatedAt) {
         this.macAddress = macAddress;
         this.status = status;
         this.battery = battery;
