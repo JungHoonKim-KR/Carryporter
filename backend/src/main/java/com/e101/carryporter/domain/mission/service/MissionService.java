@@ -104,6 +104,51 @@ public class MissionService {
         mission.arrive();
     }
 
+    @Transactional
+    public void completeReturn(Long missionId) {
+        log.debug("복귀 완료 mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        mission.returned();
+    }
+
+    @Transactional
+    public void completeLock(Long missionId) {
+        log.debug("잠금 완료 mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        mission.lock();
+    }
+
+    @Transactional
+    public void completeUnlock(Long missionId) {
+        log.debug("잠금 해제 완료 mission id = {}", missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        mission.unlock();
+    }
+
+    // 끝나야 로봇도 대기큐로 이동
+    @Transactional
+    public void finish(Long missionId, Long robotId) {
+        log.debug("미션 종료 missionId = {}, robotId = {}", missionId, robotId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        Robot robot = robotRepository.findById(robotId)
+                .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+
+        mission.finish();
+
+        RobotStatus previousStatus = robot.getRobotStatus();
+        robot.changeStatus(RobotStatus.IDLE);
+
+        eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(robot.getId(), robot.getRobotCode(), previousStatus, robot.getRobotStatus()));
+    }
+
     private void validateIdleRobot(Robot robot) {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
             throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);

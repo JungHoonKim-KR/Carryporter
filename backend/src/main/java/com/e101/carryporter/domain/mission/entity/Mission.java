@@ -107,8 +107,14 @@ public class Mission extends BaseEntity {
         this.arrivedAt = LocalDateTime.now();
     }
 
+    // 로봇 복귀 완료
+    public void returned() {
+        this.missionStatus = MissionStatus.RETURNED;
+        this.arrivedAt = LocalDateTime.now();
+    }
+
     // 미션 종료
-    public void finis() {
+    public void finish() {
         this.missionStatus = MissionStatus.FINISHED;
         this.userLockerStatus = UserLockerStatus.COMPLETED;
         this.finishedAt = LocalDateTime.now();
@@ -124,5 +130,13 @@ public class Mission extends BaseEntity {
 
     public void failed() {
         this.missionStatus = MissionStatus.FAILED;
+    }
+
+    public void lock() {
+        this.missionStatus = MissionStatus.LOCKED;
+    }
+
+    public void unlock() {
+        this.missionStatus = MissionStatus.UNLOCKED;
     }
 }
