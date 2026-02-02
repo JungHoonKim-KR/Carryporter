@@ -123,7 +123,7 @@ public class AdminController {
 
     @PostMapping("/missions/{missionId}/lockers/{lockerId}")
     public ResponseEntity<Void> assignLockerToMission(@PathVariable Long missionId, @PathVariable Long lockerId) {
-        missionService.assignLocker(missionId, lockerId);
+        adminLockerService.assignLocker(missionId, lockerId);
         return ResponseEntity.noContent().build();
     }
 

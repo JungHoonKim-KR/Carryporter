@@ -95,16 +95,6 @@ public class MissionService {
         mission.failed();
     }
 
-    @Transactional
-    public void assignLocker(Long missionId, Long lockerId) {
-        Mission mission = missionRepository.findById(missionId)
-                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
-
-        Locker locker = lockerRepository.findById(lockerId)
-                .orElseThrow(() -> new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND));
-
-        mission.assignLocker(locker);
-    }
 
     private void validateIdleRobot(Robot robot) {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {

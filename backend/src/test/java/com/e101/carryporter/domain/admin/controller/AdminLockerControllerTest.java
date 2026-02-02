@@ -100,7 +100,7 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
         Long lockerId = 1L;
 
         willDoNothing()
-                .given(missionService)
+                .given(adminLockerService)
                 .assignLocker(missionId, lockerId);
 
         // when & then
@@ -108,7 +108,7 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
-        verify(missionService, times(1)).assignLocker(missionId, lockerId);
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
     }
 
     @Test
@@ -119,7 +119,7 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
         Long lockerId = 1L;
 
         doThrow(new BusinessException(MissionErrorCode.MISSION_NOT_FOUND))
-                .when(missionService)
+                .when(adminLockerService)
                 .assignLocker(missionId, lockerId);
 
         // when & then
@@ -129,7 +129,7 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.message").value(MissionErrorCode.MISSION_NOT_FOUND.getMessage()))
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"));
 
-        verify(missionService, times(1)).assignLocker(missionId, lockerId);
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
     }
 
     @Test
@@ -140,7 +140,7 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
         Long lockerId = 999L;
 
         doThrow(new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND))
-                .when(missionService)
+                .when(adminLockerService)
                 .assignLocker(missionId, lockerId);
 
         // when & then
@@ -150,6 +150,6 @@ class AdminLockerControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.message").value(LockerErrorCode.LOCKER_NOT_FOUND.getMessage()))
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"));
 
-        verify(missionService, times(1)).assignLocker(missionId, lockerId);
+        verify(adminLockerService, times(1)).assignLocker(missionId, lockerId);
     }
 }
