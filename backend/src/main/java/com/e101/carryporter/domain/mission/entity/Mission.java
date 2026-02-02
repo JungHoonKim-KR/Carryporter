@@ -78,6 +78,11 @@ public class Mission extends BaseEntity {
         this.assignedAt = LocalDateTime.now();
     }
 
+    public void assignLocker(Locker locker){
+        this.locker = locker;
+        this.assignedAt = LocalDateTime.now();
+    }
+
     // 로봇 주행 시작
     public void dispatch() {
         this.missionStatus = MissionStatus.MOVING;

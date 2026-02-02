@@ -31,7 +31,7 @@ class SseControllerTest extends WebMvcTestSupport {
         mockMvc.perform(get("/sse/subscribe")
                         // ★ 필터가 userId와 userRole을 세팅해준 상황을 시뮬레이션합니다.
                         .requestAttr("userId", userId)
-                        .requestAttr("userRole", Role.BASIC)
+                        .requestAttr("role", Role.BASIC)
                         .accept(MediaType.TEXT_EVENT_STREAM))
                 .andDo(print())
                 .andExpect(status().isOk())

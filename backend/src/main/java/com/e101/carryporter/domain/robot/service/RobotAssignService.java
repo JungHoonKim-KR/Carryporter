@@ -46,7 +46,7 @@ public class RobotAssignService {
 
         log.info("미션 배차 완료: userId={}, missionId={}, robotId={}", userId, missionId, availableRobotId);
 
-        eventPublisher.publishEvent(new RobotAssignedEvent(userId, robotCode));
+        eventPublisher.publishEvent(new RobotAssignedEvent(userId, missionId, robotCode, findMission.getCallLocation().getLocationName(), findMission.getLocker().getLockerCode(), "FIRST/RECALL"));
 
         return availableRobotId;
 

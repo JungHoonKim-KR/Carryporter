@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -32,6 +33,7 @@ public class RobotService {
     private final RobotRepository robotRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final MissionService missionService;
+    private final MissionRepository missionRepository;
 
     /**
      * 로봇 등록 (MQTT register 토픽에서 호출)
@@ -62,8 +64,11 @@ public class RobotService {
                 .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
     }
 
-    public void lockByAdmin(Long missionId, Long robotId) {
-        Robot robot = findById(robotId);
+    public void lockByAdmin(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
+
+        Robot robot = mission.getRobot();
         eventPublisher.publishEvent(new AdminLockRequestEvent(missionId, robot.getMacAddress()));
     }
 
@@ -75,13 +80,14 @@ public class RobotService {
 
 
     @Transactional
-    public void dispatch(DispatchServiceRequestDto requestDto) {
+    public void move(Long missionId) {
         //userid -> 해당 이벤트가 사용자에게도 가서 필요)와 robotcode 전달을 위해서 수정
 
-        Mission mission = missionService.findById(requestDto.getMissionId());
-        Robot robot = findById(requestDto.getRobotId());
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
 
         missionService.dispatch(mission.getId());
+        Robot robot = mission.getRobot();
 
         //로봇코드
         eventPublisher.publishEvent(new MissionStartedEvent(

@@ -2,6 +2,9 @@ package com.e101.carryporter.domain.robot.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
+import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
@@ -38,6 +41,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private MissionRepository missionRepository;
+
+    @Autowired
+    private LockerRepository lockerRepository;
 
     @Autowired
     private RobotRepository robotRepository;
@@ -86,6 +92,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     @Test
     void assignRobotToMission_Success() {
         // given
+        Locker locker = Locker.createLocker("A-001");
+        lockerRepository.save(locker);
+
         // 1. User 생성
         User user = User.createUser("test@example.com");
         userRepository.save(user);
@@ -97,6 +106,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         // 3. Mission 생성 (REQUESTED 상태)
         Mission mission = Mission.createMission(user, location);
         Long missionId = missionRepository.save(mission);
+        mission.assignLocker(locker);
 
         // 4. Robot 생성 (IDLE 상태)
         Robot robot = Robot.createRobot("ROBOT-001", "AA:BB:CC:DD:EE:FF");
@@ -159,7 +169,6 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         // 3. Mission 생성 (REQUESTED 상태)
         Mission mission = Mission.createMission(user, location);
         Long missionId = missionRepository.save(mission);
-
         // 4. Redis 큐가 비어있음 (가용 로봇 없음)
 
         // when & then
@@ -220,6 +229,11 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     @DisplayName("여러 로봇을 순차적으로 배정할 수 있다")
     @Test
     void assignRobotToMission_MultipleAssignments() {
+        Locker locker1 = Locker.createLocker("A-001");
+        lockerRepository.save(locker1);
+
+        Locker locker2 = Locker.createLocker("A-002");
+        lockerRepository.save(locker2);
         // given
         // 1. User 생성
         User user = User.createUser("test@example.com");
@@ -235,6 +249,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
 
         Mission mission2 = Mission.createMission(user, location);
         Long missionId2 = missionRepository.save(mission2);
+
+        mission1.assignLocker(locker1);
+        mission2.assignLocker(locker2);
 
         // 4. 두 개의 Robot 생성
         Robot robot1 = Robot.createRobot("ROBOT-001", "AA:BB:CC:DD:EE:01");

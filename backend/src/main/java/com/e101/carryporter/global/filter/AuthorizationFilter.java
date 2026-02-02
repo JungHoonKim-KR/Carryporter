@@ -30,7 +30,10 @@ public class AuthorizationFilter extends OncePerRequestFilter {
             "/auth/reissue",
             "/api/auth/request",
             "/api/auth/verify",
-            "/api/auth/reissue"
+            "/api/auth/reissue",
+            //프론트 테스트 용
+            "/api/test/sse",
+            "/test/sse"
     );
 
     // 관리자 전용 URL 목록

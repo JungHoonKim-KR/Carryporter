@@ -7,6 +7,7 @@ import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
+import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.robot.service.RobotService;
@@ -184,7 +185,17 @@ public class MqttSubscriberService {
                 log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(), robot.getId());
 
                 eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
+                log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
+                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), mission.getRobot().getId(), mac));
+                eventPublisher.publishEvent(new RobotReturnedAdminEvent(
+                        mission.getUser().getId(),
+                        mission.getRobot().getRobotCode(),
+                        mission.getId(),
+                        mission.getLocker().getLockerCode(),
+                        "STORAGE_REQUIRED"
+                ));
             });
+
         } catch (Exception e) {
             log.error("관리소 복귀 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
         }

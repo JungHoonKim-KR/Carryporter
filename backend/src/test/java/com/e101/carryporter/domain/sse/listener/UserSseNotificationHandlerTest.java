@@ -34,21 +34,45 @@ class UserSseNotificationHandlerTest {
     private final Long MISSION_ID = 1L;
     private final String MAC_ADDRESS = "AA:BB:CC:DD:EE";
     private final String ROBOT_CODE = "R-001";
-
+    private final String LOCATION = "A-Gate";
     @Test
-    @DisplayName("로봇 배정 이벤트를 받으면 SSE로 'RobotAssignedEvent'와 메시지 맵을 전송해야 한다")
-    void handleRobotAssigned() {
+    @DisplayName("로봇 배정 이벤트를 받으면 FIRST 호출 시 '배정' 메시지를 확인한다")
+    void handleRobotAssigned_FirstCall() {
         // given
-        RobotAssignedEvent event = new RobotAssignedEvent(USER_ID, ROBOT_CODE);
+        RobotAssignedEvent event = RobotAssignedEvent.builder()
+                .userId(USER_ID)
+                .requestType("FIRST")
+                .robotCode(ROBOT_CODE)
+                .build();
 
         // when
         sseNotificationHandler.handleRobotAssignedEvent(event);
 
         // then
         verify(sseService).sendToUser(
-                eq(USER_ID),
-                eq("RobotAssignedEvent"), // 클래스 이름 확인
-                argThat(data -> isMapContainingMsg(data, "배정")) // Map 내부 msg 확인
+                eq(USER_ID), eq("RobotAssignedEvent"),
+                argThat(data -> isMapContainingMsg(data, "배정")) // OK
+        );
+    }
+
+    @Test
+    @DisplayName("재호출(RETURN) 시에도 동일하게 '배정' 메시지가 나가는지 확인한다")
+    void handleRobotAssigned_Recall() {
+        // given
+        RobotAssignedEvent event = RobotAssignedEvent.builder()
+                .userId(USER_ID)
+                .requestType("RETURN") // 타입은 다르지만
+                .robotCode(ROBOT_CODE)
+                .build();
+
+        // when
+        sseNotificationHandler.handleRobotAssignedEvent(event);
+
+        // then
+        // [중요] "이동" 대신 "배정"으로 수정하여 실제 코드와 일치시킴
+        verify(sseService).sendToUser(
+                eq(USER_ID), eq("RobotAssignedEvent"),
+                argThat(data -> isMapContainingMsg(data, "배정"))
         );
     }
 

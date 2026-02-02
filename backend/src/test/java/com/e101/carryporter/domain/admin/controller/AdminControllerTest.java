@@ -476,7 +476,7 @@ class AdminControllerTest extends WebMvcTestSupport {
 
         willDoNothing()
                 .given(robotService)
-                .lockByAdmin(anyLong(), anyLong());
+                .lockByAdmin(anyLong());
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/lock", missionId)
@@ -534,159 +534,30 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    @Test
-    @DisplayName("로봇 잠금 API 호출 시 robotId가 null이면 400 Bad Request를 반환한다")
-    void lockRobot_WithNullRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        UnlockRobotRequestDto requestDto = createUnlockRobotRequestDto(null);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/lock", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/lock");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("로봇 잠금 API 호출 시 robotId가 음수이면 400 Bad Request를 반환한다")
-    void lockRobot_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        UnlockRobotRequestDto requestDto = createUnlockRobotRequestDto(-1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/lock", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/lock");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
 
     @Test
     @DisplayName("로봇 이동 API 호출 시 204 No Content를 반환한다")
     void dispatch() throws Exception {
         // given
         Long missionId = 1L;
-        DispatchRequestDto requestDto = createMoveRequestDto(1L, 1L);
+        // DTO 생성 로직 삭제
 
         willDoNothing()
                 .given(robotService)
-                .dispatch(any());
+                .move(missionId); // any() 대신 명확한 인자 전달 검증
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
+                        // Request Body가 없으므로 contentType, content 삭제
                         .with(request -> {
                             request.setServletPath("/admin/missions/" + missionId + "/dispatch");
                             return request;
                         }))
                 .andDo(print())
                 .andExpect(status().isNoContent());
-    }
 
-    @Test
-    @DisplayName("로봇 이동 API 호출 시 robotId가 null이면 400 Bad Request를 반환한다")
-    void move_WithNullRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        DispatchRequestDto requestDto = createMoveRequestDto(null, 1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("로봇 이동 API 호출 시 callLocationId가 null이면 400 Bad Request를 반환한다")
-    void move_WithNullCallLocationId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        DispatchRequestDto requestDto = createMoveRequestDto(1L, null);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("로봇 이동 API 호출 시 robotId가 음수이면 400 Bad Request를 반환한다")
-    void move_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        DispatchRequestDto requestDto = createMoveRequestDto(-1L, 1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("로봇 이동 API 호출 시 callLocationId가 음수이면 400 Bad Request를 반환한다")
-    void move_WithNegativeCallLocationId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        DispatchRequestDto requestDto = createMoveRequestDto(1L, -1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/dispatch");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
+        // verify: 서비스가 올바른 missionId로 호출되었는지 검증
+        verify(robotService).move(missionId);
     }
 
     @Test
