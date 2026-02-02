@@ -502,7 +502,7 @@ class AdminControllerTest extends WebMvcTestSupport {
 
         willDoNothing()
                 .given(robotService)
-                .move(missionId); // any() 대신 명확한 인자 전달 검증
+                .dispatch(missionId); // any() 대신 명확한 인자 전달 검증
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/dispatch", missionId)
@@ -515,7 +515,7 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(status().isNoContent());
 
         // verify: 서비스가 올바른 missionId로 호출되었는지 검증
-        verify(robotService).move(missionId);
+        verify(robotService).dispatch(missionId);
     }
 
     @Test
