@@ -4,7 +4,7 @@ import axios from 'axios';
 // 1. Axios 인스턴스 생성
 export const api = axios.create({
   // baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080', // 백엔드 주소
-    baseURL: import.meta.env.VITE_API_URL || 'http://i14e101.p.ssafy.io/', // 백엔드 주소
+    baseURL: import.meta.env.VITE_API_URL || 'http://i14e101.p.ssafy.io/api', // 백엔드 주소
 
   timeout: 10000, // 10초 타임아웃
   withCredentials: true, // 🚨 중요: 쿠키(Refresh Token)를 주고받기 위한 설정
