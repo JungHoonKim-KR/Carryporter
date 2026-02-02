@@ -23,7 +23,7 @@ public class TempPasswordRedisRepository {
     public void save(String email, Integer password) {
         try {
             // 2. 키 생성 메서드 활용 & try-catch로 감싸기
-            redisTemplate.opsForValue().set(getTempPasswordKey(email), password, TTL_MINUTES, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(getTempPasswordKey(email), password.toString(), TTL_MINUTES, TimeUnit.MINUTES);
             log.debug("임시 비밀번호 저장 email = {}", email);
         } catch (Exception e) {
             log.error("임시 비밀번호 저장 실패 : email = {}", email, e);

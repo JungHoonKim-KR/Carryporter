@@ -23,6 +23,8 @@ jwt:
 logging:
   level:
     com.e101.carryporter: debug
+    org.springframework.integration: info
+    org.eclipse.paho.client: info
 
 ---
 # ===========================================
@@ -39,7 +41,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+      ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:

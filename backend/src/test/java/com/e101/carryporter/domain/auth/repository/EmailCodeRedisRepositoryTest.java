@@ -183,7 +183,7 @@ class EmailCodeRedisRepositoryTest extends IntegrationTestSupport {
             Integer code = 123456;
 
             // 테스트를 위해 짧은 TTL로 직접 설정
-            redisTemplate.opsForValue().set("auth:email:code:" + email, code, 1, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set("auth:email:code:" + email, code.toString(), 1, TimeUnit.SECONDS);
 
             // when
             Thread.sleep(1100); // 1.1초 대기

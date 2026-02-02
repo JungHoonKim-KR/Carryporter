@@ -16,12 +16,15 @@ import com.e101.carryporter.domain.robot.service.dto.request.DispatchServiceRequ
 import com.e101.carryporter.global.exception.BusinessException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -31,6 +34,30 @@ public class RobotService {
     private final ApplicationEventPublisher eventPublisher;
     private final MissionService missionService;
     private final MissionRepository missionRepository;
+
+    /**
+     * 로봇 등록 (MQTT register 토픽에서 호출)
+     * 이미 등록된 MAC 주소면 기존 로봇 반환, 없으면 새로 생성
+     */
+    @Transactional
+    public Robot registerRobot(String macAddress) {
+        return robotRepository.findByMacAddress(macAddress)
+                .map(existingRobot -> {
+                    log.info("이미 등록된 로봇 - MAC: {}, robotCode: {}", macAddress, existingRobot.getRobotCode());
+                    return existingRobot;
+                })
+                .orElseGet(() -> {
+                    String robotCode = generateRobotCode();
+                    Robot newRobot = Robot.createRobot(robotCode, macAddress);
+                    robotRepository.save(newRobot);
+                    log.info("새 로봇 등록 완료 - MAC: {}, robotCode: {}", macAddress, robotCode);
+                    return newRobot;
+                });
+    }
+
+    private String generateRobotCode() {
+        return "e101-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
 
     public Robot findById(Long robotId) {
         return robotRepository.findById(robotId)
@@ -49,6 +76,8 @@ public class RobotService {
         Robot robot = findById(robotId);
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
     }
+
+
 
     @Transactional
     public void move(Long missionId) {

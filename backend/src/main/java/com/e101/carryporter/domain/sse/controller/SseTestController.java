@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/test/sse")
@@ -78,14 +79,28 @@ public class SseTestController {
         return "🚀 [미션 출발] 이벤트 전송 완료: " + code;
     }
 
-    // 4. 로봇 복귀 알림 테스트
+    // =================================================================================
+    // 🆕 3. [RETURN] 로봇 복귀 알림 (최종 처리)
+    // Front: MissionReturnModal 뜸 -> 보관/반납 선택
+    // URL: http://localhost:8080/api/test/sse/return?robotCode=ROBOT-303
+    // =================================================================================
     @GetMapping("/return")
-    public String testReturn(@RequestParam(defaultValue = "ROBOT-999") String robotId) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("missionId", System.currentTimeMillis());
-        data.put("robotId", robotId);
-        data.put("message", "로봇이 관리소에 도착했습니다. 최종 점검을 진행해주세요.");
-        sseService.broadcastToAdmins("ROBOT_RETURNED", data);
-        return "🏁 [로봇 복귀] 이벤트 전송 완료 - ID: " + robotId;
+    public String testReturn(@RequestParam(defaultValue = "ROBOT-303") String robotCode) {
+
+        // 랜덤 사물함 코드 생성 (테스트용)
+        String lockerCode = "C-" + (new Random().nextInt(20) + 10);
+
+        // RobotReturnedAdminEvent 타입에 맞춘 데이터
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("userId", 3003L);
+        eventData.put("missionId", System.currentTimeMillis());
+        eventData.put("robotCode", robotCode); // 프론트 타입: robotCode (robotId 아님)
+        eventData.put("lockerCode", lockerCode); // 관리자가 넣어야 할 사물함
+        eventData.put("message", "로봇이 관리소에 도착했습니다.");
+
+        // 이벤트명: RobotReturnedAdminEvent
+        sseService.broadcastToAdmins("RobotReturnedAdminEvent", eventData);
+
+        return "🏁 [로봇 복귀] 전송 완료 (" + lockerCode + "): " + robotCode;
     }
 }

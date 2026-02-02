@@ -40,9 +40,8 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     private static final List<String> ADMIN_ONLY_PATHS = Arrays.asList(
             "/admin",
             "/api/admin",
-            //프론트 로컬용
-            "/admin/join",    // 관리자 회원가입
-            "/admin/login"   // 관리자 로그인
+            "/admin/join",
+            "/admin/login"
     );
 
     @Override

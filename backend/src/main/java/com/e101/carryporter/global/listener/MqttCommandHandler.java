@@ -55,7 +55,7 @@ public class MqttCommandHandler {
     public void handleMissionStarted(MissionStartedEvent event) {
         log.info("[MQTT] 미션 시작 - missionId: {}, robotMacAddress: {}, dest: ({}, {})",
                 event.missionId(), event.robotMacAddress(), event.destX(), event.destY());
-        mqttPublisherService.sendDeliverCommand(event.robotMacAddress(), event.destX(), event.destY());
+        mqttPublisherService.sendDispatchCommand(event.robotMacAddress(), event.destX(), event.destY());
     }
 
     /**

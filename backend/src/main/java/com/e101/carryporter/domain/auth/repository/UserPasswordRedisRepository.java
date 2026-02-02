@@ -21,7 +21,7 @@ public class UserPasswordRedisRepository {
     // 사용자 4자리 비밀번호 저장 (TTL: 24 시간)
     public void save(Long userId, Integer password) {
         try {
-            redisTemplate.opsForValue().set(getUserPasswordKey(userId), password, TTL_HOURS, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(getUserPasswordKey(userId), password.toString(), TTL_HOURS, TimeUnit.HOURS);
             log.debug("사용자 4자리 비밀번호 저장 userId = {}", userId);
         } catch (Exception e) {
             log.error("사용자 4자리 비밀번호 저장 실패 userId = {}", userId, e);

@@ -42,10 +42,10 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
               }`}
           >
             {/* 외부 원형 테두리 */}
-            <div className="absolute inset-0 rounded-full border-4 border-[#0064FF]/20" />
+            <div className="absolute inset-0 rounded-full border-4 border-toss-blue-500/20" />
 
             {/* 내부 채워진 원 */}
-            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#0064FF] to-[#4DA3FF] flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-toss-blue-500 to-toss-blue-light flex items-center justify-center shadow-lg shadow-blue-500/30">
               <svg
                 className={`w-10 h-10 text-white transition-all duration-500 delay-300 ${animate ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
                   }`}
@@ -87,7 +87,7 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
         {/* 등록 버튼 (Toss 스타일) */}
         <Button
           onClick={onConfirm}
-          className="w-full h-14 text-lg font-semibold bg-[#0064FF] hover:bg-[#0052CC] rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
+          className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 active:scale-[0.98]"
         >
           등록
         </Button>

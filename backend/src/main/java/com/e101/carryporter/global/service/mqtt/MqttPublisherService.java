@@ -36,15 +36,15 @@ public class MqttPublisherService {
     }
 
     /**
-     * 배송 명령 전송
+     * 디스패치 명령 전송 (관리자가 로봇에게 이동 명령)
      * @param mac 로봇 MAC 주소
      * @param destX 목적지 X 좌표
      * @param destY 목적지 Y 좌표
      */
-    public void sendDeliverCommand(String mac, double destX, double destY) {
+    public void sendDispatchCommand(String mac, double destX, double destY) {
         String payload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
-        sendCommand(mac, "deliver", payload);
-        log.info("배송 명령 전송 - MAC: {}, 목적지: ({}, {})", mac, destX, destY);
+        sendCommand(mac, "dispatch", payload);
+        log.info("디스패치 명령 전송 - MAC: {}, 목적지: ({}, {})", mac, destX, destY);
     }
 
     /**

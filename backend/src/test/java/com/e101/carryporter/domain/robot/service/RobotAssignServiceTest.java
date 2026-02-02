@@ -2,17 +2,20 @@ package com.e101.carryporter.domain.robot.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
+import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
-import com.e101.carryporter.domain.robot.entity.RobotState;
+import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotAvailableQueueRepository;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
-import com.e101.carryporter.domain.robot.repository.RobotStateRepository;
+import com.e101.carryporter.domain.robot.repository.RobotRealTimeRepository;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.global.exception.BusinessException;
@@ -24,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +43,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     private MissionRepository missionRepository;
 
     @Autowired
+    private LockerRepository lockerRepository;
+
+    @Autowired
     private RobotRepository robotRepository;
 
     @Autowired
@@ -50,12 +58,13 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     private RobotAvailableQueueRepository robotAvailableQueueRepository;
 
     @Autowired
-    private RobotStateRepository robotStateRepository;
+    private RobotRealTimeRepository robotRealTimeRepository;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     private static final String AVAILABLE_ROBOTS_KEY = "robot:available";
+    private static final String ROBOT_STATUS_PREFIX = "robot:status:";
 
     @AfterEach
     void tearDown() {
@@ -65,10 +74,27 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
                 .ifPresent(conn -> conn.serverCommands().flushDb());
     }
 
+    private void initRobotHash(Long robotId, String macAddress, RobotStatus status, int battery) {
+        String key = ROBOT_STATUS_PREFIX + robotId;
+
+        Map<String, String> data = Map.of(
+                "macAddress", macAddress,
+                "status", status.name(),
+                "battery", String.valueOf(battery),
+                // 실제 로직과 동일하게 날짜 정보도 넣어주는 것이 테스트 정합성에 좋습니다.
+                "updatedAt", LocalDateTime.now().toString()
+        );
+
+        redisTemplate.opsForHash().putAll(key, data);
+    }
+
     @DisplayName("로봇 배정 성공 시 미션과 로봇의 상태가 올바르게 변경되고 이벤트가 발행된다")
     @Test
     void assignRobotToMission_Success() {
         // given
+        Locker locker = Locker.createLocker("A-001");
+        lockerRepository.save(locker);
+
         // 1. User 생성
         User user = User.createUser("test@example.com");
         userRepository.save(user);
@@ -80,17 +106,20 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         // 3. Mission 생성 (REQUESTED 상태)
         Mission mission = Mission.createMission(user, location);
         Long missionId = missionRepository.save(mission);
+        mission.assignLocker(locker);
 
         // 4. Robot 생성 (IDLE 상태)
         Robot robot = Robot.createRobot("ROBOT-001", "AA:BB:CC:DD:EE:FF");
         Long robotId = robotRepository.save(robot);
 
         // 5. Redis에 로봇 상태 저장
-        RobotState robotState = RobotState.of("AA:BB:CC:DD:EE:FF", RobotStatus.IDLE, 100);
-        robotStateRepository.save(robotId, robotState);
+        String key = "robot:status:" + robotId;
+        redisTemplate.opsForHash().put(key, "macAddress", "AA:BB:CC:DD:EE:FF");
+        redisTemplate.opsForHash().put(key, "status", RobotStatus.BUSY.name());
+        redisTemplate.opsForHash().put(key, "battery", "100");
 
-        // 6. Redis 큐에 로봇 추가
-        redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
+        // 6. updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+        robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
 
         // when
         Long assignedRobotId = robotAssignService.assignRobotToMission(missionId);
@@ -140,7 +169,6 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         // 3. Mission 생성 (REQUESTED 상태)
         Mission mission = Mission.createMission(user, location);
         Long missionId = missionRepository.save(mission);
-
         // 4. Redis 큐가 비어있음 (가용 로봇 없음)
 
         // when & then
@@ -175,11 +203,13 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         Long robotId = robotRepository.save(robot);
 
         // 4. Redis에 로봇 상태 저장
-        RobotState robotState = RobotState.of("AA:BB:CC:DD:EE:FF", RobotStatus.IDLE, 100);
-        robotStateRepository.save(robotId, robotState);
+        String key = "robot:status:" + robotId;
+        redisTemplate.opsForHash().put(key, "macAddress", "AA:BB:CC:DD:EE:FF");
+        redisTemplate.opsForHash().put(key, "status", RobotStatus.BUSY.name());
+        redisTemplate.opsForHash().put(key, "battery", "100");
 
-        // 5. Redis 큐에 로봇 추가
-        redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId);
+        // 5. updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨)
+        robotRealTimeRepository.updateStatusOnly(robotId, RobotStatus.IDLE);
 
         // when & then
         // 존재하지 않는 미션에 대한 로봇 배정 시도 시 예외 발생
@@ -187,7 +217,7 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
                 .isInstanceOf(BusinessException.class);
 
         // 로봇이 다시 IDLE 상태로 변경되었는지 확인
-        Optional<RobotState> IDLERobotState = robotStateRepository.findById(robotId);
+        Optional<RobotRealTimeInfo> IDLERobotState = robotRealTimeRepository.findById(robotId);
         assertThat(IDLERobotState).isPresent();
         assertThat(IDLERobotState.get().getStatus()).isEqualTo(RobotStatus.IDLE);
 
@@ -199,6 +229,11 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
     @DisplayName("여러 로봇을 순차적으로 배정할 수 있다")
     @Test
     void assignRobotToMission_MultipleAssignments() {
+        Locker locker1 = Locker.createLocker("A-001");
+        lockerRepository.save(locker1);
+
+        Locker locker2 = Locker.createLocker("A-002");
+        lockerRepository.save(locker2);
         // given
         // 1. User 생성
         User user = User.createUser("test@example.com");
@@ -215,6 +250,9 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         Mission mission2 = Mission.createMission(user, location);
         Long missionId2 = missionRepository.save(mission2);
 
+        mission1.assignLocker(locker1);
+        mission2.assignLocker(locker2);
+
         // 4. 두 개의 Robot 생성
         Robot robot1 = Robot.createRobot("ROBOT-001", "AA:BB:CC:DD:EE:01");
         Long robotId1 = robotRepository.save(robot1);
@@ -223,15 +261,19 @@ class RobotAssignServiceTest extends IntegrationTestSupport {
         Long robotId2 = robotRepository.save(robot2);
 
         // 5. Redis에 로봇 상태 저장
-        RobotState robotState1 = RobotState.of("AA:BB:CC:DD:EE:01", RobotStatus.IDLE, 100);
-        robotStateRepository.save(robotId1, robotState1);
+        String key1 = "robot:status:" + robotId1;
+        redisTemplate.opsForHash().put(key1, "macAddress", "AA:BB:CC:DD:EE:01");
+        redisTemplate.opsForHash().put(key1, "status", RobotStatus.BUSY.name());
+        redisTemplate.opsForHash().put(key1, "battery", "100");
 
-        RobotState robotState2 = RobotState.of("AA:BB:CC:DD:EE:02", RobotStatus.IDLE, 90);
-        robotStateRepository.save(robotId2, robotState2);
+        String key2 = "robot:status:" + robotId2;
+        redisTemplate.opsForHash().put(key2, "macAddress", "AA:BB:CC:DD:EE:02");
+        redisTemplate.opsForHash().put(key2, "status", RobotStatus.BUSY.name());
+        redisTemplate.opsForHash().put(key2, "battery", "90");
 
-        // 6. Redis 큐에 로봇 추가 (FIFO 순서)
-        redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId1);
-        redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, robotId2);
+        // 6. updateStatusOnly로 IDLE로 변경 (자동으로 큐에 추가됨, FIFO 순서)
+        robotRealTimeRepository.updateStatusOnly(robotId1, RobotStatus.IDLE);
+        robotRealTimeRepository.updateStatusOnly(robotId2, RobotStatus.IDLE);
 
         // when
         Long assignedRobotId1 = robotAssignService.assignRobotToMission(missionId1);
