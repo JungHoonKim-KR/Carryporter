@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,4 +64,9 @@ public class MissionRepository {
                 .getResultList();
     }
 
+    public List<Mission> findByUserId(Long userId) {
+        return new ArrayList<>(em.createQuery("select m from Mission m where m.user.id = :userId", Mission.class)
+                .setParameter("userId", userId)
+                .getResultList());
+    }
 }

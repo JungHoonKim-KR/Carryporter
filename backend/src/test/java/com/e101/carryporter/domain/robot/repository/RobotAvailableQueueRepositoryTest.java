@@ -159,6 +159,58 @@ class RobotAvailableQueueRepositoryTest extends IntegrationTestSupport {
     }
 
     @Nested
+    @DisplayName("가용 로봇 수 조회 (getAvailableRobotCount)")
+    class GetAvailableRobotCountTest {
+
+        @DisplayName("큐에 로봇이 여러 개 있을 때 정확한 개수를 반환한다")
+        @Test
+        void getCountWhenMultipleRobots() {
+            // given
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 1L);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 2L);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 3L);
+
+            // when
+            Long count = robotAvailableQueueRepository.getAvailableRobotCount();
+
+            // then
+            assertThat(count).isEqualTo(3);
+        }
+
+        @DisplayName("큐가 비어있을 때 0을 반환한다")
+        @Test
+        void getCountWhenQueueEmpty() {
+            // given - 큐가 비어있음
+
+            // when
+            Long count = robotAvailableQueueRepository.getAvailableRobotCount();
+
+            // then
+            assertThat(count).isEqualTo(0);
+        }
+
+        @DisplayName("로봇이 추가되고 제거될 때 개수가 정확하게 반영된다")
+        @Test
+        void countChangesWithPushAndPop() {
+            // given
+            assertThat(robotAvailableQueueRepository.getAvailableRobotCount()).isEqualTo(0);
+
+            // when - 로봇 2대 추가
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 1L);
+            redisTemplate.opsForList().rightPush(AVAILABLE_ROBOTS_KEY, 2L);
+
+            // then
+            assertThat(robotAvailableQueueRepository.getAvailableRobotCount()).isEqualTo(2);
+
+            // when - 로봇 1대 제거
+            redisTemplate.opsForList().leftPop(AVAILABLE_ROBOTS_KEY);
+
+            // then
+            assertThat(robotAvailableQueueRepository.getAvailableRobotCount()).isEqualTo(1);
+        }
+    }
+
+    @Nested
     @DisplayName("통합 시나리오")
     class IntegrationScenarioTest {
 

@@ -42,6 +42,7 @@ public class RobotAvailableQueueRepository {
             throw e;
         }
     }
+
     /**
      * 현재 가용한 로봇의 수를 반환합니다.
      * @return 가용 로봇 수
