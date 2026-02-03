@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/missionStore';
-import { useMissionSSE } from '../hooks/useMissionSSE';
 import { Button } from '@/components/ui/button';
 import { VerificationModal } from '../components/mission/VerificationModal';
 import { MissionTypeSelector } from '../components/mission/MissionTypeSelector';
@@ -21,15 +20,55 @@ const MissionTrackPage = () => {
     clearMission,
     setMissionType,
     hasStoredLuggages,
+    // ✅ missionStore에서 직접 가져오기 (useMissionSSE 제거)
+    isConnected,
+    connectionError,
+    connectionQuality,
+    reconnectAttempts,
   } = useMissionStore();
-
-  const { isConnected, connectionError } = useMissionSSE(); // missionId 파라미터 제거
 
   // UI 상태 관리
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showStorageFlow, setShowStorageFlow] = useState(false);
   const [showReturnFlow, setShowReturnFlow] = useState(false);
+
+  // ✅ 연결 상태 UI (계획대로 구현)
+  const connectionStatus = useMemo(() => {
+    if (!isConnected && reconnectAttempts > 0) {
+      return {
+        label: `재연결 중... (${reconnectAttempts}/10)`,
+        color: 'bg-yellow-50 text-yellow-600',
+        dotColor: 'bg-yellow-500',
+        animate: true,
+      };
+    }
+
+    if (isConnected && connectionQuality === 'poor') {
+      return {
+        label: '연결 불안정',
+        color: 'bg-orange-50 text-orange-600',
+        dotColor: 'bg-orange-500',
+        animate: false,
+      };
+    }
+
+    if (isConnected) {
+      return {
+        label: '실시간',
+        color: 'bg-toss-green/20 text-toss-green',
+        dotColor: 'bg-toss-green',
+        animate: true,
+      };
+    }
+
+    return {
+      label: '연결 끊김',
+      color: 'bg-red-50 text-red-500',
+      dotColor: 'bg-red-500',
+      animate: false,
+    };
+  }, [isConnected, connectionQuality, reconnectAttempts]);
 
   // ARRIVED 상태 → 인증 모달 자동 표시
   useEffect(() => {
@@ -128,17 +167,9 @@ const MissionTrackPage = () => {
             </div>
 
             {/* 실시간 연결 상태 */}
-            <div
-              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isConnected
-                  ? 'bg-toss-green/20 text-toss-green'
-                  : 'bg-red-50 text-red-500'
-                }`}
-            >
-              <div
-                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-toss-green' : 'bg-red-500'
-                  } ${isConnected ? 'animate-pulse' : ''}`}
-              />
-              {isConnected ? '실시간' : '연결 끊김'}
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${connectionStatus.color}`}>
+              <div className={`w-2 h-2 rounded-full ${connectionStatus.dotColor} ${connectionStatus.animate ? 'animate-pulse' : ''}`} />
+              {connectionStatus.label}
             </div>
           </div>
         </div>
@@ -249,7 +280,7 @@ const MissionTrackPage = () => {
       {/* 인증 모달 (ARRIVED 상태) */}
       {showVerifyModal && currentMission && (
         <VerificationModal
-          missionId={currentMission.id}
+          missionId={Number(currentMission.id)}
           onSuccess={handleVerificationSuccess}
           onClose={() => setShowVerifyModal(false)}
         />

@@ -600,3 +600,73 @@ body {
   min-height: 44px;
   min-width: 44px;
 }
+
+/* ============================================
+   홀로그램 카드 애니메이션
+   ============================================ */
+
+/* Shimmer - 반짝이는 빛이 카드를 가로지름 */
+@keyframes shimmer-hologram {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+/* Float - 미묘한 상하 움직임 */
+@keyframes subtle-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Holographic Shift - 무지개 색상 변화 */
+@keyframes holographic-shift {
+  0%, 100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(30deg);
+  }
+}
+
+/* ============================================
+   비행기 애니메이션
+   ============================================ */
+
+/* Plane Glide - 부드러운 비행 (좌우 이동 + 상하 움직임) */
+@keyframes plane-glide {
+  0%, 100% {
+    transform: translateX(-100%) translateY(0);
+  }
+  50% {
+    transform: translateX(100%) translateY(-3px);
+  }
+}
+
+/* Plane Fly - 단순 좌우 이동 */
+@keyframes plane-fly {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Plane Pulse - 깜빡이는 효과 */
+@keyframes plane-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
