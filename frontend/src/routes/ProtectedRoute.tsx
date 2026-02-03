@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { SSEProvider } from '../components/common/SSEProvider';
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -10,8 +11,12 @@ const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // 로그인 했으면 자식 컴포넌트 렌더링
-  return <Outlet />;
+  // ✅ SSEProvider로 자식 컴포넌트를 래핑하여 전역 SSE 연결 제공
+  return (
+    <SSEProvider>
+      <Outlet />
+    </SSEProvider>
+  );
 };
 
 export default ProtectedRoute;

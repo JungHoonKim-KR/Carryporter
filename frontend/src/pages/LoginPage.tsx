@@ -35,14 +35,14 @@ const LoginPage = () => {
         formState: { errors, isValid },
     } = useForm<SendCodeFormData>({
         resolver: zodResolver(sendCodeSchema),
-        mode: 'onChange',
+        mode: "onChange",
     });
 
     // 폼 값 감시 (비밀번호 일치 확인용)
-    const password = watch('password');
-    const passwordConfirm = watch('passwordConfirm');
-    const agreeTerms = watch('agreeTerms');
-    const agreePrivacy = watch('agreePrivacy');
+    const password = watch("password");
+    const passwordConfirm = watch("passwordConfirm");
+    const agreeTerms = watch("agreeTerms");
+    const agreePrivacy = watch("agreePrivacy");
 
     // 폼 전체 유효성 검사
     const isFormValid = isValid && agreeTerms && agreePrivacy;
@@ -61,7 +61,8 @@ const LoginPage = () => {
             // Mock API용: 비밀번호 저장
             setMockPassword(parseInt(data.password, 10));
 
-            if (import.meta.env.DEV) console.log("=== 1단계 인증번호 발송 성공 ===");
+            if (import.meta.env.DEV)
+                console.log("=== 1단계 인증번호 발송 성공 ===");
             if (import.meta.env.DEV) console.log("응답 데이터:", response);
 
             // CODE 선택 페이지로 이동
@@ -75,7 +76,7 @@ const LoginPage = () => {
             console.error("Send code error:", error);
             setApiError(
                 error.response?.data?.message ||
-                "인증번호 발송에 실패했습니다. 다시 시도해주세요.",
+                    "인증번호 발송에 실패했습니다. 다시 시도해주세요."
             );
         } finally {
             setIsLoading(false);
@@ -96,7 +97,9 @@ const LoginPage = () => {
                                 onError={() => setLogoError(true)}
                             />
                         </div>
-                        <h1 className="text-gray-900 text-lg font-bold">CARRY PORTER</h1>
+                        <h1 className="text-gray-900 text-lg font-bold">
+                            CARRY PORTER
+                        </h1>
                     </div>
                 </div>
             </header>
@@ -115,10 +118,15 @@ const LoginPage = () => {
 
                 {/* 로그인 폼 카드 */}
                 <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="space-y-6"
+                    >
                         {/* 폼 제목 */}
                         <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-gray-900">로그인</h2>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                로그인
+                            </h2>
                             <p className="text-sm text-gray-600">
                                 CARRY PORTER 이용을 위해 정보를 입력해주세요
                             </p>
@@ -139,10 +147,14 @@ const LoginPage = () => {
                                     type="email"
                                     placeholder="example@email.com"
                                     {...register("email")}
-                                    className={errors.email ? "border-red-500" : ""}
+                                    className={
+                                        errors.email ? "border-red-500" : ""
+                                    }
                                 />
                                 {errors.email && (
-                                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                                    <p className="text-sm text-red-500">
+                                        {errors.email.message}
+                                    </p>
                                 )}
                             </div>
 
@@ -172,11 +184,14 @@ const LoginPage = () => {
                                     label=""
                                     placeholder="4자리 숫자"
                                 />
-                                {passwordConfirm && password && passwordConfirm === password && !errors.passwordConfirm && (
-                                    <p className="text-sm text-green-600">
-                                        ✓ 비밀번호가 일치합니다
-                                    </p>
-                                )}
+                                {passwordConfirm &&
+                                    password &&
+                                    passwordConfirm === password &&
+                                    !errors.passwordConfirm && (
+                                        <p className="text-sm text-green-600">
+                                            ✓ 비밀번호가 일치합니다
+                                        </p>
+                                    )}
                             </div>
 
                             {/* 4. 약관 동의 */}
@@ -197,8 +212,14 @@ const LoginPage = () => {
 
                             {/* 약관 설명 */}
                             <div className="text-xs text-gray-500 space-y-1">
-                                <p>· 보관 정책: 짐 보관 시 안전 및 책임 범위에 대한 내용입니다.</p>
-                                <p>· 서비스 이용약관: 로봇 호출 서비스 이용 시 준수사항입니다.</p>
+                                <p>
+                                    · 보관 정책: 짐 보관 시 안전 및 책임 범위에
+                                    대한 내용입니다.
+                                </p>
+                                <p>
+                                    · 서비스 이용약관: 로봇 호출 서비스 이용 시
+                                    준수사항입니다.
+                                </p>
                             </div>
                         </div>
 
@@ -206,10 +227,22 @@ const LoginPage = () => {
                         {apiError && (
                             <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                                 <div className="flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <svg
+                                        className="w-5 h-5 text-red-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
                                     </svg>
-                                    <p className="text-sm text-red-600">{apiError}</p>
+                                    <p className="text-sm text-red-600">
+                                        {apiError}
+                                    </p>
                                 </div>
                             </div>
                         )}
@@ -221,7 +254,7 @@ const LoginPage = () => {
                             disabled={!isFormValid || isLoading}
                             className="w-full bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
                         >
-                            {isLoading ? "처리 중..." : "회원가입"}
+                            {isLoading ? "처리 중..." : "로그인"}
                         </Button>
                     </form>
                 </div>

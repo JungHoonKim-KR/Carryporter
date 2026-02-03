@@ -43,6 +43,7 @@ export const createMission = async (
 export const subscribeMissionUpdates = (
   callbacks: {
     onConnect?: () => void;
+    onHeartbeat?: () => void; // ✅ Heartbeat 이벤트 (백엔드에서 15초마다 전송)
     onRobotAssigned?: (data: SSEEventData) => void;
     onMissionStarted?: (data: SSEEventData) => void;
     onRobotArrival?: (data: SSEEventData) => void;
@@ -60,16 +61,23 @@ export const subscribeMissionUpdates = (
     throw new Error('AccessToken이 없습니다. 로그인이 필요합니다.');
   }
 
+  // ✅ 개발 환경: Vite 프록시 사용 (CORS 우회)
+  // ✅ 프로덕션 환경: 전체 URL 사용
+  const sseUrl = import.meta.env.DEV
+    ? '/api/sse/subscribe'
+    : `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`;
+
+  if (import.meta.env.DEV) {
+    console.log('[SSE] 개발 모드 - 프록시 경로 사용:', sseUrl);
+  }
+
   // EventSourcePolyfill 생성 (Bearer Token 포함)
-  const eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      heartbeatTimeout: 60000, // 1분
-    }
-  );
+  const eventSource = new EventSourcePolyfill(sseUrl, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    heartbeatTimeout: 60000, // 1분
+  });
 
   // 1. Connect 이벤트
   eventSource.addEventListener('Connect', (e: any) => {
@@ -77,49 +85,55 @@ export const subscribeMissionUpdates = (
     callbacks.onConnect?.();
   });
 
-  // 2. RobotAssignedEvent
+  // 2. Heartbeat 이벤트 (백엔드에서 15초마다 전송)
+  eventSource.addEventListener('heartbeat', (e: any) => {
+    if (import.meta.env.DEV) console.debug('[SSE] Heartbeat:', e.data);
+    callbacks.onHeartbeat?.();
+  });
+
+  // 3. RobotAssignedEvent
   eventSource.addEventListener('RobotAssignedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Robot Assigned:', data);
     callbacks.onRobotAssigned?.(data);
   });
 
-  // 3. MissionStartedEvent
+  // 4. MissionStartedEvent
   eventSource.addEventListener('MissionStartedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Mission Started:', data);
     callbacks.onMissionStarted?.(data);
   });
 
-  // 4. RobotArrivalEvent
+  // 5. RobotArrivalEvent
   eventSource.addEventListener('RobotArrivalEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Robot Arrival:', data);
     callbacks.onRobotArrival?.(data);
   });
 
-  // 5. UserAuthSuccessEvent
+  // 6. UserAuthSuccessEvent
   eventSource.addEventListener('UserAuthSuccessEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Auth Success:', data);
     callbacks.onAuthSuccess?.(data);
   });
 
-  // 6. MissionUnlockedEvent
+  // 7. MissionUnlockedEvent
   eventSource.addEventListener('MissionUnlockedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Unlocked:', data);
     callbacks.onUnlocked?.(data);
   });
 
-  // 7. MissionAbortedEvent
+  // 8. MissionAbortedEvent
   eventSource.addEventListener('MissionAbortedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Aborted:', data);
     callbacks.onAborted?.(data);
   });
 
-  // 8. MissionLockedEvent
+  // 9. MissionLockedEvent
   eventSource.addEventListener('MissionLockedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Locked:', data);
