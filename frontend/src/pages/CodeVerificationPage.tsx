@@ -212,7 +212,7 @@ const CodeVerificationPage = () => {
             onClick={handleSubmit}
             size="lg"
             disabled={isLoading || selectedCode === null}
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
+            className="w-full bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
           >
             {isLoading ? '인증 중...' : '로그인'}
           </Button>

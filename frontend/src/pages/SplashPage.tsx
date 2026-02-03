@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
 
 // 애니메이션 타이밍 상수
 const ANIMATION_TIMING = {
@@ -121,6 +122,7 @@ const TaglineReveal = ({ text, onDone }: TaglineRevealProps) => {
 const SplashPage = () => {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
+  const { isAuthenticated } = useAuthStore();
 
   const tagline = "가장 낮은 눈높이에서, 가장 높은 서비스를";
   const [taglineDone, setTaglineDone] = useState(false);
@@ -128,25 +130,25 @@ const SplashPage = () => {
   // 애니메이션 variants (reduce motion 여부에 따라 다르게 적용)
   const variants = createAnimationVariants(reduce);
 
-  // reduced motion 모드: 짧게 노출 후 로그인 페이지로 이동
+  // reduced motion 모드: 짧게 노출 후 이동 (인증 상태에 따라 분기)
   useEffect(() => {
     if (!reduce) return;
     const timer = setTimeout(
-      () => navigate("/login"),
+      () => navigate(isAuthenticated ? "/home" : "/login"),
       ANIMATION_TIMING.REDUCED_MOTION_DELAY_MS
     );
     return () => clearTimeout(timer);
-  }, [reduce, navigate]);
+  }, [reduce, navigate, isAuthenticated]);
 
-  // 일반 모드: 태그라인 애니메이션 완료 후 읽을 시간을 보장한 뒤 이동
+  // 일반 모드: 태그라인 애니메이션 완료 후 읽을 시간을 보장한 뒤 이동 (인증 상태에 따라 분기)
   useEffect(() => {
     if (reduce || !taglineDone) return;
     const timer = setTimeout(
-      () => navigate("/login"),
+      () => navigate(isAuthenticated ? "/home" : "/login"),
       ANIMATION_TIMING.READ_HOLD_MS
     );
     return () => clearTimeout(timer);
-  }, [taglineDone, reduce, navigate]);
+  }, [taglineDone, reduce, navigate, isAuthenticated]);
 
   return (
     <motion.div

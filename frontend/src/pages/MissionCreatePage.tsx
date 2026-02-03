@@ -9,7 +9,7 @@ import { LocationSelector } from '@/components/mission/LocationSelector';
 import { STATIONS, BOARDING_GATES, ALL_LOCATIONS } from '../constants/locations';
 
 // 중앙 사물함 (고정 도착지)
-const CENTRAL_LOCKER_ID = 999;
+// const CENTRAL_LOCKER_ID = 999; // 미사용
 
 const MissionCreatePage = () => {
   const navigate = useNavigate();
@@ -36,18 +36,28 @@ const MissionCreatePage = () => {
       setCreating(true);
       setError('');
 
+      // 백엔드는 callLocationId만 필요 (userId는 JWT에서 자동 추출)
       const response = await createMission({
-        userId: Number(user.id),
-        startLocation: locationId,        // 키 이름 변경
-        endLocation: CENTRAL_LOCKER_ID,   // 키 이름 변경
+        callLocationId: locationId,
       });
+
+      // 🔍 디버깅: 백엔드 응답 확인
+      if (import.meta.env.DEV) {
+        console.log('[MissionCreate] 백엔드 응답:', response);
+        console.log('[MissionCreate] missionId:', response.missionId);
+      }
+
+      // 응답 검증
+      if (!response || !response.missionId) {
+        throw new Error('백엔드 응답에 missionId가 없습니다. 응답: ' + JSON.stringify(response));
+      }
 
       // 미션 생성 성공 → 스토어에 저장
       setCurrentMission({
         id: response.missionId.toString(),
-        userId: Number(user.id),
-        startLocation: locationId,        // 키 이름 변경
-        endLocation: CENTRAL_LOCKER_ID,   // 키 이름 변경
+        userId: 0, // JWT에서 추출되므로 임시값
+        startLocation: locationId, // 호출 위치 = 시작 위치
+        endLocation: 0, // 목적지는 SSE로 받음 (임시값)
         status: 'REQUESTED',
         destination: selectedLocation?.name, // 목적지 이름 저장
         createdAt: new Date().toISOString(),
@@ -56,8 +66,12 @@ const MissionCreatePage = () => {
 
       // 미션 추적 페이지로 이동
       navigate('/mission/track');
-    } catch (err) {
-      if (import.meta.env.DEV) console.error('미션 생성 실패:', err);
+    } catch (err: any) {
+      if (import.meta.env.DEV) {
+        console.error('미션 생성 실패:', err);
+        console.error('에러 응답:', err.response?.data);
+        console.error('에러 상태:', err.response?.status);
+      }
       setError('미션 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setCreating(false);

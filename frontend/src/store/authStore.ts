@@ -25,6 +25,7 @@ interface AuthState {
   login: (accessToken: string, user: User) => void;
   clearAuth: () => void; // 토큰 만료 시 내부 사용
   setAccessToken: (token: string) => void;
+  setUser: (user: User) => void; // User 정보만 업데이트
   setAuthenticated: (value: boolean) => void;
   setInitialized: (value: boolean) => void;
 }
@@ -60,6 +61,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   // Access Token 갱신 시 호출
   setAccessToken: (token: string) => {
     set({ accessToken: token });
+  },
+
+  // User 정보만 업데이트
+  setUser: (user: User) => {
+    set({ user });
   },
 
   // 인증 상태 설정

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-// import { verifyMission } from '../../api/mission.api;
-import { verifyMission } from '../../api/mission.api.mock'; // 🔧 Mock API 사용 (백엔드 없이 테스트용)
+import { verifyMission } from '../../api/mission.api'; // ✅ 실제 API 사용
 
 interface VerificationModalProps {
-  missionId: string;
+  missionId: number;
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -66,7 +65,10 @@ export const VerificationModal = ({
       setIsVerifying(true);
       setError('');
 
-      await verifyMission(missionId, Number(pwd));
+      const result = await verifyMission(missionId, Number(pwd));
+      if (import.meta.env.DEV) {
+        console.log('[VerificationModal] 인증 성공:', result);
+      }
 
       // 인증 성공
       onSuccess();
