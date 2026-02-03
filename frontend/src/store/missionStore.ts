@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Mission, MissionStatusEvent, MissionType, StoredLuggage } from '../types/mission.types';
+import type { Mission, MissionStatus, MissionType, StoredLuggage } from '../types/mission.types';
 
 interface MissionState {
   // 미션 정보
@@ -13,6 +13,12 @@ interface MissionState {
   isConnected: boolean;
   connectionError: Error | null;
 
+  // ✅ 재연결 관련 상태
+  reconnectAttempts: number;          // 현재 재시도 횟수
+  maxReconnectAttempts: number;       // 최대 재시도 (10회)
+  lastConnectedAt: string | null;     // 마지막 연결 시간
+  connectionQuality: 'good' | 'poor' | 'disconnected'; // 연결 품질
+
   // 로딩 상태
   isCreating: boolean;
   isVerifying: boolean;
@@ -22,10 +28,15 @@ interface MissionState {
 
   // 액션
   setCurrentMission: (mission: Mission) => void;
-  updateMissionStatus: (status: MissionStatusEvent) => void;
+  updateMissionStatus: (update: { status: MissionStatus; robotCode?: string }) => void;
   setConnected: (connected: boolean) => void;
   setConnectionError: (error: Error | null) => void;
   clearMission: () => void;
+
+  // ✅ 재연결 관련 액션
+  incrementReconnectAttempts: () => void;
+  resetReconnectAttempts: () => void;
+  setConnectionQuality: (quality: 'good' | 'poor' | 'disconnected') => void;
   setCreating: (creating: boolean) => void;
   setVerifying: (verifying: boolean) => void;
   setWeightAnimating: (animating: boolean) => void;
@@ -49,6 +60,13 @@ export const useMissionStore = create<MissionState>()(
       storedLuggages: [],
       isConnected: false,
       connectionError: null,
+
+      // ✅ 재연결 초기값
+      reconnectAttempts: 0,
+      maxReconnectAttempts: 10,
+      lastConnectedAt: null,
+      connectionQuality: 'disconnected',
+
       isCreating: false,
       isVerifying: false,
       isWeightAnimating: false,
@@ -76,6 +94,25 @@ export const useMissionStore = create<MissionState>()(
           connectionError: null,
           isWeightAnimating: false,
         }),
+
+      // ✅ 재연결 액션 구현
+      incrementReconnectAttempts: () =>
+        set((state) => {
+          const newAttempts = state.reconnectAttempts + 1;
+          return {
+            reconnectAttempts: newAttempts,
+            connectionQuality: newAttempts > 3 ? 'poor' : state.connectionQuality,
+          };
+        }),
+
+      resetReconnectAttempts: () =>
+        set({
+          reconnectAttempts: 0,
+          connectionQuality: 'good',
+          lastConnectedAt: new Date().toISOString(),
+        }),
+
+      setConnectionQuality: (quality) => set({ connectionQuality: quality }),
 
       setCreating: (creating) => set({ isCreating: creating }),
       setVerifying: (verifying) => set({ isVerifying: verifying }),

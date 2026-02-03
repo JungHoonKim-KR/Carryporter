@@ -98,6 +98,12 @@ apiClient.interceptors.response.use(
             // Store에 새 토큰 저장
             useAuthStore.getState().setAccessToken(accessToken);
 
+            // ✅ SSE 재연결 로그 추가
+            // useGlobalSSE에서 accessToken 변경을 감지하여 자동으로 재연결됩니다.
+            if (import.meta.env.DEV) {
+                console.log('[Axios] 토큰 재발급 완료, SSE는 useGlobalSSE에서 자동 재연결');
+            }
+
             // 대기 중인 모든 요청에 새 토큰 전달
             onRefreshed(accessToken);
 
