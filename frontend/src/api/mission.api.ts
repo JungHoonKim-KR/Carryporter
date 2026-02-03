@@ -18,9 +18,7 @@ export const createMission = async (
 ): Promise<CreateMissionResponse> => {
   // userId를 명시적으로 number로 변환 (User.id는 string이지만 API는 number 필요)
   const requestData = {
-    userId: Number(data.userId),
-    startLocation: data.startLocation,  // 키 이름 변경
-    endLocation: data.endLocation,      // 키 이름 변경
+      "callLocationId": 1
   };
 
   const response = await apiClient.post<CreateMissionResponse>(

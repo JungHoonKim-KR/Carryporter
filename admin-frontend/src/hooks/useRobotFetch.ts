@@ -31,7 +31,8 @@ export interface RobotItem {
   currentTask?: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// 개발 환경에서는 빈 문자열 (vite 프록시 사용), 프로덕션에서는 환경 변수 사용
+const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
 
 // ─────────────────────────────────────────────
 // 백엔드 RobotStatus (대문자) → 프론트 status (소문자) 매핑
@@ -51,16 +52,16 @@ function mapStatus(backendStatus: string): RobotItem['status'] {
 // API 호출 함수들 (훅 밖으로 분리 → 다른 곳에서도 재사용 가능)
 // ─────────────────────────────────────────────
 
-// 전체 목록: GET /robots
+// 전체 목록: GET /api/robots
 export async function fetchAllRobots(): Promise<RobotApiResponse[]> {
-  const res = await fetch(`${API_BASE}/robots`);
+  const res = await fetch(`${API_BASE}/api/robots`);
   if (!res.ok) throw new Error(`전체 로봇 조회 실패 (${res.status})`);
   return res.json();
 }
 
-// 단건 조회: GET /robots/{robotId}
+// 단건 조회: GET /api/robots/{robotId}
 export async function fetchRobotById(robotId: number): Promise<RobotApiResponse> {
-  const res = await fetch(`${API_BASE}/robots/${robotId}`);
+  const res = await fetch(`${API_BASE}/api/robots/${robotId}`);
   if (!res.ok) throw new Error(`로봇 ${robotId} 조회 실패 (${res.status})`);
   return res.json();
 }
