@@ -69,4 +69,13 @@ public class MissionRepository {
                 .setParameter("userId", userId)
                 .getResultList());
     }
+
+    public Optional<Mission> findByUserIdAndMissionStatus(Long userId, MissionStatus missionStatus) {
+        return em.createQuery("select m from Mission m where m.user.id =: userId and m.missionStatus = :missionStatus", Mission.class)
+                .setParameter("userId", userId)
+                .setParameter("missionStatus", missionStatus)
+                .getResultList()
+                .stream()
+                .findAny();
+    }
 }

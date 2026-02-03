@@ -7,6 +7,7 @@ import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
 import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
 import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
@@ -52,8 +53,10 @@ public class MissionService {
         User user = userService.findById(userId);
         Location location = locationService.findById(request.getCallLocationId());
 
-        // 새 미션 생성
-        Mission mission = Mission.createMission(user, location);
+        // STORING 상태 있으면 조회 없으면 새로 생성
+        Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
+                .orElseGet(() -> Mission.createMission(user, location));
+
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
