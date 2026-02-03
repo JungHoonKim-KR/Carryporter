@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
+import com.e101.carryporter.domain.mission.event.MissionStoredEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.MissionService;
@@ -174,8 +175,8 @@ public class RobotService {
                 mission.getId(),
                 robot.getRobotCode(),
                 robot.getMacAddress(),
-                10.0,
-                20.0
+                50.0,
+                50.0
         ));
     }
 
@@ -183,8 +184,23 @@ public class RobotService {
      * 관리자 최종 점검 완료 → 로봇 상태를 IDLE로 변경
      */
     @Transactional
-    public void finalizeMission(Long missionId, Long robotId) {
-        findById(robotId); // 로봇 존재 확인
+    public void finalizeMission(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        if (mission.getRobot() == null) {
+            throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
+        }
+        Long robotId = mission.getRobot().getId();
         eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
+    }
+
+    public void storeMission(Long missionId){
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(()-> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        if (mission.getRobot() == null) {
+            throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
+        }
+        Long robotId = mission.getRobot().getId();
+        eventPublisher.publishEvent(new MissionStoredEvent(missionId, robotId));
     }
 }

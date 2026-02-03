@@ -52,5 +52,6 @@ public class AdminLockerService {
                 .orElseThrow(() -> new BusinessException(LockerErrorCode.LOCKER_NOT_FOUND));
 
         mission.assignLocker(locker);
+        locker.updateStatus(LockerStatus.OCCUPIED);
     }
 }

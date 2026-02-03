@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.admin.service;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
 import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.entity.UserLockerStatus;
 import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
@@ -74,6 +75,9 @@ class AdminLockerServiceTest extends IntegrationTestSupport {
         assertThat(mission.getLocker().getLockerCode()).isEqualTo("LOCKER-001");
         assertThat(mission.getLockerAssignedAt()).isNotNull();
         assertThat(mission.getUserLockerStatus()).isEqualTo(UserLockerStatus.OCCUPIED);
+
+        // locker 상태가 OCCUPIED로 변경되었는지 확인
+        assertThat(mission.getLocker().getLockerStatus()).isEqualTo(LockerStatus.OCCUPIED);
     }
 
     @DisplayName("존재하지 않는 미션에 사물함을 배정하면 예외가 발생한다.")

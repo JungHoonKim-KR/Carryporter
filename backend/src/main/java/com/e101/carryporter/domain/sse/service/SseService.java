@@ -75,11 +75,27 @@ public class SseService {
     }
 
     /**
+     * [USER] 모든 사용자에게 알림 전송
+     */
+    public void broadcastToUsers(String eventName, Object data) {
+        Map<Long, SseEmitter> users = emitterRepository.findAllUsers();
+
+        log.info("[SSE-SERVICE] 사용자 전체 전송 | event={} | count={}",
+                eventName, users.size());
+
+        users.forEach((id, emitter) -> {
+            sendToClient(emitter, id, eventName, data);
+        });
+    }
+
+
+    /**
      * [ADMIN] 모든 관리자에게 알림 전송
      * @param eventName MissionStatus.name() 혹은 커스텀 이벤트 이름
      */
     public void broadcastToAdmins(String eventName, Object data) {
         Map<Long, SseEmitter> admins = emitterRepository.findAllAdmins();
+        log.info(admins.toString());
         admins.forEach((id, emitter) -> {
             sendToClient(emitter, id, eventName, data);
         });

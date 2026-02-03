@@ -9,6 +9,7 @@ import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
+import com.e101.carryporter.domain.robot.repository.RobotMacMappingRepository;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,6 +65,9 @@ public class MqttSubscriberService {
                 case "locked":
                     handleLocked(mac, payload);
                     break;
+                case "returned":
+                    handleReturned(mac, payload);
+                    break;
                 case "unlocked":
                     handleUnlocked(mac, payload);
                     break;
@@ -72,6 +76,36 @@ public class MqttSubscriberService {
             }
         } catch (Exception e) {
             log.error("MQTT 메시지 처리 중 오류 발생: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 로봇 복귀 시작 처리
+     * Topic: robot/{MAC}/returned
+     * Payload: {} (빈 페이로드 - 로봇은 missionId를 모름)
+     */
+    private void handleReturned(String mac, String payload) {
+        log.info("로봇 복귀 시작 알림 - MAC: {}", mac);
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                // 1. mac으로 로봇 조회
+                Robot robot = robotRepository.findByMacAddress(mac)
+                        .orElseThrow(() -> new RuntimeException("로봇을 찾을 수 없습니다: " + mac));
+
+                // 2. 해당 로봇의 RETURNING 상태 미션 조회 (잠금 후 복귀 시작)
+                Mission mission = missionRepository.findByRobotAndStatus(robot, MissionStatus.RETURNING)
+                        .orElseThrow(() -> new RuntimeException("잠금 상태의 미션을 찾을 수 없습니다. MAC: " + mac));
+
+                log.info("로봇 복귀 시작 이벤트 발행 - missionId: {}, robotId: {}", mission.getId(), robot.getId());
+
+                eventPublisher.publishEvent(new RobotReturnedEvent(
+                        mission.getId(),
+                        robot.getId(),
+                        mac
+                ));
+            });
+        } catch (Exception e) {
+            log.error("복귀 시작 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
         }
     }
 
@@ -184,8 +218,8 @@ public class MqttSubscriberService {
 
                 log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(), robot.getId());
 
-                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
-                log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
+//                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
+//                log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
                 eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), mission.getRobot().getId(), mac));
                 eventPublisher.publishEvent(new RobotReturnedAdminEvent(
                         mission.getUser().getId(),
@@ -223,8 +257,8 @@ public class MqttSubscriberService {
 
                 // 3. 잠금 완료 이벤트 발행 (이 이벤트를 SSE 핸들러가 수신함)
                 eventPublisher.publishEvent(new MissionLockedEvent(
-                        mission.getUser().getId(),
                         mission.getId(),
+                        mission.getUser().getId(),
                         robot.getMacAddress()
                 ));
             });
@@ -254,8 +288,8 @@ public class MqttSubscriberService {
 
                 // 3. 열림 완료 이벤트 발행 (MissionUnlockedEvent)
                 eventPublisher.publishEvent(new MissionUnlockedEvent(
-                        mission.getUser().getId(),
                         mission.getId(),
+                        mission.getUser().getId(),
                         robot.getMacAddress()
                 ));
             });
