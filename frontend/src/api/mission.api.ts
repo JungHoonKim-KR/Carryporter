@@ -186,3 +186,13 @@ export const lockMission = async (missionId: number): Promise<string> => {
   });
   return response.data; // "잠금 요청 성공"
 };
+
+/**
+ * 로봇 복귀 API
+ * 보관/반납 완료 후 로봇을 원래 위치로 복귀시킵니다.
+ *
+ * @param missionId - 미션 ID
+ */
+export const returnMission = async (missionId: number): Promise<void> => {
+  await apiClient.post(`/api/missions/${missionId}/return`);
+};

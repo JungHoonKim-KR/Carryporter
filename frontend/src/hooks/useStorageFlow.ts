@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/missionStore';
-import { lockMission } from '../api/mission.api';
+import { lockMission, returnMission } from '../api/mission.api';
 import type { StoredLuggage } from '../types/mission.types';
 
 export type StorageStep = 'WEIGHT_CHECK' | 'WEIGHT_RESULT' | 'STORAGE_COMPLETE';
@@ -51,6 +51,12 @@ export const useStorageFlow = () => {
         const result = await lockMission(Number(currentMission.id));
         if (import.meta.env.DEV) {
           console.log('[StorageFlow] 잠금 성공:', result);
+        }
+
+        // 🆕 보관 완료 → 로봇 복귀 요청
+        await returnMission(Number(currentMission.id));
+        if (import.meta.env.DEV) {
+          console.log('[StorageFlow] 로봇 복귀 요청 성공');
         }
       }
 
