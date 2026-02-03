@@ -16,7 +16,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         // target: 'http://localhost:8080', // 백엔드 주소
-                target: 'https://i14e101.p.ssafy.io/', // 백엔드 주소
+                target: 'https://i14e101.p.ssafy.io', // 백엔드 주소
 
         changeOrigin: true,
         secure: false,
