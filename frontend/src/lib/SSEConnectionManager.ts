@@ -112,7 +112,7 @@ export class SSEConnectionManager {
     if (!this.eventSource) return;
 
     // Connect 이벤트
-    this.eventSource.addEventListener('Connect', () => {
+    this.eventSource.addEventListener('CONNECT', () => {
       console.log('[SSE Manager] 연결 성공');
       this.reconnectAttempts = 0;
       this.callbacks.onConnect?.();
