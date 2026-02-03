@@ -38,7 +38,6 @@ public class MissionService {
     private final UserService userService;
     private final LocationService locationService;
     private final RobotRepository robotRepository;
-    private final LockerRepository lockerRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Mission findById(Long missionId) {
