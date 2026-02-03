@@ -44,4 +44,8 @@ public class SseEmitterRepository {
     public Map<Long, SseEmitter> findAllAdmins() {
         return adminEmitters;
     }
+
+    public Map<Long, SseEmitter> findAllUsers() {
+        return userEmitters;
+    }
 }

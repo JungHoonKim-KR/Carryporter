@@ -188,7 +188,7 @@ class MissionRepositoryTest extends IntegrationTestSupport {
         // COMPLETED 상태
         Mission mission3 = Mission.createMission(user, location);
         mission3.assignLocker(locker3);
-        mission3.finis();
+        mission3.finish();
         missionRepository.save(mission3);
 
         flushAndClear();
@@ -205,6 +205,123 @@ class MissionRepositoryTest extends IntegrationTestSupport {
                         UserLockerStatus.OCCUPIED,
                         UserLockerStatus.COMPLETED
                 );
+    }
+
+    @DisplayName("사용자 ID와 미션 상태로 미션을 조회한다")
+    @Test
+    void findByUserIdAndMissionStatus() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Locker locker = Locker.createLocker("L001");
+        em.persist(locker);
+
+        Mission mission1 = Mission.createMission(user, location);
+        Mission mission2 = Mission.createMission(user, location);
+        mission2.assignLocker(locker);
+        mission2.finish();
+
+        missionRepository.save(mission1);
+        missionRepository.save(mission2);
+        flushAndClear();
+
+        // when
+        Optional<Mission> foundMission = missionRepository.findByUserIdAndMissionStatus(
+                user.getId(),
+                MissionStatus.REQUESTED
+        );
+
+        // then
+        assertThat(foundMission).isPresent();
+        assertThat(foundMission.get().getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
+        assertThat(foundMission.get().getUser().getId()).isEqualTo(user.getId());
+    }
+
+    @DisplayName("사용자 ID와 미션 상태로 미션을 조회할 때 해당하는 미션이 없으면 빈 Optional을 반환한다")
+    @Test
+    void findByUserIdAndMissionStatusNotFound() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Mission mission = Mission.createMission(user, location);
+        missionRepository.save(mission);
+        flushAndClear();
+
+        // when
+        Optional<Mission> foundMission = missionRepository.findByUserIdAndMissionStatus(
+                user.getId(),
+                MissionStatus.FINISHED
+        );
+
+        // then
+        assertThat(foundMission).isEmpty();
+    }
+
+    @DisplayName("사용자 ID와 미션 상태로 미션을 조회할 때 다른 사용자의 미션은 조회되지 않는다")
+    @Test
+    void findByUserIdAndMissionStatusWithDifferentUser() {
+        // given
+        User user1 = User.createUser("user1@example.com");
+        User user2 = User.createUser("user2@example.com");
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Mission mission1 = Mission.createMission(user1, location);
+        Mission mission2 = Mission.createMission(user2, location);
+
+        missionRepository.save(mission1);
+        missionRepository.save(mission2);
+        flushAndClear();
+
+        // when
+        Optional<Mission> foundMission = missionRepository.findByUserIdAndMissionStatus(
+                user1.getId(),
+                MissionStatus.REQUESTED
+        );
+
+        // then
+        assertThat(foundMission).isPresent();
+        assertThat(foundMission.get().getUser().getId()).isEqualTo(user1.getId());
+    }
+
+    @DisplayName("사용자 ID와 미션 상태로 조회 시 동일 조건의 미션이 여러 개면 하나를 반환한다")
+    @Test
+    void findByUserIdAndMissionStatusWithMultipleMatches() {
+        // given
+        User user = User.createUser("user@example.com");
+        userRepository.save(user);
+
+        Location location = Location.createLocation("Location1", "Test Location");
+        locationRepository.save(location);
+
+        Mission mission1 = Mission.createMission(user, location);
+        Mission mission2 = Mission.createMission(user, location);
+
+        missionRepository.save(mission1);
+        missionRepository.save(mission2);
+        flushAndClear();
+
+        // when
+        Optional<Mission> foundMission = missionRepository.findByUserIdAndMissionStatus(
+                user.getId(),
+                MissionStatus.REQUESTED
+        );
+
+        // then
+        assertThat(foundMission).isPresent();
+        assertThat(foundMission.get().getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
+        assertThat(foundMission.get().getUser().getId()).isEqualTo(user.getId());
     }
 
     private void flushAndClear() {

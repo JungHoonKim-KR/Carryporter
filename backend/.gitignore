@@ -48,5 +48,10 @@ logs/
 /DOCKER_README.md
 /docker-compose.yml
 /.env.example
-/mosquitto/data/mosquitto.db
+/mosquitto/data/
+/mosquitto/log/
 /mosquitto/config/mosquitto.conf
+
+# MQTT / test subscriber clients
+carryporter-client-subscriber-*/
+carryporter-test-client-subscriber-*/

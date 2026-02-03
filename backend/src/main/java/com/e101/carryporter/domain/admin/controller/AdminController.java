@@ -29,7 +29,6 @@ public class AdminController {
     private final RobotService robotService;
     private final AdminService adminService;
     private final AdminLockerService adminLockerService;
-    private final MissionService missionService;
 
     @PostMapping("/join")
     public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
@@ -82,12 +81,19 @@ public class AdminController {
         robotService.dispatch(missionId);
         return ResponseEntity.noContent().build();
     }
-
+    // 락커 할당 해제
     @PostMapping("/missions/{missionId}/finalize")
-    public ResponseEntity<Void> finalize(@RequestBody @Valid FinalizeRequestDto requestDto, @PathVariable Long missionId) {
-        log.debug("관리자 최종 점검 완료 - missionId: {}, robotId: {}", missionId, requestDto.getRobotId());
+    public ResponseEntity<Void> finalize(@PathVariable Long missionId) {
+        log.debug("관리자 최종 점검 완료 - missionId: {}", missionId);
 
-        robotService.finalizeMission(missionId, requestDto.getRobotId());
+        robotService.finalizeMission(missionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("missions/{missionId}/store")
+    public ResponseEntity<Void> store(@PathVariable Long missionId){
+        log.debug("관리자 보관 유지 완료 - missionId : {}", missionId);
+        robotService.storeMission(missionId);
         return ResponseEntity.noContent().build();
     }
 
@@ -120,7 +126,7 @@ public class AdminController {
         LockerResponseDto locker = adminLockerService.getLocker(lockerId);
         return ResponseEntity.ok(locker);
     }
-
+    // 락커 상태 변경
     @PostMapping("/missions/{missionId}/lockers/{lockerId}")
     public ResponseEntity<Void> assignLockerToMission(@PathVariable Long missionId, @PathVariable Long lockerId) {
         adminLockerService.assignLocker(missionId, lockerId);

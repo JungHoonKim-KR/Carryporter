@@ -7,7 +7,6 @@ import com.e101.carryporter.domain.mission.event.MissionLockRequestEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
-import com.e101.carryporter.global.service.mqtt.MqttPublisherService;
 import com.e101.carryporter.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

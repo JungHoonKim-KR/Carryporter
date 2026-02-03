@@ -225,12 +225,15 @@ class RobotServiceTest extends IntegrationTestSupport {
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
+        mission.assignRobot(robot);
+
         missionRepository.save(mission);
 
+        mission.assignRobot(robot);
         flushAndClear();
 
         // when
-        robotService.finalizeMission(mission.getId(), robot.getId());
+        robotService.finalizeMission(mission.getId());
 
         // then
         long publishedCount = events.stream(MissionFinalizedEvent.class).count();
@@ -252,9 +255,9 @@ class RobotServiceTest extends IntegrationTestSupport {
         Long notExistsRobotId = 9999L;
 
         // when then
-        assertThatThrownBy(() -> robotService.finalizeMission(missionId, notExistsRobotId))
+        assertThatThrownBy(() -> robotService.finalizeMission(missionId))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("해당 로봇을 찾을 수 없습니다.");
+                .hasMessage("해당 미션을 찾을 수 없습니다.");
     }
 
     // ==================== registerRobot 테스트 ====================
