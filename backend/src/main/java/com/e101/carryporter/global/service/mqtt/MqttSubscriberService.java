@@ -92,8 +92,8 @@ public class MqttSubscriberService {
                 Robot robot = robotRepository.findByMacAddress(mac)
                         .orElseThrow(() -> new RuntimeException("로봇을 찾을 수 없습니다: " + mac));
 
-                // 2. 해당 로봇의 LOCKED 상태 미션 조회 (잠금 후 복귀 시작)
-                Mission mission = missionRepository.findByRobotAndStatus(robot, MissionStatus.LOCKED)
+                // 2. 해당 로봇의 RETURNING 상태 미션 조회 (잠금 후 복귀 시작)
+                Mission mission = missionRepository.findByRobotAndStatus(robot, MissionStatus.RETURNING)
                         .orElseThrow(() -> new RuntimeException("잠금 상태의 미션을 찾을 수 없습니다. MAC: " + mac));
 
                 log.info("로봇 복귀 시작 이벤트 발행 - missionId: {}, robotId: {}", mission.getId(), robot.getId());
