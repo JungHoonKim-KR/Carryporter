@@ -1,5 +1,4 @@
 import React from 'react';
-import { useGlobalSSE } from '@/hooks/useGlobalSSE';
 
 // /**
 //  * SSE Provider 컴포넌트
