@@ -113,12 +113,14 @@ class RobotServiceTest extends IntegrationTestSupport {
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
+        mission.assignRobot(robot);
+
         missionRepository.save(mission);
 
         flushAndClear();
 
         // when
-        robotService.unlockByAdmin(mission.getId(), robot.getId());
+        robotService.unlockByAdmin(mission.getId());
 
         // then
         long publishedCount = events.stream(AdminUnlockRequestEvent.class).count();
@@ -146,9 +148,6 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         Mission mission = Mission.createMission(user, callLocation);
 
-        // 🔥 [중요] 이 부분이 빠져서 NPE가 발생했습니다!
-        // Mission 엔티티에 정의된 로봇 설정 메서드를 사용하세요.
-        // (예: assignRobot, setRobot, updateRobot 등)
         mission.assignRobot(robot);
 
         missionRepository.save(mission);

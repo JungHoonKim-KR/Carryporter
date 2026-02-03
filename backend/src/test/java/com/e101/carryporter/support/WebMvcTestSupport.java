@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.auth.controller.AuthController;
 import com.e101.carryporter.domain.auth.service.AuthService;
+import com.e101.carryporter.domain.locker.service.LockerService;
 import com.e101.carryporter.domain.mission.controller.MissionController;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.service.RobotService;
@@ -12,6 +13,7 @@ import com.e101.carryporter.domain.sse.controller.SseController;
 import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.ticket.controller.TicketController;
 import com.e101.carryporter.domain.ticket.service.TicketService;
+import com.e101.carryporter.domain.user.controller.UserController;
 import com.e101.carryporter.domain.user.service.UserService;
 import com.e101.carryporter.global.filter.AuthorizationFilter;
 import com.e101.carryporter.global.filter.CorsFilter;
@@ -30,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
         AdminController.class,
         TicketController.class,
         SseController.class,
+        UserController.class,
 })
 @AutoConfigureMockMvc(addFilters = false)
 public abstract class WebMvcTestSupport {
@@ -63,6 +66,9 @@ public abstract class WebMvcTestSupport {
 
     @MockitoBean
     protected SseService sseService;
+
+    @MockitoBean
+    protected LockerService lockerService;
 
     @MockitoBean
     protected JwtAuthenticationFilter jwtAuthenticationFilter;

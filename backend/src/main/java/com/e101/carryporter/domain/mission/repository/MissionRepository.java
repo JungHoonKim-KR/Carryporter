@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,5 +51,22 @@ public class MissionRepository {
                 .setMaxResults(1)
                 .getResultList();
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    /**
+     * 최근 미션 조회 (최대 limit 개수)
+     */
+    public List<Mission> findAllWithLimit(int limit) {
+        return em.createQuery(
+                        "SELECT m FROM Mission m ORDER BY m.createdAt DESC",
+                        Mission.class)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    public List<Mission> findByUserId(Long userId) {
+        return new ArrayList<>(em.createQuery("select m from Mission m where m.user.id = :userId", Mission.class)
+                .setParameter("userId", userId)
+                .getResultList());
     }
 }

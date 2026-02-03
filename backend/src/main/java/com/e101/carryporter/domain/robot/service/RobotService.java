@@ -15,6 +15,7 @@ import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -95,7 +96,7 @@ public class RobotService {
      * 미션에 로봇 할당 (가용 로봇 획득 + DB 배정)
      */
     @Transactional
-    public Long assignRobotToMission(Long missionId) {
+    public void assignRobotToMission(Long missionId) {
         Long availableRobotId = null;
 
         try {
@@ -122,10 +123,16 @@ public class RobotService {
             log.info("미션 배차 완료: userId={}, missionId={}, robotId={}",
                     mission.getUser().getId(), missionId, availableRobotId);
 
-            return availableRobotId;
 
         } catch (Exception e) {
             log.error("배차 실패 (롤백): missionId={}", missionId, e);
+
+            // failed 로 mission 상태 update 실패 방어
+            try {
+                missionService.failMission(missionId);
+            } catch (Exception ex) {
+                log.error("미션 FAILED 상태로 업데이트 실패", ex);
+            }
 
             // DB 실패 시 Redis 상태 복구 (BUSY → IDLE)
             if (availableRobotId != null) {
@@ -133,7 +140,6 @@ public class RobotService {
                 cacheService.releaseRobot(availableRobotId);
             }
 
-            throw e;
         }
     }
 
@@ -145,8 +151,11 @@ public class RobotService {
         eventPublisher.publishEvent(new AdminLockRequestEvent(missionId, robot.getMacAddress()));
     }
 
-    public void unlockByAdmin(Long missionId, Long robotId) {
-        Robot robot = findById(robotId);
+    public void unlockByAdmin(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
+
+        Robot robot = mission.getRobot();
         eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
     }
 

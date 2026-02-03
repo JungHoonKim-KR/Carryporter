@@ -291,6 +291,7 @@ class AdminServiceTest extends IntegrationTestSupport {
         String name = "관리자";
         String password = "password123!";
 
+
         adminService.join(email, name, password);
 
         // when
