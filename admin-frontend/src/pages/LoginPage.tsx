@@ -82,8 +82,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                         {/* ✅ 수정됨: public 폴더 경로 사용 */}
                         <img 
                             src={theme === 'dark' 
-                                ? "/assets/images/robot-white.png"       // 다크모드일 때 (기존 로고 파일명)
-                                : "/assets/images/robot-white.png" // 라이트모드일 때 (새 파일명)
+                                ? "./assets/images/robot-white.png"       // 다크모드일 때 (기존 로고 파일명)
+                                : "./assets/images/robot-white.png" // 라이트모드일 때 (새 파일명)
                             } 
                             alt="Carry Porter Logo" 
                             className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(0,255,255,0.3)]"

@@ -13,6 +13,7 @@ export interface RobotReturnedAdminEvent {
   userId: number;
   robotCode: string;
   missionId: number;
+  lockerId: number; // 사물함 ID
   lockerCode: string; // 관리자가 넣어야 할 사물함
   message: string;
 }
