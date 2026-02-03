@@ -16,12 +16,15 @@ import { useAuthStore } from '../store/authStore';
 export const createMission = async (
   data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
-  // userId를 명시적으로 number로 변환 (User.id는 string이지만 API는 number 필요)
+  // 백엔드는 callLocationId만 필요 (userId는 JWT에서 자동 추출)
   const requestData = {
-    userId: Number(data.userId),
-    startLocation: data.startLocation,  // 키 이름 변경
-    endLocation: data.endLocation,      // 키 이름 변경
+    callLocationId: data.callLocationId,
   };
+
+  // 🔍 디버깅: 전송되는 데이터 확인
+  if (import.meta.env.DEV) {
+    console.log('[createMission] 전송 데이터:', JSON.stringify(requestData, null, 2));
+  }
 
   const response = await apiClient.post<CreateMissionResponse>(
     '/api/missions',
@@ -40,6 +43,7 @@ export const createMission = async (
 export const subscribeMissionUpdates = (
   callbacks: {
     onConnect?: () => void;
+    onHeartbeat?: () => void; // ✅ Heartbeat 이벤트 (백엔드에서 15초마다 전송)
     onRobotAssigned?: (data: SSEEventData) => void;
     onMissionStarted?: (data: SSEEventData) => void;
     onRobotArrival?: (data: SSEEventData) => void;
@@ -57,16 +61,23 @@ export const subscribeMissionUpdates = (
     throw new Error('AccessToken이 없습니다. 로그인이 필요합니다.');
   }
 
+  // ✅ 개발 환경: Vite 프록시 사용 (CORS 우회)
+  // ✅ 프로덕션 환경: 전체 URL 사용
+  const sseUrl = import.meta.env.DEV
+    ? '/api/sse/subscribe'
+    : `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`;
+
+  if (import.meta.env.DEV) {
+    console.log('[SSE] 개발 모드 - 프록시 경로 사용:', sseUrl);
+  }
+
   // EventSourcePolyfill 생성 (Bearer Token 포함)
-  const eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      heartbeatTimeout: 60000, // 1분
-    }
-  );
+  const eventSource = new EventSourcePolyfill(sseUrl, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    heartbeatTimeout: 60000, // 1분
+  });
 
   // 1. Connect 이벤트
   eventSource.addEventListener('Connect', (e: any) => {
@@ -74,49 +85,55 @@ export const subscribeMissionUpdates = (
     callbacks.onConnect?.();
   });
 
-  // 2. RobotAssignedEvent
+  // 2. Heartbeat 이벤트 (백엔드에서 15초마다 전송)
+  eventSource.addEventListener('heartbeat', (e: any) => {
+    if (import.meta.env.DEV) console.debug('[SSE] Heartbeat:', e.data);
+    callbacks.onHeartbeat?.();
+  });
+
+  // 3. RobotAssignedEvent
   eventSource.addEventListener('RobotAssignedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Robot Assigned:', data);
     callbacks.onRobotAssigned?.(data);
   });
 
-  // 3. MissionStartedEvent
+  // 4. MissionStartedEvent
   eventSource.addEventListener('MissionStartedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Mission Started:', data);
     callbacks.onMissionStarted?.(data);
   });
 
-  // 4. RobotArrivalEvent
+  // 5. RobotArrivalEvent
   eventSource.addEventListener('RobotArrivalEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Robot Arrival:', data);
     callbacks.onRobotArrival?.(data);
   });
 
-  // 5. UserAuthSuccessEvent
+  // 6. UserAuthSuccessEvent
   eventSource.addEventListener('UserAuthSuccessEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Auth Success:', data);
     callbacks.onAuthSuccess?.(data);
   });
 
-  // 6. MissionUnlockedEvent
+  // 7. MissionUnlockedEvent
   eventSource.addEventListener('MissionUnlockedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Unlocked:', data);
     callbacks.onUnlocked?.(data);
   });
 
-  // 7. MissionAbortedEvent
+  // 8. MissionAbortedEvent
   eventSource.addEventListener('MissionAbortedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Aborted:', data);
     callbacks.onAborted?.(data);
   });
 
-  // 8. MissionLockedEvent
+  // 9. MissionLockedEvent
   eventSource.addEventListener('MissionLockedEvent', (e: any) => {
     const data: SSEEventData = JSON.parse(e.data);
     if (import.meta.env.DEV) console.log('[SSE] Locked:', data);
@@ -143,11 +160,39 @@ export const subscribeMissionUpdates = (
  *
  * @param missionId - 인증할 미션 ID
  * @param password - 4자리 비밀번호
+ * @returns 성공 메시지
  */
 export const verifyMission = async (
-  missionId: string,
+  missionId: number,
   password: number
-): Promise<void> => {
-  await apiClient.patch(`/api/missions/${missionId}/verify`, { password });
-  // Response: 204 No Content
+): Promise<string> => {
+  const response = await apiClient.post<string>('/auth/unlock', {
+    missionId,
+    password
+  });
+  return response.data; // "비밀번호 인증 요청 성공"
+};
+
+/**
+ * 미션 잠금 API
+ * UNLOCKED 상태에서 사용자가 짐을 넣은 후 호출하여 로봇을 잠금합니다.
+ *
+ * @param missionId - 잠금할 미션 ID
+ * @returns 성공 메시지
+ */
+export const lockMission = async (missionId: number): Promise<string> => {
+  const response = await apiClient.post<string>('/auth/lock', {
+    missionId
+  });
+  return response.data; // "잠금 요청 성공"
+};
+
+/**
+ * 로봇 복귀 API
+ * 보관/반납 완료 후 로봇을 원래 위치로 복귀시킵니다.
+ *
+ * @param missionId - 미션 ID
+ */
+export const returnMission = async (missionId: number): Promise<void> => {
+  await apiClient.post(`/api/missions/${missionId}/return`);
 };

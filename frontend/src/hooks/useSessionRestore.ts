@@ -15,6 +15,7 @@ export const useSessionRestore = () => {
         isAuthenticated,
         isInitialized,
         setAccessToken,
+        setUser,
         setAuthenticated,
         setInitialized,
         clearAuth,
@@ -56,8 +57,14 @@ export const useSessionRestore = () => {
             try {
                 const response = await reissue();
                 setAccessToken(response.accessToken);
+                setUser(response.user);
                 setAuthenticated(true);
-                if (import.meta.env.DEV) console.log('세션 복원 성공');
+                if (import.meta.env.DEV) {
+                    console.log('세션 복원 성공', {
+                        email: response.user.email,
+                        role: response.user.role,
+                    });
+                }
             } catch (error) {
                 // 로그 레벨 낮춤 (에러가 아닌 정상 동작)
                 if (import.meta.env.DEV) console.log('세션 복원 실패 (refreshToken 만료):', error);
@@ -72,7 +79,7 @@ export const useSessionRestore = () => {
         restoreSession();
         // isAuthenticated를 의존성에서 제거하여 무한 루프 방지
         // refreshToken은 httpOnly 쿠키로 관리되므로 의존성에서 제거
-    }, [isInitialized, setAccessToken, setAuthenticated, setInitialized, clearAuth]);
+    }, [isInitialized, setAccessToken, setUser, setAuthenticated, setInitialized, clearAuth]);
 
     return { isInitialized };
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/missionStore';
+import { returnMission } from '../api/mission.api';
 import type { StoredLuggage } from '../types/mission.types';
 
 export type ReturnStep = 'SELECT_LUGGAGE' | 'REMOVE_ITEMS' | 'CONFIRM_CHECKLIST' | 'RETURN_COMPLETE';
@@ -10,7 +11,7 @@ export type ReturnStep = 'SELECT_LUGGAGE' | 'REMOVE_ITEMS' | 'CONFIRM_CHECKLIST'
  */
 export const useReturnFlow = () => {
   const navigate = useNavigate();
-  const { storedLuggages, removeStoredLuggage, clearMission } = useMissionStore();
+  const { currentMission, storedLuggages, removeStoredLuggage, clearMission } = useMissionStore();
   
   const [step, setStep] = useState<ReturnStep>('SELECT_LUGGAGE');
   const [selectedLuggage, setSelectedLuggage] = useState<StoredLuggage | null>(null);
@@ -46,13 +47,27 @@ export const useReturnFlow = () => {
     if (!selectedLuggage) return;
 
     setIsReturning(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // 보관된 짐 목록에서 제거
-    removeStoredLuggage(selectedLuggage.id);
+    try {
+      // 🆕 반납 완료 → 로봇 복귀 요청
+      if (currentMission?.id) {
+        await returnMission(Number(currentMission.id));
+        if (import.meta.env.DEV) {
+          console.log('[ReturnFlow] 로봇 복귀 요청 성공');
+        }
+      }
 
-    setIsReturning(false);
-    setStep('RETURN_COMPLETE');
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // 보관된 짐 목록에서 제거
+      removeStoredLuggage(selectedLuggage.id);
+
+      setStep('RETURN_COMPLETE');
+    } catch (error) {
+      console.error('[ReturnFlow] 반납 실패:', error);
+    } finally {
+      setIsReturning(false);
+    }
   };
 
   // 홈으로 이동
