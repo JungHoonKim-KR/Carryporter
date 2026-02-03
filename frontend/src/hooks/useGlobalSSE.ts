@@ -23,13 +23,11 @@ export const useGlobalSSE = () => {
     setConnectionError,
     incrementReconnectAttempts,
     resetReconnectAttempts,
-    reconnectAttempts,
-    maxReconnectAttempts,
     updateMissionStatus,
   } = useMissionStore();
 
-  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimerRef = useRef<number | null>(null);
+  const heartbeatTimerRef = useRef<number | null>(null);
   const eventSourceRef = useRef<(() => void) | null>(null);
 
   // Exponential Backoff 계산 (1초 → 2초 → 4초 → ... → 60초)

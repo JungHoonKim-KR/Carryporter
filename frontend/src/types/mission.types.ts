@@ -32,7 +32,8 @@ export type MissionStatus =
     | "LOCKED" // 잠금 (짐 넣기 완료)
     | "RETURNING" // 복귀 중 (로커로)
     | "RETURNED" // 복귀 완료
-    | "FINISHED"; // 완료
+    | "FINISHED" // 완료
+    | "ABORTED"; // 중단됨
 
 // 미션 생성 요청
 export interface CreateMissionRequest {
