@@ -2,10 +2,16 @@ package com.e101.carryporter.domain.mission.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
+import com.e101.carryporter.domain.robot.entity.Robot;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
 import com.e101.carryporter.support.IntegrationTestSupport;
@@ -35,6 +41,9 @@ class MissionServiceTest extends IntegrationTestSupport {
 
     @Autowired
     MissionRepository missionRepository;
+
+    @Autowired
+    RobotRepository robotRepository;
 
     @Autowired
     ApplicationEvents events;
@@ -99,7 +108,47 @@ class MissionServiceTest extends IntegrationTestSupport {
 
         // then
         Mission failedMission = missionRepository.findById(missionId).orElseThrow();
-        assertThat(failedMission.getMissionStatus()).isEqualTo(com.e101.carryporter.domain.mission.entity.MissionStatus.FAILED);
+        assertThat(failedMission.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+    }
+
+    @DisplayName("미션 종료 시 locker 상태가 AVAILABLE로 변경된다.")
+    @Test
+    void finishMissionReleasesLocker() {
+        // given
+        User user = User.createUser("test@mm.com");
+        em.persist(user);
+
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
+        em.persist(location);
+
+        Robot robot = Robot.createRobot("R-001", "AA:BB:CC:DD:EE:FF");
+        em.persist(robot);
+
+        Locker locker = Locker.createLocker("L001");
+        em.persist(locker);
+
+        Mission mission = Mission.createMission(user, location);
+        mission.assignRobot(robot);
+        mission.assignLocker(locker);
+        // 서비스 레이어에서 locker 상태 변경하는 것을 시뮬레이션
+        locker.updateStatus(LockerStatus.OCCUPIED);
+        missionRepository.save(mission);
+
+        flushAndClear();
+
+        // when
+        missionService.finish(mission.getId(), robot.getId());
+        flushAndClear();
+
+        // then
+        Mission finishedMission = missionRepository.findById(mission.getId()).orElseThrow();
+        assertThat(finishedMission.getMissionStatus()).isEqualTo(MissionStatus.FINISHED);
+
+        Locker releasedLocker = em.find(Locker.class, locker.getId());
+        assertThat(releasedLocker.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
+
+        Robot idleRobot = robotRepository.findById(robot.getId()).orElseThrow();
+        assertThat(idleRobot.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
     }
 
     private void flushAndClear() {

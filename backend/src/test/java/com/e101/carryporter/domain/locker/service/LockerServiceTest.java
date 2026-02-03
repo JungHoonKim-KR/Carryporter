@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.locker.service;
 
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.entity.UserLockerStatus;
 import com.e101.carryporter.domain.locker.service.dto.response.UserLockerServiceResponseDto;
 import com.e101.carryporter.domain.locker.service.dto.response.UserLockersServiceResponseDto;

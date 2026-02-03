@@ -82,7 +82,7 @@ public class AdminController {
         robotService.dispatch(missionId);
         return ResponseEntity.noContent().build();
     }
-
+    // 락커 할당 해제
     @PostMapping("/missions/{missionId}/finalize")
     public ResponseEntity<Void> finalize(@RequestBody @Valid FinalizeRequestDto requestDto, @PathVariable Long missionId) {
         log.debug("관리자 최종 점검 완료 - missionId: {}, robotId: {}", missionId, requestDto.getRobotId());
@@ -120,7 +120,7 @@ public class AdminController {
         LockerResponseDto locker = adminLockerService.getLocker(lockerId);
         return ResponseEntity.ok(locker);
     }
-
+    // 락커 상태 변경
     @PostMapping("/missions/{missionId}/lockers/{lockerId}")
     public ResponseEntity<Void> assignLockerToMission(@PathVariable Long missionId, @PathVariable Long lockerId) {
         adminLockerService.assignLocker(missionId, lockerId);
