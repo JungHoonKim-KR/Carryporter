@@ -218,8 +218,8 @@ public class MqttSubscriberService {
 
                 log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(), robot.getId());
 
-                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
-                log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
+//                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
+//                log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
                 eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), mission.getRobot().getId(), mac));
                 eventPublisher.publishEvent(new RobotReturnedAdminEvent(
                         mission.getUser().getId(),
