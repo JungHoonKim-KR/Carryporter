@@ -7,7 +7,9 @@ import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
 import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
+import com.e101.carryporter.domain.mission.event.ReturnStartedEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
@@ -36,7 +38,6 @@ public class MissionService {
     private final UserService userService;
     private final LocationService locationService;
     private final RobotRepository robotRepository;
-    private final LockerRepository lockerRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Mission findById(Long missionId) {
@@ -51,8 +52,10 @@ public class MissionService {
         User user = userService.findById(userId);
         Location location = locationService.findById(request.getCallLocationId());
 
-        // 새 미션 생성
-        Mission mission = Mission.createMission(user, location);
+        // STORING 상태 있으면 조회 없으면 새로 생성
+        Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
+                .orElseGet(() -> Mission.createMission(user, location));
+
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
@@ -156,9 +159,38 @@ public class MissionService {
         eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(robot.getId(), robot.getRobotCode(), previousStatus, robot.getRobotStatus()));
     }
 
+    public void returnToMainStation(Long missionId, Long userId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        // 사용자의 미션인지 검증
+        validateAuthorization(mission, userId);
+
+        Robot robot = mission.getRobot();
+        String macAddress = robot.getMacAddress();
+
+        eventPublisher.publishEvent(new ReturnStartedEvent(missionId, macAddress, 0.0, 0.0));
+    }
+
+    @Transactional
+    public void startReturning(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+
+        mission.returning();
+    }
+
     private void validateIdleRobot(Robot robot) {
         if (!robot.getRobotStatus().equals(RobotStatus.IDLE)) {
             throw new BusinessException(RobotErrorCode.INVALID_STATUS_CHANGE);
+        }
+    }
+
+    private void validateAuthorization(Mission mission, Long userId) {
+        log.debug("mission's userId = {}, request userId = {}", mission.getUser().getId(), userId);
+
+        if (!mission.getUser().getId().equals(userId)) {
+            throw new BusinessException(MissionErrorCode.FORBIDDEN);
         }
     }
 
