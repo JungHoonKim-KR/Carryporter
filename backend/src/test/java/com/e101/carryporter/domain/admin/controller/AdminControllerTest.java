@@ -543,7 +543,7 @@ class AdminControllerTest extends WebMvcTestSupport {
 
         willDoNothing()
                 .given(robotService)
-                .finalizeMission(anyLong(), anyLong());
+                .finalizeMission(anyLong());
 
         // when & then
         mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
