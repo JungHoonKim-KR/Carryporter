@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.mission.controller;
 
 import com.e101.carryporter.domain.mission.controller.dto.request.CreateMissionRequestDto;
 import com.e101.carryporter.domain.mission.service.dto.request.CreateMissionServiceRequestDto;
+import com.e101.carryporter.domain.user.entity.Role;
 import com.e101.carryporter.support.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MissionControllerTest extends WebMvcTestSupport {
 
     @Test
-    @DisplayName("미션 생성 API 호출 시 204 No Content를 반환한다")
+    @DisplayName("미션 생성 API 호출 시 200 OK를 반환한다")
     void createMission() throws Exception {
         // given
         CreateMissionRequestDto requestDto = new CreateMissionRequestDto(1L);
@@ -31,6 +32,7 @@ class MissionControllerTest extends WebMvcTestSupport {
         // when & then
         mockMvc.perform(post("/missions")
                         .requestAttr("userId", userId)
+                        .requestAttr("role", Role.BASIC)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
@@ -38,7 +40,8 @@ class MissionControllerTest extends WebMvcTestSupport {
                             return request;
                         }))
                 .andDo(print())
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.missionId").value(1L));
     }
 
     @Test
@@ -51,6 +54,7 @@ class MissionControllerTest extends WebMvcTestSupport {
         // when & then
         mockMvc.perform(post("/missions")
                         .requestAttr("userId", userId)
+                        .requestAttr("role", Role.BASIC)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
@@ -74,6 +78,7 @@ class MissionControllerTest extends WebMvcTestSupport {
         // when & then
         mockMvc.perform(post("/missions")
                         .requestAttr("userId", userId)
+                        .requestAttr("role", Role.BASIC)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(request -> {
