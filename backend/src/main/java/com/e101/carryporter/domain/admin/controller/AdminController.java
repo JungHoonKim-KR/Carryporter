@@ -84,10 +84,10 @@ public class AdminController {
     }
     // 락커 할당 해제
     @PostMapping("/missions/{missionId}/finalize")
-    public ResponseEntity<Void> finalize(@RequestBody @Valid FinalizeRequestDto requestDto, @PathVariable Long missionId) {
-        log.debug("관리자 최종 점검 완료 - missionId: {}, robotId: {}", missionId, requestDto.getRobotId());
+    public ResponseEntity<Void> finalize(@PathVariable Long missionId) {
+        log.debug("관리자 최종 점검 완료 - missionId: {}", missionId);
 
-        robotService.finalizeMission(missionId, requestDto.getRobotId());
+        robotService.finalizeMission(missionId);
         return ResponseEntity.noContent().build();
     }
 
