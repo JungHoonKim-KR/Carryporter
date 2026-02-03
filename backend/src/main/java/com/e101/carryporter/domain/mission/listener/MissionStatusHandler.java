@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.mission.listener;
 
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
+import com.e101.carryporter.domain.mission.event.MissionStoredEvent;
 import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
@@ -47,6 +48,12 @@ public class MissionStatusHandler {
     @EventListener
     public void handleMissionFinalizedEvent(MissionFinalizedEvent event) {
         missionService.finish(event.missionId(), event.robotId());
+    }
+
+    @Async
+    @EventListener
+    public void handleMissionStoredEvent(MissionStoredEvent event){
+        missionService.store(event.missionId(), event.robotId());
     }
 
 }

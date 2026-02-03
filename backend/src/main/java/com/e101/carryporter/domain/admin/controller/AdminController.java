@@ -29,7 +29,6 @@ public class AdminController {
     private final RobotService robotService;
     private final AdminService adminService;
     private final AdminLockerService adminLockerService;
-    private final MissionService missionService;
 
     @PostMapping("/join")
     public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
@@ -94,7 +93,8 @@ public class AdminController {
     @PostMapping("missions/{missionId}/store")
     public ResponseEntity<Void> store(@PathVariable Long missionId){
         log.debug("관리자 보관 유지 완료 - missionId : {}", missionId);
-
+        robotService.storeMission(missionId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/missions")

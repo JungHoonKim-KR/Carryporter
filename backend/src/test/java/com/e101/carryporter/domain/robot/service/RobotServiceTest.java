@@ -225,6 +225,8 @@ class RobotServiceTest extends IntegrationTestSupport {
         locationRepository.save(callLocation);
 
         Mission mission = Mission.createMission(user, callLocation);
+        mission.assignRobot(robot);
+
         missionRepository.save(mission);
 
         flushAndClear();

@@ -5,6 +5,7 @@ import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
+import com.e101.carryporter.domain.mission.event.MissionStoredEvent;
 import com.e101.carryporter.domain.mission.exception.MissionErrorCode;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.MissionService;
@@ -186,7 +187,20 @@ public class RobotService {
     public void finalizeMission(Long missionId) {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        if (mission.getRobot() == null) {
+            throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
+        }
         Long robotId = mission.getRobot().getId();
         eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
+    }
+
+    public void storeMission(Long missionId){
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(()-> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        if (mission.getRobot() == null) {
+            throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
+        }
+        Long robotId = mission.getRobot().getId();
+        eventPublisher.publishEvent(new MissionStoredEvent(missionId, robotId));
     }
 }

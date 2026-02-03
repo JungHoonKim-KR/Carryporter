@@ -557,49 +557,6 @@ class AdminControllerTest extends WebMvcTestSupport {
                 .andExpect(status().isNoContent());
     }
 
-    @Test
-    @DisplayName("미션 최종 완료 API 호출 시 robotId가 null이면 400 Bad Request를 반환한다")
-    void finalize_WithNullRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        FinalizeRequestDto requestDto = createFinalizeRequestDto(null);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/finalize");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    @DisplayName("미션 최종 완료 API 호출 시 robotId가 음수이면 400 Bad Request를 반환한다")
-    void finalize_WithNegativeRobotId_ReturnsBadRequest() throws Exception {
-        // given
-        Long missionId = 1L;
-        FinalizeRequestDto requestDto = createFinalizeRequestDto(-1L);
-
-        // when & then
-        mockMvc.perform(post("/admin/missions/{missionId}/finalize", missionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .with(request -> {
-                            request.setServletPath("/admin/missions/" + missionId + "/finalize");
-                            return request;
-                        }))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").exists());
-    }
 
     // ==================== 유저 수 조회 테스트 ====================
 
