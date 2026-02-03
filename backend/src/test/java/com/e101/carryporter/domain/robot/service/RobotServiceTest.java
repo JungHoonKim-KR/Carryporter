@@ -230,7 +230,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         flushAndClear();
 
         // when
-        robotService.finalizeMission(mission.getId(), robot.getId());
+        robotService.finalizeMission(mission.getId());
 
         // then
         long publishedCount = events.stream(MissionFinalizedEvent.class).count();
@@ -252,7 +252,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         Long notExistsRobotId = 9999L;
 
         // when then
-        assertThatThrownBy(() -> robotService.finalizeMission(missionId, notExistsRobotId))
+        assertThatThrownBy(() -> robotService.finalizeMission(missionId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("해당 로봇을 찾을 수 없습니다.");
     }

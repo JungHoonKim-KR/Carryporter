@@ -183,8 +183,10 @@ public class RobotService {
      * 관리자 최종 점검 완료 → 로봇 상태를 IDLE로 변경
      */
     @Transactional
-    public void finalizeMission(Long missionId, Long robotId) {
-        findById(robotId); // 로봇 존재 확인
+    public void finalizeMission(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        Long robotId = mission.getRobot().getId();
         eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
     }
 }
