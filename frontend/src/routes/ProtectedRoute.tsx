@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { SSEProvider } from '../components/common/SSEProvider';
+import { SSEProvider } from '../contexts/SSEContext';
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -11,7 +11,8 @@ const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ SSEProvider로 자식 컴포넌트를 래핑하여 전역 SSE 연결 제공
+  // ✅ 인증된 라우트에서만 SSEProvider 활성화
+  // 미션이 생성되면 자동으로 SSE 연결 시작
   return (
     <SSEProvider>
       <Outlet />

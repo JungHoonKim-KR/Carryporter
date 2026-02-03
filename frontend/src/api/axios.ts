@@ -43,17 +43,57 @@ apiClient.interceptors.request.use(
             delete config.headers['Content-Type'];
         }
 
+        // 🔍 디버깅: 모든 요청 로그
+        if (import.meta.env.DEV) {
+            console.log('[Axios Request]', {
+                method: config.method?.toUpperCase(),
+                url: config.url,
+                baseURL: config.baseURL,
+                fullURL: config.baseURL ? `${config.baseURL}${config.url}` : config.url,
+                data: config.data,
+                headers: {
+                    Authorization: config.headers.Authorization ? 'Bearer ***' : 'None',
+                    'Content-Type': config.headers['Content-Type'],
+                },
+            });
+        }
+
         return config;
     },
     (error) => {
+        if (import.meta.env.DEV) {
+            console.error('[Axios Request Error]', error);
+        }
         return Promise.reject(error);
     },
 );
 
 // Response Interceptor: 401 에러 시 자동 토큰 갱신
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // 🔍 디버깅: 모든 응답 로그
+        if (import.meta.env.DEV) {
+            console.log('[Axios Response]', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.config.url,
+                data: response.data,
+            });
+        }
+        return response;
+    },
     async (error) => {
+        // 🔍 디버깅: 에러 응답 로그
+        if (import.meta.env.DEV) {
+            console.error('[Axios Response Error]', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                url: error.config?.url,
+                data: error.response?.data,
+                message: error.message,
+            });
+        }
+
         const originalRequest = error.config;
 
         // 401 에러가 아니거나 이미 재시도한 요청이면 패스

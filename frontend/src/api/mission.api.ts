@@ -166,10 +166,12 @@ export const verifyMission = async (
   missionId: number,
   password: number
 ): Promise<string> => {
-  const response = await apiClient.post<string>('/auth/unlock', {
+  console.log('[verifyMission API] 호출됨', { missionId, password });
+  const response = await apiClient.post<string>('/api/auth/unlock', {
     missionId,
     password
   });
+  console.log('[verifyMission API] 성공', response.data);
   return response.data; // "비밀번호 인증 요청 성공"
 };
 
@@ -181,9 +183,11 @@ export const verifyMission = async (
  * @returns 성공 메시지
  */
 export const lockMission = async (missionId: number): Promise<string> => {
-  const response = await apiClient.post<string>('/auth/lock', {
+  console.log('[lockMission API] 호출됨', { missionId });
+  const response = await apiClient.post<string>('/api/auth/lock', {
     missionId
   });
+  console.log('[lockMission API] 성공', response.data);
   return response.data; // "잠금 요청 성공"
 };
 
