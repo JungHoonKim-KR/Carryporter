@@ -32,7 +32,7 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
       console.log(`📡 [API] 잠금 해제 요청: Mission=${data.missionId}`);
       
       // ✅ 잠금 요청과 동일한 방식이지만 엔드포인트만 unlock으로 변경
-      await api.post(`api/admin/missions/${data.missionId}/unlock`, {});
+      await api.post(`/api/admin/missions/${data.missionId}/unlock`, {});
 
       console.log("✅ 도어 개방 성공");
       setStep('PROCESS_TASK'); 
@@ -45,7 +45,7 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
     }
   };
 
-  // 2️⃣ [UI Only] 작업 완료 (보관/반납) -> API 연동 X
+  // 2️⃣ [API] 작업 완료 (반납 시 Finalize API 호출)
   const handleTaskComplete = async () => {
     if (!actionType) {
         toast.warning("보관 또는 반납을 선택해주세요.");
@@ -54,14 +54,34 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
 
     setIsProcessing(true);
     
-    // TODO: 나중에 여기에 실제 작업 완료 API (POST /complete) 연결
-    // await api.post(...)
+    try {
+      // ✅ 반납(RETURN) 선택 시 락커 해제 및 미션 종료 API 호출
+      if (actionType === 'RETURN') {
+        console.log(`📡 [API] 반납(Finalize) 요청: Mission=${data.missionId}`);
+        
+        // ✨ [수정됨] Body 없이 경로(Path Variable)만 사용하여 호출
+        // POST /api/admin/missions/{missionId}/finalize
+        await api.post(`/api/admin/missions/${data.missionId}/finalize`, {});
 
-    setTimeout(() => {
-      console.log(`✅ 작업 완료 처리: ${actionType}`);
-      setStep('READY_TO_CHARGE');
+        toast.success("반납 처리 및 락커 해제가 완료되었습니다.");
+      } 
+      
+      // ✅ 보관(STORE)의 경우 (필요 시 로직 추가)
+      else if (actionType === 'STORE') {
+         console.log("📦 보관 처리 로직 수행");
+      }
+
+      // API 성공 후 UI 단계 변경 (딜레이 효과 유지)
+      setTimeout(() => {
+        setStep('READY_TO_CHARGE');
+        setIsProcessing(false);
+      }, 500);
+
+    } catch (err) {
+      console.error("❌ 작업 완료 처리 실패:", err);
+      toast.error("작업 완료 처리에 실패했습니다. 다시 시도해주세요.");
       setIsProcessing(false);
-    }, 800); // 가짜 딜레이
+    }
   };
 
   // 3️⃣ [UI Only] 충전 복귀 요청 -> API 연동 X

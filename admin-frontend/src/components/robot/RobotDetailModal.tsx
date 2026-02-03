@@ -1,7 +1,11 @@
+import { useState, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wifi, Cpu, Calendar, Clock, MapPin, User, FileText } from 'lucide-react'
+import { X, Wifi, Cpu, Calendar, Clock, MapPin, User, FileText, Loader2, Activity, Zap, Signal } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+
+// --- 3D 관련 임포트 ---
+import { Canvas } from '@react-three/fiber'
+import { useGLTF, Stage, OrbitControls, Html } from '@react-three/drei'
 
 // --- Types ---
 interface MissionHistory {
@@ -22,11 +26,11 @@ interface MissionHistory {
 interface RobotDetailProps {
   robot: any;
   onClose: () => void;
+  modelUrl?: string;
 }
 
-// ✅ [Fix] 안전한 시간 변환 헬퍼 함수
+// ✅ 안전한 시간 변환 헬퍼 함수
 const formatTime = (timeStr: string) => {
-  // 데이터가 없거나 형식이 맞지 않으면 대시(-) 리턴
   if (!timeStr || !timeStr.includes('T')) return '--:--';
   try {
     return timeStr.split('T')[1].substring(0, 5);
@@ -35,27 +39,212 @@ const formatTime = (timeStr: string) => {
   }
 };
 
+// --- 🧊 3D Model Component ---
+function RobotModel({ url }: { url: string }) {
+  const { scene } = useGLTF(url)
+  return <primitive object={scene} />
+}
+
+// --- 🧊 3D Canvas Wrapper ---
+function Robot3DViewer({ modelUrl }: { modelUrl: string }) {
+  return (
+    <div className="w-full h-64 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden relative border border-slate-700 shadow-2xl">
+      {/* 배경 그리드 효과 */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `linear-gradient(rgba(96, 165, 250, 0.3) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(96, 165, 250, 0.3) 1px, transparent 1px)`,
+          backgroundSize: '20px 20px'
+        }} />
+      </div>
+
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 50 }}>
+        <Suspense fallback={<LoaderHtml />}>
+          <Stage environment="city" intensity={0.6} adjustCamera={1.2}>
+            <RobotModel url={modelUrl} />
+          </Stage>
+        </Suspense>
+        <OrbitControls 
+          autoRotate 
+          autoRotateSpeed={2} 
+          makeDefault 
+          minPolarAngle={Math.PI / 4}
+          maxPolarAngle={Math.PI / 1.5}
+        />
+      </Canvas>
+      
+      {/* 3D 뷰어 오버레이 UI */}
+      <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10">
+        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+        <span className="text-[10px] font-bold text-white tracking-wider">LIVE 3D MODEL</span>
+      </div>
+
+      <div className="absolute bottom-4 right-4 flex gap-2">
+        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[9px] font-mono text-cyan-400">
+          <Activity className="inline w-3 h-3 mr-1" />
+          INTERACTIVE
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 3D 로딩 중 표시할 UI
+function LoaderHtml() {
+  return (
+    <Html center>
+      <div className="flex flex-col items-center gap-3 text-cyan-400">
+        <Loader2 className="animate-spin" size={32} />
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs font-bold tracking-wider">LOADING MODEL</span>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+        </div>
+      </div>
+    </Html>
+  )
+}
+
 // --- 🎨 Sub-Component: 배터리 위젯 ---
 function BatteryWidget({ level }: { level: number }) {
+  const batteryColor = level > 60 ? 'from-emerald-500 to-cyan-500' : level > 20 ? 'from-amber-500 to-orange-500' : 'from-red-500 to-rose-600';
+  const glowColor = level > 60 ? 'rgba(16, 185, 129, 0.3)' : level > 20 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+
   return (
-    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-      <div className="relative w-16 h-8 border-2 border-slate-300 rounded-md p-0.5">
-        <div className="absolute -right-2 top-2 h-3 w-1.5 bg-slate-300 rounded-r-sm" />
-        <motion.div 
-          initial={{ width: 0 }} 
-          animate={{ width: `${level}%` }} 
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className={cn(
-            "h-full rounded-sm relative overflow-hidden",
-            level > 20 ? "bg-cyan-500" : "bg-red-500"
+    <div className="relative bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-200 shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300">
+      {/* 배경 그라데이션 효과 */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-full blur-2xl" />
+      
+      <div className="relative flex items-center gap-4">
+        {/* 배터리 아이콘 */}
+        <div className="relative">
+          <div className="w-16 h-8 border-3 border-slate-300 rounded-lg p-1 relative bg-white shadow-inner">
+            {/* 배터리 캡 */}
+            <div className="absolute -right-1.5 top-2 h-4 w-2 bg-slate-300 rounded-r-md" />
+            
+            {/* 배터리 레벨 */}
+            <motion.div 
+              initial={{ width: 0 }} 
+              animate={{ width: `${level}%` }} 
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className={cn(
+                "h-full rounded-md relative overflow-hidden bg-gradient-to-r",
+                batteryColor
+              )}
+              style={{
+                boxShadow: `0 0 15px ${glowColor}`
+              }}
+            >
+              <div className="absolute top-0 left-0 w-full h-1/2 bg-white/30 rounded-md" />
+              {level > 20 && (
+                <motion.div
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-0 left-0 w-1/3 h-full bg-white/40 skew-x-12"
+                />
+              )}
+            </motion.div>
+          </div>
+          
+          {/* 레벨 인디케이터 */}
+          {level > 20 && (
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50"
+            />
           )}
-        >
-          <div className="absolute top-0 left-0 w-full h-1/2 bg-white/30" />
-        </motion.div>
+        </div>
+
+        {/* 텍스트 정보 */}
+        <div className="flex-1">
+          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+            Power Level
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              {level}
+            </span>
+            <span className="text-lg font-bold text-slate-400">%</span>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <Zap className={cn(
+              "w-3 h-3",
+              level > 20 ? "text-cyan-500" : "text-red-500"
+            )} />
+            <span className="text-[9px] font-semibold text-slate-400">
+              {level > 60 ? 'Optimal' : level > 20 ? 'Moderate' : 'Low Power'}
+            </span>
+          </div>
+        </div>
       </div>
-      <div>
-        <div className="text-xs text-slate-500 font-bold">BATTERY LEVEL</div>
-        <div className="text-xl font-black text-slate-800">{level}%</div>
+    </div>
+  )
+}
+
+// --- 📡 네트워크 위젯 ---
+function NetworkWidget() {
+  return (
+    <div className="relative bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-200 shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300">
+      {/* 배경 효과 */}
+      <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-full blur-2xl" />
+      
+      <div className="relative">
+        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+          Network Status
+        </div>
+        
+        <div className="flex items-center gap-3 mb-3">
+          <div className="relative">
+            <Signal className="w-8 h-8 text-emerald-500" />
+            <motion.div
+              animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 rounded-full bg-emerald-500/30"
+            />
+          </div>
+          <div>
+            <div className="text-xl font-black text-emerald-600">5G</div>
+            <div className="text-[10px] font-semibold text-slate-400">Connected</div>
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-2 border-t border-slate-100">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-semibold text-slate-400">LATENCY</span>
+            <span className="text-xs font-bold text-emerald-600 font-mono">35ms</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-semibold text-slate-400">SIGNAL</span>
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((bar) => (
+                <div
+                  key={bar}
+                  className="w-1 bg-emerald-500 rounded-full"
+                  style={{ height: `${bar * 3}px` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- 📊 통계 위젯 ---
+function StatWidget({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="relative bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl border border-slate-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
+      <div className={cn("absolute top-0 right-0 w-16 h-16 bg-gradient-to-br opacity-10 rounded-full blur-2xl", color)} />
+      <div className="relative">
+        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</div>
+        <div className={cn("text-2xl font-black bg-gradient-to-r bg-clip-text text-transparent", color)}>
+          {value}
+        </div>
       </div>
     </div>
   )
@@ -63,178 +252,286 @@ function BatteryWidget({ level }: { level: number }) {
 
 // --- 📜 Sub-Component: 미션 기록 아이템 ---
 function MissionItem({ mission, index }: { mission: MissionHistory; index: number }) {
-  // 날짜 표시 (완료 날짜 없으면 할당 날짜 사용)
   const displayDate = mission.times.complete 
     ? mission.times.complete.split('T')[0] 
     : mission.times.assigned.split('T')[0];
+
+  const statusConfig = {
+    COMPLETED: { color: 'bg-emerald-500', textColor: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
+    IN_PROGRESS: { color: 'bg-amber-500', textColor: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
+    CANCELLED: { color: 'bg-red-500', textColor: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200' }
+  };
+
+  const config = statusConfig[mission.status];
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="relative pl-6 pb-6 border-l-2 border-slate-200 last:border-l-0 last:pb-0 group"
+      className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-xl p-4 shadow-md hover:shadow-xl transition-all duration-300 hover:border-cyan-300"
     >
-      {/* 타임라인 점 */}
-      <div className={cn(
-        "absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm box-content transition-colors",
-        mission.status === 'COMPLETED' ? "bg-green-500" : 
-        mission.status === 'IN_PROGRESS' ? "bg-amber-500 animate-pulse" : "bg-red-500"
-      )} />
-      
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-slate-800">Mission #{mission.missionId}</span>
+      {/* 헤더 */}
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <div className={cn(
+            "w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs shadow-lg",
+            mission.status === 'COMPLETED' ? 'from-emerald-500 to-green-600' :
+            mission.status === 'IN_PROGRESS' ? 'from-amber-500 to-orange-600' :
+            'from-red-500 to-rose-600'
+          )}>
+            #{mission.missionId.split('-')[1]}
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Mission {mission.missionId}</div>
             <span className={cn(
-              "text-[10px] px-2 py-0.5 rounded-full font-bold",
-              mission.status === 'COMPLETED' ? "bg-green-100 text-green-700" : 
-              mission.status === 'IN_PROGRESS' ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+              "inline-block text-[9px] px-2 py-0.5 rounded-full font-bold mt-0.5",
+              config.bgColor,
+              config.textColor,
+              config.borderColor,
+              "border"
             )}>
               {mission.status}
             </span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">{displayDate}</span>
         </div>
+        <div className="text-right">
+          <div className="text-[10px] text-slate-400 font-mono">{displayDate}</div>
+          <div className="text-[9px] text-slate-400 font-semibold">{formatTime(mission.times.assigned)}</div>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-y-2 text-xs text-slate-600">
-            <div className="flex items-center gap-1"><User size={12} className="text-slate-400"/> User: {mission.userId}</div>
-            <div className="flex items-center gap-1"><MapPin size={12} className="text-slate-400"/> Loc: {mission.locationId}</div>
-            <div className="flex items-center gap-1"><FileText size={12} className="text-slate-400"/> Weight: {mission.weight}kg</div>
-            {/* ✅ [Fix] 수정된 시간 표시 부분 */}
-            <div className="flex items-center gap-1">
-                <Clock size={12} className="text-slate-400"/> 
-                Time: {formatTime(mission.times.assigned)} ~ {formatTime(mission.times.complete)}
-            </div>
-        </div>
+      {/* 정보 그리드 */}
+      <div className="grid grid-cols-2 gap-2">
+        <InfoItem icon={<User size={12} />} label="User" value={mission.userId} />
+        <InfoItem icon={<MapPin size={12} />} label="Location" value={mission.locationId} />
+        <InfoItem icon={<FileText size={12} />} label="Weight" value={`${mission.weight}kg`} />
+        <InfoItem 
+          icon={<Clock size={12} />} 
+          label="Time" 
+          value={`${formatTime(mission.times.assigned)} ~ ${formatTime(mission.times.complete)}`} 
+        />
       </div>
     </motion.div>
   )
 }
 
+// --- 정보 아이템 컴포넌트 ---
+function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-1.5 bg-white/60 rounded-lg p-2 border border-slate-100">
+      <div className="text-cyan-600 mt-0.5">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[8px] text-slate-400 font-semibold uppercase tracking-wide">{label}</div>
+        <div className="text-[11px] font-bold text-slate-700 truncate">{value}</div>
+      </div>
+    </div>
+  )
+}
+
 // --- 🚀 Main Component ---
-export default function RobotDetailModal({ robot, onClose }: RobotDetailProps) {
+export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/carryporter.glb" }: RobotDetailProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'history'>('info');
 
+  // 더미 데이터
   const history: MissionHistory[] = [
     {
       missionId: "M-9923", userId: "U-120", adminId: null, locationId: "LOC-A1", weight: 12.5, status: 'IN_PROGRESS',
-      // 진행 중이라 complete 시간이 비어있음 -> formatTime 함수가 처리
       times: { assigned: "2024-01-31T10:00:00", start: "2024-01-31T10:05:00", arrival: "", complete: "" }
     },
     {
       missionId: "M-9811", userId: "U-055", adminId: "ADM-01", locationId: "LOC-B3", weight: 5.2, status: 'COMPLETED',
       times: { assigned: "2024-01-30T14:00:00", start: "2024-01-30T14:02:00", arrival: "2024-01-30T14:15:00", complete: "2024-01-30T14:20:00" }
     },
-    {
-      missionId: "M-9740", userId: "U-302", adminId: null, locationId: "LOC-C1", weight: 20.0, status: 'CANCELLED',
-      times: { assigned: "2024-01-29T09:00:00", start: "", arrival: "", complete: "2024-01-29T09:10:00" }
-    },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* 배경 오버레이 */}
       <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={onClose} 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+        onClick={onClose} 
       />
       
+      {/* 메인 모달 */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
         animate={{ opacity: 1, scale: 1, y: 0 }} 
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: "spring", duration: 0.5 }}
-        className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+        className="relative bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden"
       >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600">
-              <Cpu size={24} />
+        {/* 🎨 헤더 */}
+        <div className="relative p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+          {/* 배경 장식 */}
+          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl" />
+          
+          <div className="relative flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              {/* 로봇 아이콘 */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl blur-md opacity-30" />
+                <div className="relative w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                  <Cpu size={28} />
+                </div>
+                {/* 상태 인디케이터 */}
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-lg">
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 rounded-full bg-emerald-500"
+                  />
+                </div>
+              </div>
+              
+              {/* 텍스트 정보 */}
+              <div>
+                <h2 className="text-2xl font-black bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  {robot.name}
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-mono text-slate-400">ID: {robot.id}</span>
+                  <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                  <span className={cn(
+                    "text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md",
+                    robot.status === 'WORKING' 
+                      ? 'bg-emerald-100 text-emerald-700' 
+                      : 'bg-slate-100 text-slate-600'
+                  )}>
+                    {robot.status}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-800">{robot.name}</h2>
-              <p className="text-xs text-slate-500 font-mono uppercase tracking-wider">ID: {robot.id} • {robot.status}</p>
-            </div>
+            
+            {/* 닫기 버튼 */}
+            <button 
+              onClick={onClose} 
+              className="p-2.5 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-700 hover:scale-110 active:scale-95"
+            >
+              <X size={22} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400 hover:text-slate-700">
-            <X size={20} />
-          </button>
         </div>
 
-        {/* Tab Menu */}
-        <div className="flex border-b border-slate-100 px-6">
-            {['info', 'history'].map((tab) => (
-                <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as any)}
-                    className={cn(
-                        "px-4 py-3 text-sm font-bold border-b-2 transition-colors",
-                        activeTab === tab 
-                            ? "border-cyan-500 text-cyan-600" 
-                            : "border-transparent text-slate-400 hover:text-slate-600"
-                    )}
-                >
-                    {tab === 'info' ? 'ROBOT INFO' : 'MISSION LOGS'}
-                </button>
-            ))}
+        {/* 🎯 탭 메뉴 */}
+        <div className="flex border-b border-slate-100 px-6 bg-white">
+          {[
+            { id: 'info', label: 'Digital Twin', icon: <Cpu size={16} /> },
+            { id: 'history', label: 'Mission Logs', icon: <Activity size={16} /> }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={cn(
+                "relative px-6 py-4 text-sm font-bold transition-all duration-300 flex items-center gap-2",
+                activeTab === tab.id 
+                  ? "text-cyan-600" 
+                  : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              {tab.icon}
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Content Area */}
-        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white">
-            <AnimatePresence mode="wait">
-                {activeTab === 'info' ? (
-                    <motion.div 
-                        key="info"
-                        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                        className="space-y-6"
-                    >
-                        {/* Status & Battery */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <BatteryWidget level={robot.battery} />
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-                                <div className="text-xs text-slate-500 font-bold mb-1">NETWORK STATUS</div>
-                                <div className="flex items-center gap-2 text-green-600 font-bold">
-                                    <Wifi size={18} /> STRONG (5G)
-                                </div>
-                                <div className="text-[10px] text-slate-400 font-mono mt-1">LAT: 35ms / JITTER: 2ms</div>
-                            </div>
-                        </div>
+        {/* 📋 콘텐츠 영역 */}
+        <div className="bg-gradient-to-br from-slate-50/50 to-white p-6">
+          <AnimatePresence mode="wait">
+            {activeTab === 'info' ? (
+              <motion.div 
+                key="info"
+                initial={{ opacity: 0, x: -20 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 gap-6"
+              >
+                {/* 왼쪽: 3D 모델 + 상세 정보 */}
+                <div className="space-y-4">
+                  <Robot3DViewer modelUrl={modelUrl} />
+                  
+                  {/* 상세 정보 */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                        System Information
+                      </h3>
+                    </div>
+                    <div className="p-4 grid grid-cols-2 gap-3">
+                      <DetailRow label="Robot Code" value="RB-2024-X99" icon={<Cpu size={14}/>} />
+                      <DetailRow label="MAC Address" value="00:1B:44:11:3A:B7" icon={<Wifi size={14}/>} />
+                      <DetailRow label="Created At" value="2023-11-15 09:30" icon={<Calendar size={14}/>} />
+                      <DetailRow label="Last Update" value="2024-01-31 14:45" icon={<Clock size={14}/>} />
+                    </div>
+                  </div>
+                </div>
 
-                        {/* Detail Grid */}
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-4 py-4 border-t border-slate-100">
-                            <DetailRow label="Robot Code" value="RB-2024-X99" icon={<Cpu size={14}/>} />
-                            <DetailRow label="MAC Address" value="00:1B:44:11:3A:B7" icon={<Wifi size={14}/>} />
-                            <DetailRow label="Created At" value="2023-11-15 09:30:00" icon={<Calendar size={14}/>} />
-                            <DetailRow label="Last Update" value="2024-01-31 14:45:12" icon={<Clock size={14}/>} />
-                        </div>
-                    </motion.div>
+                {/* 오른쪽: 상태 위젯들 */}
+                <div className="space-y-4">
+                  <BatteryWidget level={robot.battery} />
+                  <NetworkWidget />
+                  
+                  {/* 추가 통계 위젯 */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <StatWidget label="Total Missions" value="1,247" color="from-cyan-500 to-blue-500" />
+                    <StatWidget label="Success Rate" value="98.5%" color="from-emerald-500 to-green-500" />
+                    <StatWidget label="Uptime" value="99.2%" color="from-purple-500 to-pink-500" />
+                    <StatWidget label="Avg Speed" value="1.2m/s" color="from-amber-500 to-orange-500" />
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="history"
+                initial={{ opacity: 0, x: 20 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 gap-4"
+              >
+                {history.length > 0 ? (
+                  history.map((mission, idx) => (
+                    <MissionItem key={mission.missionId} mission={mission} index={idx} />
+                  ))
                 ) : (
-                    <motion.div 
-                        key="history"
-                        initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                        className="pl-2 pt-2"
-                    >
-                        {history.map((mission, idx) => (
-                            <MissionItem key={mission.missionId} mission={mission} index={idx} />
-                        ))}
-                    </motion.div>
+                  <div className="col-span-2 flex flex-col items-center justify-center py-16 text-slate-400">
+                    <Activity size={48} className="mb-4 opacity-30" />
+                    <p className="text-sm font-semibold">No mission history available</p>
+                  </div>
                 )}
-            </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>
   )
 }
 
-// 헬퍼 컴포넌트: 정보 한 줄 표시
-function DetailRow({ label, value, icon }: any) {
-    return (
-        <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-1">
-                {icon} {label}
-            </div>
-            <div className="text-sm font-bold text-slate-700 font-mono">{value}</div>
-        </div>
-    )
+// 헬퍼 컴포넌트
+function DetailRow({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+        <span className="text-cyan-600">{icon}</span>
+        {label}
+      </div>
+      <div className="text-sm font-bold text-slate-700 font-mono bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+        {value}
+      </div>
+    </div>
+  )
 }
