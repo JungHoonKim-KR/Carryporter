@@ -120,6 +120,11 @@ public class Mission extends BaseEntity {
         this.finishedAt = LocalDateTime.now();
     }
 
+    // 미션 보관
+    public void store() {
+        this.missionStatus = MissionStatus.STORING;
+    }
+
     @Builder
     private Mission(User user, Location callLocation, MissionStatus missionStatus, UserLockerStatus userLockerStatus) {
         this.user = user;

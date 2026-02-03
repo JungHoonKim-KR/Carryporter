@@ -135,6 +135,24 @@ public class MissionService {
         mission.unlock();
     }
 
+    @Transactional
+    public void store(Long missionId, Long robotId){
+        log.debug("미션 보관 missionId = {}, robotId = {}", missionId, robotId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(()-> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+        mission.store();
+
+        Robot robot = robotRepository.findById(robotId)
+                .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
+
+        RobotStatus previousStatus = robot.getRobotStatus();
+        robot.changeStatus(RobotStatus.IDLE);
+
+        eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(robot.getId(), robot.getRobotCode(), previousStatus, robot.getRobotStatus()));
+
+
+    }
+
     // 끝나야 로봇도 대기큐로 이동
     @Transactional
     public void finish(Long missionId, Long robotId) {
