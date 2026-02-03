@@ -28,4 +28,11 @@ public class MissionController {
 
         return ResponseEntity.ok(CreateMissionResponseDto.of(missionId));
     }
+
+    @PostMapping("/{missionId}/return")
+    public ResponseEntity<Void> returnRobot(@PathVariable Long missionId, @RequestAttribute("userId") Long userId) {
+        log.debug("Return Mission Request: missionId = {}, userId = {}", missionId, userId);
+        missionService.returnToMainStation(missionId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
