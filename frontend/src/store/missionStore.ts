@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Mission, MissionStatusEvent, MissionType, StoredLuggage } from '../types/mission.types';
+import type { Mission, MissionStatus, MissionType, StoredLuggage } from '../types/mission.types';
 
 interface MissionState {
   // 미션 정보
@@ -28,7 +28,7 @@ interface MissionState {
 
   // 액션
   setCurrentMission: (mission: Mission) => void;
-  updateMissionStatus: (status: MissionStatusEvent) => void;
+  updateMissionStatus: (update: { status: MissionStatus; robotCode?: string }) => void;
   setConnected: (connected: boolean) => void;
   setConnectionError: (error: Error | null) => void;
   clearMission: () => void;

@@ -21,9 +21,7 @@ export default defineConfig({
             },
             // 일반 API 프록시 설정
             "/api": {
-                // target: "https://i14e101.p.ssafy.io",
-                target: "http://localhost:8080",
-
+                target: "https://i14e101.p.ssafy.io",
                 changeOrigin: true,
                 secure: true,
             },
