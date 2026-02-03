@@ -85,6 +85,77 @@ class MissionServiceTest extends IntegrationTestSupport {
         assertThat(publishedEvent.missionId()).isEqualTo(missionId);
     }
 
+    @DisplayName("STORING 상태의 미션이 이미 있으면 새로운 미션을 생성하지 않고 기존 미션을 반환한다.")
+    @Test
+    void createMissionWithExistingStoringMission() {
+        // given
+        User user = User.createUser("test@mm.com");
+        Location location1 = Location.createLocation("Gate A12", "탑승구 A12");
+        Location location2 = Location.createLocation("Gate B5", "탑승구 B5");
+
+        userRepository.save(user);
+        locationRepository.save(location1);
+        Long locationId2 = locationRepository.save(location2);
+
+        // STORING 상태의 미션을 미리 생성
+        Mission existingMission = Mission.createMission(user, location1);
+        Long existingMissionId = missionRepository.save(existingMission);
+
+        // 미션을 STORING 상태로 변경
+        Mission savedMission = missionRepository.findById(existingMissionId).orElseThrow();
+        em.createQuery("UPDATE Mission m SET m.missionStatus = :status WHERE m.id = :id")
+                .setParameter("status", MissionStatus.STORING)
+                .setParameter("id", existingMissionId)
+                .executeUpdate();
+        flushAndClear();
+
+        CreateMissionServiceRequestDto request = CreateMissionServiceRequestDto.builder()
+                .callLocationId(locationId2)
+                .build();
+
+        // when
+        Long returnedMissionId = missionService.createMission(user.getId(), request);
+        flushAndClear();
+
+        // then
+        assertThat(returnedMissionId).isEqualTo(existingMissionId);
+
+        Mission mission = missionRepository.findById(returnedMissionId).orElseThrow();
+        assertThat(mission.getMissionStatus()).isEqualTo(MissionStatus.STORING);
+        assertThat(mission.getCallLocation().getId()).isEqualTo(location1.getId()); // 기존 위치 유지
+    }
+
+    @DisplayName("STORING 상태의 미션이 없으면 새로운 미션을 생성한다.")
+    @Test
+    void createMissionWithoutStoringMission() {
+        // given
+        User user = User.createUser("test@mm.com");
+        Location location1 = Location.createLocation("Gate A12", "탑승구 A12");
+        Location location2 = Location.createLocation("Gate B5", "탑승구 B5");
+
+        userRepository.save(user);
+        locationRepository.save(location1);
+        Long locationId2 = locationRepository.save(location2);
+
+        // REQUESTED 상태의 미션만 있음 (STORING 아님)
+        Mission requestedMission = Mission.createMission(user, location1);
+        missionRepository.save(requestedMission);
+        flushAndClear();
+
+        CreateMissionServiceRequestDto request = CreateMissionServiceRequestDto.builder()
+                .callLocationId(locationId2)
+                .build();
+
+        // when
+        Long newMissionId = missionService.createMission(user.getId(), request);
+        flushAndClear();
+
+        // then
+        Mission newMission = missionRepository.findById(newMissionId).orElseThrow();
+        assertThat(newMission.getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
+        assertThat(newMission.getCallLocation().getId()).isEqualTo(locationId2);
+    }
+
     @DisplayName("미션 실패 시 미션 상태가 FAILED로 변경된다.")
     @Test
     void failMission() {

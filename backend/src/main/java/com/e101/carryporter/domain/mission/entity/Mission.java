@@ -144,4 +144,8 @@ public class Mission extends BaseEntity {
     public void unlock() {
         this.missionStatus = MissionStatus.UNLOCKED;
     }
+
+    public void returning() {
+        this.missionStatus = MissionStatus.RETURNING;
+    }
 }

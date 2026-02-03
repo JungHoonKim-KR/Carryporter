@@ -229,6 +229,7 @@ class RobotServiceTest extends IntegrationTestSupport {
 
         missionRepository.save(mission);
 
+        mission.assignRobot(robot);
         flushAndClear();
 
         // when
@@ -256,7 +257,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         // when then
         assertThatThrownBy(() -> robotService.finalizeMission(missionId))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("해당 로봇을 찾을 수 없습니다.");
+                .hasMessage("해당 미션을 찾을 수 없습니다.");
     }
 
     // ==================== registerRobot 테스트 ====================
