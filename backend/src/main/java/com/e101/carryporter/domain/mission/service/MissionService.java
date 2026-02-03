@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.mission.service;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
 import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
 import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
@@ -142,6 +143,12 @@ public class MissionService {
                 .orElseThrow(() -> new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND));
 
         mission.finish();
+
+        // locker 할당 해제
+        Locker locker = mission.getLocker();
+        if (locker != null) {
+            locker.updateStatus(LockerStatus.AVAILABLE);
+        }
 
         RobotStatus previousStatus = robot.getRobotStatus();
         robot.changeStatus(RobotStatus.IDLE);
