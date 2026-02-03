@@ -91,6 +91,12 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("missions/{missionId}/store")
+    public ResponseEntity<Void> store(@PathVariable Long missionId){
+        log.debug("관리자 보관 유지 완료 - missionId : {}", missionId);
+
+    }
+
     @GetMapping("/missions")
     public ResponseEntity<List<MissionResponseDto>> getAllMissions() {
         log.debug("관리자 전체 미션 조회 요청 (최대 15개)");
