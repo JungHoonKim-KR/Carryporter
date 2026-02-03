@@ -2,6 +2,7 @@ package com.e101.carryporter.domain.sse.controller;
 
 import com.e101.carryporter.domain.sse.service.SseService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import java.util.Random;
 @RestController
 @RequestMapping("/test/sse")
 @RequiredArgsConstructor
+@Slf4j
 public class SseTestController {
 
     private final SseService sseService;
@@ -25,7 +27,7 @@ public class SseTestController {
     // =================================================================================
     @GetMapping("/assign/first")
     public String testAssignFirst(@RequestParam(defaultValue = "ROBOT-101") String robotCode) {
-
+        log.info("로봇 첫 배정 알림");
         // RobotAssignedEvent (Record) 구조 모의
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("userId", 1004L);
@@ -37,7 +39,6 @@ public class SseTestController {
 
         // 관리자에게 전송 (이벤트명: RobotAssignedEvent)
         sseService.broadcastToAdmins("RobotAssignedEvent", eventData);
-
         return "✅ [FIRST 배정] 이벤트 전송 완료 (사물함 선택 필요): " + robotCode;
     }
 
@@ -103,5 +104,27 @@ public class SseTestController {
         sseService.broadcastToAdmins("RobotReturnedAdminEvent", eventData);
 
         return "🏁 [로봇 복귀] 전송 완료 (" + lockerCode + "): " + robotCode;
+    }
+
+    /**
+     * 🧪 모든 사용자에게 로봇 배정 이벤트 테스트 전송
+     *
+     * 호출 예:
+     * http://localhost:8080/api/test/sse/robot-assigned/all?robotCode=ROBOT-101
+     */
+    @GetMapping("/robot-assigned/all")
+    public String testRobotAssignedToAllUsers(
+            @RequestParam(defaultValue = "ROBOT-101") String robotCode
+    ) {
+        log.info("🧪 [TEST] RobotAssignedEvent 전체 사용자 전송 | robotCode={}", robotCode);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", "로봇 배정이 완료되었습니다.");
+        data.put("robotCode", robotCode);
+
+        // ✅ 이벤트 이름을 실제와 동일하게
+        sseService.broadcastToUsers("RobotAssignedEvent", data);
+        sseService.broadcastToAdmins("test", data);
+        return "✅ RobotAssignedEvent 전체 사용자 테스트 전송 완료";
     }
 }

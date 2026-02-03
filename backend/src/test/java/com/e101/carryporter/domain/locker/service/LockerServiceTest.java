@@ -107,7 +107,7 @@ class LockerServiceTest extends IntegrationTestSupport {
         // COMPLETED 상태
         Mission mission2 = Mission.createMission(user, location);
         mission2.assignLocker(locker2);
-        mission2.finis();
+        mission2.finish();
         missionRepository.save(mission2);
 
         em.flush();

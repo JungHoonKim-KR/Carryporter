@@ -3,6 +3,7 @@ package com.e101.carryporter.global.config.mqtt;
 import com.e101.carryporter.global.service.mqtt.MqttSubscriberService;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -100,7 +101,7 @@ public class MqttConfig {
             subscriberClientId += "-" + UUID.randomUUID();
         }
 
-        MqttClient client = new MqttClient(brokerUrl, subscriberClientId);
+        MqttClient client = new MqttClient(brokerUrl, subscriberClientId, new MemoryPersistence());
 
         client.setCallback(new MqttCallback() {
             @Override

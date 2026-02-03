@@ -50,3 +50,7 @@ logs/
 /.env.example
 /mosquitto/data/mosquitto.db
 /mosquitto/config/mosquitto.conf
+
+# MQTT / test subscriber clients
+carryporter-client-subscriber-*/
+carryporter-test-client-subscriber-*/

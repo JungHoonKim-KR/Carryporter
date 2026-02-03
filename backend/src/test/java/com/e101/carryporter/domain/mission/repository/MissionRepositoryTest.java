@@ -188,7 +188,7 @@ class MissionRepositoryTest extends IntegrationTestSupport {
         // COMPLETED 상태
         Mission mission3 = Mission.createMission(user, location);
         mission3.assignLocker(locker3);
-        mission3.finis();
+        mission3.finish();
         missionRepository.save(mission3);
 
         flushAndClear();

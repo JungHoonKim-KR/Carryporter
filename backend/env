@@ -1,0 +1,21 @@
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=demoapp
+DB_USER=root
+DB_PASS=1234
+
+# JPA Configuration
+JPA_DDL_AUTO=create
+JPA_SHOW_SQL=true
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# MQTT Configuration
+MQTT_HOST=localhost
+MQTT_PORT=1883
+MQTT_USER=admin
+MQTT_PASS=1234
+MQTT_CLIENT_ID=carryporter-client
