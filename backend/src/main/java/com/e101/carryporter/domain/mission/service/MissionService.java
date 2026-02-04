@@ -60,7 +60,7 @@ public class MissionService {
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
-        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, isNew));
+        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, userId, isNew));
 
         return createdMissionId;
     }

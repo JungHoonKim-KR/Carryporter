@@ -19,6 +19,6 @@ public class RobotAssignmentHandler {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionCreatedEvent(MissionCreatedEvent event) {
-        robotService.assignRobotToMission(event.missionId(), event.isNew());
+        robotService.assignRobotToMission(event.missionId(), event.userId(), event.isNew());
     }
 }
