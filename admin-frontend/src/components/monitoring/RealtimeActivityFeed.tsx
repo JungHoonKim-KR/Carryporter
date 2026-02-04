@@ -14,144 +14,116 @@ interface ActivityLog {
   bgColor: string
   borderColor: string
 }
-
 export default function RealtimeActivityFeed() {
   const lastMessage = useSseStore(state => state.lastMessage)
   const [activities, setActivities] = useState<ActivityLog[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
+// ... (기존 import 및 ActivityLog 인터페이스 생략)
 
-  useEffect(() => {
-    if (!lastMessage) return
+useEffect(() => {
+  if (!lastMessage) return;
 
-    const timestamp = new Date()
-    let newActivity: ActivityLog | null = null
+  const timestamp = new Date();
+  let newActivity: ActivityLog | null = null;
 
-    try {
-      const parsed = JSON.parse(lastMessage)
-      
-      if (parsed.eventName === 'RobotAssignedEvent' || parsed.requestType) {
+  // 1. SSE 원본 문자열에서 event와 data 분리
+  let eventName = '';
+  let rawData = '';
+
+  if (typeof lastMessage === 'string') {
+    const lines = lastMessage.split('\n');
+    lines.forEach(line => {
+      if (line.startsWith('event:')) eventName = line.replace('event:', '').trim();
+      else if (line.startsWith('data:')) rawData = line.replace('data:', '').trim();
+    });
+    // 만약 event: 형식이 없는 순수 문자열이라면 전체를 rawData로 간주
+    if (!rawData && !eventName) rawData = lastMessage;
+  }
+
+  // 2. 데이터 처리 시나리오
+  try {
+    // --- 시나리오 A: CONNECT 이벤트 (텍스트 데이터) ---
+    if (eventName === 'CONNECT' || rawData.includes('Connected!')) {
+      newActivity = {
+        id: `${Date.now()}-conn`,
+        timestamp,
+        type: 'connect',
+        message: `🌐 시스템 연결 성공: 관리자 권한 활성화`,
+        icon: <Wifi className="w-4 h-4" />,
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+        borderColor: 'border-emerald-200'
+      };
+    } 
+    // --- 시나리오 B: Heartbeat (로그에 남기지 않거나 아주 작게 처리) ---
+    else if (eventName === 'heartbeat' || rawData === 'ping') {
+      // 핑 데이터는 너무 자주 오므로 로그에 남기지 않으려면 여기서 return 처리
+      // 만약 남기고 싶다면 아래 주석 해제
+      /*
+      newActivity = {
+        id: `${Date.now()}-hb`,
+        timestamp,
+        type: 'heartbeat',
+        message: '💓 시스템 신호 정상 (Ping)',
+        icon: <Heart className="w-4 h-4" />,
+        color: 'text-rose-400',
+        bgColor: 'bg-rose-50',
+        borderColor: 'border-rose-100'
+      };
+      */
+      return; 
+    } 
+    // --- 시나리오 C: 일반 JSON 이벤트 (로봇 할당, 반납 등) ---
+    else {
+      const parsed = JSON.parse(rawData);
+      const type = parsed.eventName || (parsed.requestType ? 'RobotAssignedEvent' : '');
+
+      if (type === 'RobotAssignedEvent' || parsed.requestType) {
         newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
+          id: `${Date.now()}-assign`,
           timestamp,
           type: 'robot_assigned',
           robotCode: parsed.robotCode,
-          message: `${parsed.robotCode || '로봇'}이 ${parsed.callLocationName || '목적지'}로 출발`,
+          message: `🚀 [호출] ${parsed.robotCode}번 로봇이 '${parsed.callLocationName}'으로 출발`,
           icon: <Zap className="w-4 h-4" />,
           color: 'text-amber-600',
           bgColor: 'bg-amber-50',
-          borderColor: 'border-amber-300'
-        }
-      }
-      else if (parsed.eventName === 'RobotReturnedAdminEvent') {
+          borderColor: 'border-amber-200'
+        };
+      } else if (type === 'RobotReturnedAdminEvent' || parsed.lockerCode) {
         newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
+          id: `${Date.now()}-return`,
           timestamp,
           type: 'robot_returned',
           robotCode: parsed.robotCode,
-          message: `${parsed.robotCode || '로봇'} 복귀 완료`,
+          message: `✅ [복귀] ${parsed.robotCode} 로봇 업무를 마치고 복귀했습니다.`,
           icon: <CheckCircle className="w-4 h-4" />,
-          color: 'text-emerald-600',
-          bgColor: 'bg-emerald-50',
-          borderColor: 'border-emerald-300'
-        }
-      }
-      else if (parsed.robotCode && parsed.status) {
-        const statusText = parsed.status === 'working' ? '작업 중' : '대기 중'
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'status_update',
-          robotCode: parsed.robotCode,
-          message: `${parsed.robotCode} → ${statusText}`,
-          icon: <TrendingUp className="w-4 h-4" />,
           color: 'text-cyan-600',
           bgColor: 'bg-cyan-50',
-          borderColor: 'border-cyan-300'
-        }
-      }
-      else if (parsed.missionId) {
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'mission_start',
-          message: `미션 #${parsed.missionId} 시작`,
-          icon: <AlertCircle className="w-4 h-4" />,
-          color: 'text-purple-600',
-          bgColor: 'bg-purple-50',
-          borderColor: 'border-purple-300'
-        }
-      }
-      else {
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'system',
-          message: `시스템: ${parsed.message || JSON.stringify(parsed).slice(0, 50)}`,
-          icon: <Info className="w-4 h-4" />,
-          color: 'text-slate-600',
-          bgColor: 'bg-slate-50',
-          borderColor: 'border-slate-300'
-        }
-      }
-    } catch (e) {
-      const lines = lastMessage.split('\n')
-      let eventType = ''
-      let data = ''
-
-      lines.forEach(line => {
-        if (line.startsWith('event:')) {
-          eventType = line.replace('event:', '').trim()
-        } else if (line.startsWith('data:')) {
-          data = line.replace('data:', '').trim()
-        }
-      })
-
-      if (eventType === 'heartbeat' || data === 'ping') {
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'heartbeat',
-          message: '시스템 연결 확인 (Heartbeat)',
-          icon: <Heart className="w-4 h-4" />,
-          color: 'text-rose-600',
-          bgColor: 'bg-rose-50',
-          borderColor: 'border-rose-300'
-        }
-      }
-      else if (eventType === 'CONNECT' || data.includes('Connected')) {
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'connect',
-          message: `연결 성공: ${data}`,
-          icon: <Wifi className="w-4 h-4" />,
-          color: 'text-emerald-600',
-          bgColor: 'bg-emerald-50',
-          borderColor: 'border-emerald-300'
-        }
-      }
-      else if (eventType || data) {
-        newActivity = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp,
-          type: 'system',
-          message: eventType ? `[${eventType}] ${data}` : data || lastMessage.slice(0, 50),
-          icon: <Radio className="w-4 h-4" />,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-300'
-        }
+          borderColor: 'border-cyan-200'
+        };
       }
     }
-
-    if (newActivity) {
-      setActivities(prev => {
-        const updated = [newActivity!, ...prev]
-        return updated.slice(0, 30)
-      })
+  } catch (e) {
+    // JSON 파싱 실패 시 (순수 텍스트인 경우)
+    if (rawData && !rawData.includes('ping')) {
+      newActivity = {
+        id: `${Date.now()}-text`,
+        timestamp,
+        type: 'system',
+        message: rawData,
+        icon: <Info className="w-4 h-4" />,
+        color: 'text-slate-500',
+        bgColor: 'bg-slate-50',
+        borderColor: 'border-slate-200'
+      };
     }
+  }
 
-  }, [lastMessage])
+  if (newActivity) {
+    setActivities(prev => [newActivity!, ...prev].slice(0, 30));
+  }
+}, [lastMessage]);
 
   const formatTime = (date: Date) => {
     const now = new Date()
