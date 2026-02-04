@@ -121,6 +121,77 @@ class AdminLockerServiceTest extends IntegrationTestSupport {
                 .hasMessageContaining("사물함을 찾을 수 없습니다");
     }
 
+    @DisplayName("changeStatusAll 호출 시 모든 locker가 지정된 상태로 변경된다.")
+    @Test
+    void changeStatusAll() {
+        // given - 다양한 상태의 locker 생성
+        Locker locker1 = Locker.createLocker("LOCKER-001");
+        locker1.updateStatus(LockerStatus.OCCUPIED);
+        lockerRepository.save(locker1);
+
+        Locker locker2 = Locker.createLocker("LOCKER-002");
+        locker2.updateStatus(LockerStatus.OCCUPIED);
+        lockerRepository.save(locker2);
+
+        Locker locker3 = Locker.createLocker("LOCKER-003");
+        locker3.updateStatus(LockerStatus.OCCUPIED);
+        lockerRepository.save(locker3);
+
+        Locker locker4 = Locker.createLocker("LOCKER-004");
+        // AVAILABLE 상태 (기본값)
+        lockerRepository.save(locker4);
+
+        flushAndClear();
+
+        // when - 모든 locker를 AVAILABLE로 변경
+        adminLockerService.changeStatusAll(LockerStatus.AVAILABLE);
+        flushAndClear();
+
+        // then - 모든 locker가 AVAILABLE 상태로 변경
+        Locker updatedLocker1 = lockerRepository.findById(locker1.getId()).orElseThrow();
+        Locker updatedLocker2 = lockerRepository.findById(locker2.getId()).orElseThrow();
+        Locker updatedLocker3 = lockerRepository.findById(locker3.getId()).orElseThrow();
+        Locker updatedLocker4 = lockerRepository.findById(locker4.getId()).orElseThrow();
+
+        assertThat(updatedLocker1.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
+        assertThat(updatedLocker2.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
+        assertThat(updatedLocker3.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
+        assertThat(updatedLocker4.getLockerStatus()).isEqualTo(LockerStatus.AVAILABLE);
+    }
+
+    @DisplayName("changeStatusAll 호출 시 locker가 없어도 정상 동작한다.")
+    @Test
+    void changeStatusAll_withNoLockers() {
+        // given - locker 없음
+
+        // when & then - 예외 없이 정상 실행
+        adminLockerService.changeStatusAll(LockerStatus.AVAILABLE);
+    }
+
+    @DisplayName("changeStatusAll로 AVAILABLE에서 OCCUPIED로 변경할 수 있다.")
+    @Test
+    void changeStatusAll_toOccupied() {
+        // given - AVAILABLE 상태의 locker들
+        Locker locker1 = Locker.createLocker("LOCKER-001");
+        lockerRepository.save(locker1);
+
+        Locker locker2 = Locker.createLocker("LOCKER-002");
+        lockerRepository.save(locker2);
+
+        flushAndClear();
+
+        // when - OCCUPIED 상태로 변경
+        adminLockerService.changeStatusAll(LockerStatus.OCCUPIED);
+        flushAndClear();
+
+        // then
+        Locker updatedLocker1 = lockerRepository.findById(locker1.getId()).orElseThrow();
+        Locker updatedLocker2 = lockerRepository.findById(locker2.getId()).orElseThrow();
+
+        assertThat(updatedLocker1.getLockerStatus()).isEqualTo(LockerStatus.OCCUPIED);
+        assertThat(updatedLocker2.getLockerStatus()).isEqualTo(LockerStatus.OCCUPIED);
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
