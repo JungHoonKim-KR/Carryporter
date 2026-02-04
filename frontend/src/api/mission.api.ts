@@ -43,9 +43,8 @@ export const subscribeMissionUpdates = (
   const token = useAuthStore.getState().accessToken;
   if (!token) throw new Error('AccessToken이 없습니다.');
 
-  const sseUrl = import.meta.env.DEV
-    ? '/api/sse/subscribe'
-    : `${import.meta.env.VITE_API_URL}/api/sse/subscribe`;
+  // Nginx 프록시를 사용하므로 개발/프로덕션 모두 상대 경로 사용
+  const sseUrl = '/api/sse/subscribe';
 
   const controller = new AbortController();
 
