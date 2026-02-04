@@ -43,7 +43,7 @@ export const subscribeMissionUpdates = (
 
   const sseUrl = import.meta.env.DEV
     ? '/api/sse/subscribe'
-    : `${import.meta.env.VITE_API_BASE_URL}/api/sse/subscribe`;
+    : `${import.meta.env.VITE_API_URL}/api/sse/subscribe`;
 
   const eventSource = new EventSourcePolyfill(sseUrl, {
     headers: { 'Authorization': `Bearer ${token}` },
