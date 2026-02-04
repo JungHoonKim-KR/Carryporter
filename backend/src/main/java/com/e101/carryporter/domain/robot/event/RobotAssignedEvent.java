@@ -10,7 +10,8 @@ public record RobotAssignedEvent(
         String robotCode,       // 배정된 로봇 코드
         String callLocationName,  // 호출지 정보 (첫 호출 시 필요)
         String lockerCode,        // 사물함 코드 (재호출/복귀 시에만 포함, 첫 호출 시 null)
-        String requestType      // "FIRST" (보관 요청), "RECALL" (수령/반납을 위한 재호출) 등으로 구분 가능
+        String requestType,      // "FIRST" (보관 요청), "RECALL" (수령/반납을 위한 재호출) 등으로 구분 가능
+        String robotMacAddress
 ) {
     /**
      * 관리자 화면은 lockerId 의 null 기준으로 분기 -> 백에서 첫호출/재호출에 따라 사물함 번호를 채워줌
