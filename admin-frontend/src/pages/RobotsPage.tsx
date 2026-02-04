@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, Zap, LayoutGrid, Activity, Maximize2, Users, Radio, Wifi } from 'lucide-react'
 import { useRobotSSE } from '@/hooks/UserRobotSSE'
+import { useSseStore } from '@/store/sseStore'; // 👈 이 줄이 없어서 에러가 났습니다.
 import { useRobotFetch, RobotItem } from '@/hooks/useRobotFetch'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
