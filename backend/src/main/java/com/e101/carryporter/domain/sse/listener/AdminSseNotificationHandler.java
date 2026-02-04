@@ -49,6 +49,7 @@ public class AdminSseNotificationHandler {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionFailedEvent(MissionFailedEvent event) {
+        log.debug("mission 생성 실패: missionId = {}, userId = {}, message = {}", event.missionId(), event.userId(), event.message());
         sseService.broadcastToAdmins("MissionFailedEvent", event);
     }
 }
