@@ -23,36 +23,36 @@ export const useMissionSSE = () => {
       },
       onRobotAssigned: (data) => {
         updateMissionStatus({
-          missionId: currentMission.id, status: 'ASSIGNED', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
+          status: 'ASSIGNED',
+          robotCode: data.robotCode
         });
       },
       onMissionStarted: (data) => {
         updateMissionStatus({
-          missionId: currentMission.id, status: 'MOVING', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
+          status: 'MOVING',
+          robotCode: data.robotCode
         });
       },
       onRobotArrival: (data) => {
         updateMissionStatus({
-          missionId: currentMission.id, status: 'ARRIVED', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
+          status: 'ARRIVED',
+          robotCode: data.robotCode
         });
       },
-      onUnlocked: (data) => {
+      onUnlocked: (_data) => {
         updateMissionStatus({
-          missionId: currentMission.id, status: 'UNLOCKED', timestamp: data.timestamp, message: data.msg 
+          status: 'UNLOCKED'
         });
       },
-      onLocked: (data) => {
+      onLocked: (_data) => {
         updateMissionStatus({
-          missionId: currentMission.id, status: 'LOCKED', timestamp: data.timestamp, message: data.msg 
+          status: 'LOCKED'
         });
       },
       onAborted: (data) => {
         alert(data.msg);
         updateMissionStatus({
-          missionId: currentMission.id, status: 'FINISHED', timestamp: data.timestamp, message: data.msg 
+          status: 'FINISHED'
         });
       },
       onError: (error) => {

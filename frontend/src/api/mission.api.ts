@@ -1,5 +1,5 @@
 import apiClient from './axios';
-import { EventSourcePolyfill } from 'event-source-polyfill';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import type {
   CreateMissionRequest,
   CreateMissionResponse,
@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
  * 미션 생성 API
  */
 export const createMission = async (
-  data: CreateMissionRequest
+  _data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
   // 기존 로직 유지
   const requestData = { "callLocationId": 1 }; 
@@ -24,10 +24,12 @@ export const createMission = async (
 
 /**
  * SSE 구독 - 실시간 이벤트 수신
+ * @microsoft/fetch-event-source 사용으로 탭 비활성화 시에도 연결 유지
  */
 export const subscribeMissionUpdates = (
   callbacks: {
     onConnect?: () => void;
+    onHeartbeat?: () => void;
     onRobotAssigned?: (data: SSEEventData) => void;
     onMissionStarted?: (data: SSEEventData) => void;
     onRobotArrival?: (data: SSEEventData) => void;
@@ -45,49 +47,92 @@ export const subscribeMissionUpdates = (
     ? '/api/sse/subscribe'
     : `${import.meta.env.VITE_API_URL}/api/sse/subscribe`;
 
-  const eventSource = new EventSourcePolyfill(sseUrl, {
-    headers: { 'Authorization': `Bearer ${token}` },
-    heartbeatTimeout: 60000,
-  });
+  const controller = new AbortController();
 
-  // 1. CONNECT 이벤트 (인자 없음)
-  eventSource.addEventListener('CONNECT', () => {
-    if (import.meta.env.DEV) console.log('[SSE] Connected');
-    callbacks.onConnect?.();
-  });
-
-  // 2. 데이터가 필요한 이벤트 리스트 (인자 1개)
-  const dataEvents = [
-    { name: 'RobotAssignedEvent', cb: callbacks.onRobotAssigned },
-    { name: 'MissionStartedEvent', cb: callbacks.onMissionStarted },
-    { name: 'RobotArrivalEvent', cb: callbacks.onRobotArrival },
-    { name: 'UserAuthSuccessEvent', cb: callbacks.onAuthSuccess },
-    { name: 'MissionUnlockedEvent', cb: callbacks.onUnlocked },
-    { name: 'MissionAbortedEvent', cb: callbacks.onAborted },
-    { name: 'MissionLockedEvent', cb: callbacks.onLocked },
-  ] as const;
-
-  dataEvents.forEach(({ name, cb }) => {
-    eventSource.addEventListener(name, (e: any) => {
-      if (import.meta.env.DEV) console.log(`[SSE] ${name}:`, e.data);
-      try {
-        const parsedData: SSEEventData = JSON.parse(e.data);
-        if (cb) cb(parsedData); // 인자 전달 보장
-      } catch (err) {
-        console.error(`[SSE] ${name} 파싱 실패:`, err);
-      }
-    });
-  });
-
-  eventSource.onerror = (error: any) => {
-    if (import.meta.env.DEV) console.error('[SSE] Connection error:', error);
-    callbacks.onError?.(new Error('SSE connection error'));
-    if (error.status === 401) eventSource.close();
+  // 이벤트 타입과 콜백 매핑
+  const eventCallbacks: Record<string, (data: SSEEventData) => void> = {
+    'RobotAssignedEvent': callbacks.onRobotAssigned || (() => {}),
+    'MissionStartedEvent': callbacks.onMissionStarted || (() => {}),
+    'RobotArrivalEvent': callbacks.onRobotArrival || (() => {}),
+    'UserAuthSuccessEvent': callbacks.onAuthSuccess || (() => {}),
+    'MissionUnlockedEvent': callbacks.onUnlocked || (() => {}),
+    'MissionAbortedEvent': callbacks.onAborted || (() => {}),
+    'MissionLockedEvent': callbacks.onLocked || (() => {}),
   };
 
+  // fetchEventSource 실행
+  fetchEventSource(sseUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'text/event-stream',
+    },
+    signal: controller.signal,
+    openWhenHidden: true, // 탭이 백그라운드에 있어도 연결 유지
+
+    // 연결 성공
+    async onopen(response) {
+      if (response.ok) {
+        if (import.meta.env.DEV) console.log('[SSE] Connected');
+        callbacks.onConnect?.();
+        return;
+      } else {
+        if (import.meta.env.DEV) console.error('[SSE] Connection failed:', response.status);
+        throw new Error(`HTTP ${response.status}`);
+      }
+    },
+
+    // 메시지 수신
+    onmessage(msg) {
+      // CONNECT 이벤트
+      if (msg.event === 'CONNECT') {
+        if (import.meta.env.DEV) console.log('[SSE] CONNECT event');
+        callbacks.onConnect?.();
+        return;
+      }
+
+      // HEARTBEAT 이벤트
+      if (msg.event === 'HEARTBEAT' || msg.event === 'heartbeat') {
+        if (import.meta.env.DEV) console.debug('[SSE] Heartbeat');
+        callbacks.onHeartbeat?.();
+        return;
+      }
+
+      // 데이터 이벤트 처리
+      if (eventCallbacks[msg.event]) {
+        try {
+          const parsedData: SSEEventData = JSON.parse(msg.data);
+          if (import.meta.env.DEV) console.log(`[SSE] ${msg.event}:`, parsedData);
+          eventCallbacks[msg.event](parsedData);
+        } catch (err) {
+          console.error(`[SSE] ${msg.event} 파싱 실패:`, err);
+        }
+      }
+    },
+
+    // 에러 처리
+    onerror(err) {
+      if (import.meta.env.DEV) console.error('[SSE] Error:', err);
+
+      // AbortError는 정상 종료
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
+      callbacks.onError?.(new Error('SSE connection error'));
+      throw err; // 재연결 시도
+    },
+
+    // 연결 종료
+    onclose() {
+      if (import.meta.env.DEV) console.log('[SSE] Connection closed');
+    }
+  });
+
+  // cleanup 함수 반환
   return () => {
     if (import.meta.env.DEV) console.log('[SSE] Disconnecting');
-    eventSource.close();
+    controller.abort();
   };
 };
 
@@ -95,7 +140,7 @@ export const subscribeMissionUpdates = (
  * 사용자 잠금 해제 (비밀번호 인증)
  */
 export const verifyMission = async (
-  missionId: string,
+  missionId: number,
   password: number
 ): Promise<void> => {
   await apiClient.post(`/api/auth/unlock`, { missionId, password });

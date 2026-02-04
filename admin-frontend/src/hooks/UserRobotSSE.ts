@@ -61,38 +61,50 @@ export function useRobotSSE() {
         },
         signal: controller.signal,
         openWhenHidden: true, // 탭이 백그라운드에 있어도 연결 유지 시도
+        
         // 1. 연결 성공 시
         async onopen(response) {
           if (response.ok) {
             console.log('✅ SSE Connected!');
             setIsConnected(true);
+            
+            // 🔥 연결 성공 메시지를 화면에 표시
+            const connectMessage = `event:CONNECT\ndata:Connected! [Role: ADMIN]`;
+            setLastMessage(connectMessage);
+            
             return; // OK
           } else {
             console.error('❌ SSE Connection Failed', response.status);
-            // 인증 실패나 다른 에러는 재연결 중단
             throw new Error(`HTTP ${response.status}`);
           }
         },
 
         // 2. 메시지 수신 (이벤트 분기 처리)
         onmessage(msg) {
-          // heartbeat나 ping은 무시
-          if (msg.event === 'heartbeat') return;
-
           console.log(`📩 Event Received: [${msg.event}]`, msg.data);
 
-          try {
-            // 1. JSON 형식이 맞는지 확인하기 위해 파싱 시도
-            const parsedData = JSON.parse(msg.data);
+          // 🔥 SSE 원본 형식으로 화면에 전달 (모든 이벤트 포함)
+          let rawMessage = '';
+          if (msg.id) rawMessage += `id:${msg.id}\n`;
+          if (msg.event) rawMessage += `event:${msg.event}\n`;
+          rawMessage += `data:${msg.data}`;
+          
+          setLastMessage(rawMessage);
 
-            // 원본 데이터를 그대로 저장
-            setLastMessage(msg.data);
+          // heartbeat는 로그만 표시하고 상태 변경은 하지 않음
+          if (msg.event === 'heartbeat') {
+            return;
+          }
+
+          try {
+            // JSON 형식이 맞는지 확인하기 위해 파싱 시도
+            const parsedData = JSON.parse(msg.data);
 
             // 이벤트 종류에 따른 로봇 상태 업데이트 로직
             handleServerEvent(msg.event, parsedData);
 
           } catch (err) {
-            // 2. JSON이 아니라면(단순 텍스트 메시지) 여기서 처리
+            // JSON이 아니라면(단순 텍스트 메시지) 여기서 처리
             console.warn("⚠️ JSON 형식이 아닙니다. 텍스트로 처리합니다:", msg.data);
           }
         },
@@ -115,6 +127,10 @@ export function useRobotSSE() {
         onclose() {
           console.log('🔒 SSE Closed');
           setIsConnected(false);
+          
+          // 🔥 연결 종료 메시지 표시
+          const closeMessage = `event:DISCONNECT\ndata:Connection closed`;
+          setLastMessage(closeMessage);
         }
       });
     };
