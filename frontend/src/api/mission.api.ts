@@ -98,5 +98,19 @@ export const verifyMission = async (
   missionId: string,
   password: number
 ): Promise<void> => {
-  await apiClient.patch(`/api/missions/${missionId}/verify`, { password });
+  await apiClient.post(`/api/auth/unlock`, { missionId, password });
+};
+
+/**
+ * 사물함 잠금
+ */
+export const lockMission = async (missionId: number): Promise<void> => {
+  await apiClient.post(`/api/auth/lock`,{missionId});
+};
+
+/**
+ * 로봇 복귀 요청
+ */
+export const returnMission = async (missionId: number): Promise<void> => {
+  await apiClient.post(`/api/missions/${missionId}/return`);
 };
