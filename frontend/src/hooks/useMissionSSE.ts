@@ -22,25 +22,38 @@ export const useMissionSSE = () => {
         setConnectionError(null);
       },
       onRobotAssigned: (data) => {
-        updateMissionStatus({ status: 'ASSIGNED', robotCode: data.robotCode });
+        updateMissionStatus({
+          status: 'ASSIGNED',
+          robotCode: data.robotCode
+        });
       },
       onMissionStarted: (data) => {
-        updateMissionStatus({ status: 'MOVING', robotCode: data.robotCode });
+        updateMissionStatus({
+          status: 'MOVING',
+          robotCode: data.robotCode
+        });
       },
       onRobotArrival: (data) => {
-        updateMissionStatus({ status: 'ARRIVED', robotCode: data.robotCode });
+        updateMissionStatus({
+          status: 'ARRIVED',
+          robotCode: data.robotCode
+        });
       },
       onUnlocked: (_data) => {
-        updateMissionStatus({ status: 'UNLOCKED' });
+        updateMissionStatus({
+          status: 'UNLOCKED'
+        });
       },
       onLocked: (_data) => {
-        updateMissionStatus({ status: 'LOCKED' });
-        // SSE에서 LOCKED 수신 시 체크리스트 단계로 전환
-        setUnifiedFlowStep('CHECKLIST_CONFIRM');
+        updateMissionStatus({
+          status: 'LOCKED'
+        });
       },
       onAborted: (data) => {
         alert(data.msg);
-        updateMissionStatus({ status: 'FINISHED' });
+        updateMissionStatus({
+          status: 'FINISHED'
+        });
       },
       onError: (error) => {
         setConnected(false);

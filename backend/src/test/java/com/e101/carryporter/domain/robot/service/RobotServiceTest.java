@@ -293,7 +293,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         flushAndClear();
 
         // when - isNew = true
-        robotService.assignRobotToMission(missionId, true);
+        robotService.assignRobotToMission(missionId, user.getId(), true);
 
         // then
         long publishedCount = events.stream(RobotAssignedEvent.class).count();
@@ -348,7 +348,7 @@ class RobotServiceTest extends IntegrationTestSupport {
         flushAndClear();
 
         // when - isNew = false
-        robotService.assignRobotToMission(missionId, false);
+        robotService.assignRobotToMission(missionId, user.getId(), false);
 
         // then
         long publishedCount = events.stream(RobotAssignedEvent.class).count();

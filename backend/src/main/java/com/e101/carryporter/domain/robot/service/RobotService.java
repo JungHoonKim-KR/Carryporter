@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.robot.service;
 import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.mission.entity.Mission;
+import com.e101.carryporter.domain.mission.event.MissionFailedEvent;
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStoredEvent;
@@ -99,7 +100,7 @@ public class RobotService {
      * 미션에 로봇 할당 (가용 로봇 획득 + DB 배정)
      */
     @Transactional
-    public void assignRobotToMission(Long missionId, boolean isNew) {
+    public void assignRobotToMission(Long missionId, Long userId, boolean isNew) {
         Long availableRobotId = null;
 
         try {
@@ -115,16 +116,17 @@ public class RobotService {
             // 3. 배정 완료 이벤트 발행
             Mission mission = missionService.findById(missionId);
             eventPublisher.publishEvent(new RobotAssignedEvent(
-                    mission.getUser().getId(),
+                    userId,
                     mission.getId(),
                     mission.getRobot().getRobotCode(),
                     mission.getCallLocation().getLocationName(),
                     isNew ? null : mission.getLocker().getLockerCode(),
-                    isNew ? "FIRST" : "RECALL"
+                    isNew ? "FIRST" : "RECALL",
+                    mission.getRobot().getMacAddress()
             ));
 
             log.info("미션 배차 완료: userId={}, missionId={}, robotId={}",
-                    mission.getUser().getId(), missionId, availableRobotId);
+                    userId, missionId, availableRobotId);
 
 
         } catch (Exception e) {
@@ -139,10 +141,19 @@ public class RobotService {
 
             // DB 실패 시 Redis 상태 복구 (BUSY → IDLE)
             if (availableRobotId != null) {
+                // 로봇은 배정 받았지만 db business or system exception
                 log.warn("로봇 상태 복구: robotId={}", availableRobotId);
                 cacheService.releaseRobot(availableRobotId);
             }
 
+            // 커스텀 예외 일 경우
+            if (e instanceof BusinessException bizException) {
+                eventPublisher.publishEvent(MissionFailedEvent.bizError(missionId, userId,  bizException.getMessage()));
+                return ;
+            }
+
+            // 시스템 예외일 경우
+            eventPublisher.publishEvent(MissionFailedEvent.systemError(missionId, userId, "시스템 오류입니다. 잠시후 시도해 주세요"));
         }
     }
 
@@ -193,7 +204,7 @@ public class RobotService {
             throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
         }
         Long robotId = mission.getRobot().getId();
-        eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
+        eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId, "미션이 종료되었습니다."));
     }
 
     public void storeMission(Long missionId){
