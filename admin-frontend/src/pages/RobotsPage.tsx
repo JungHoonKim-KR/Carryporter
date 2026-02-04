@@ -20,7 +20,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import RobotStage from '@/components/robot/RobotStage'
 import RobotDetailModal from '@/components/robot/RobotDetailModal'
 import ActiveTaskList from '@/components/dashboard/ActiveTaskList'
-import { StatusCard, UserGrowthChart } from '@/components/dashboard/DashboardWidgets'
+import { StatusCard} from '@/components/dashboard/DashboardWidgets'
 import MiniLockerWidget from '@/components/locker/MiniLockerWidget'
 import LockerSelectionModal from '@/components/locker/LockerSelectionModal'
 import MissionControlModal from '@/components/mission/MissionControlModal'
@@ -301,17 +301,6 @@ export default function RobotsPage() {
               />
             </div>
           </motion.section>
-
-          {/* 사용자 증가 차트 */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex-none"
-          >
-            <UserGrowthChart />
-          </motion.div>
-
           {/* 작업 중인 로봇 리스트 */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
