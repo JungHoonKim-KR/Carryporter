@@ -1,9 +1,6 @@
 package com.e101.carryporter.domain.sse.listener;
 
-import com.e101.carryporter.domain.mission.event.MissionAbortedEvent;
-import com.e101.carryporter.domain.mission.event.MissionLockedEvent;
-import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
-import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
+import com.e101.carryporter.domain.mission.event.*;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.sse.service.SseService;
@@ -96,6 +93,12 @@ public class UserSseNotificationHandler {
     public void handleMissionLockedEvent(MissionLockedEvent event) {
         sendNotification(event.userId(), event.getClass().getSimpleName(),
                 "이용해 주셔서 감사합니다. 안녕히 가세요!", null);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleMissionFailedEvent(MissionFailedEvent event) {
+        sendNotification(event.userId(), event.getClass().getSimpleName(), event.message(), null);
     }
 
     /**

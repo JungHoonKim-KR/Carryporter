@@ -1,5 +1,6 @@
 package com.e101.carryporter.domain.sse.listener;
 
+import com.e101.carryporter.domain.mission.event.MissionFailedEvent;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
@@ -7,7 +8,10 @@ import com.e101.carryporter.domain.sse.service.SseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -37,6 +41,15 @@ public class AdminSseNotificationHandler {
     @EventListener
     public void handleRobotArrivalEvent (RobotArrivalEvent event) {
         sseService.broadcastToAdmins("RobotArrivalEvent", event);
+    }
+
+    /**
+     * 4. 로봇 배정 실패 알림
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleMissionFailedEvent(MissionFailedEvent event) {
+        sseService.broadcastToAdmins("MissionFailedEvent", event);
     }
 }
 
