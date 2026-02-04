@@ -11,7 +11,9 @@ import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
+import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.global.exception.BusinessException;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -39,7 +42,6 @@ public class RobotService {
     private final MissionService missionService;
     private final MissionRepository missionRepository;
     private final EntityManager em;
-    private final TransactionTemplate transactionTemplate;
 
     /**
      * 로봇 등록 (MQTT register 토픽에서 호출)
@@ -202,5 +204,15 @@ public class RobotService {
         }
         Long robotId = mission.getRobot().getId();
         eventPublisher.publishEvent(new MissionStoredEvent(missionId, robotId));
+    }
+
+    @Transactional
+    public void changeStatusAll(RobotStatus newStatus) {
+        List<Robot> robots = robotRepository.findAll();
+        robots.forEach(r -> {
+            RobotStatus previousStatus = r.getRobotStatus();
+            r.changeStatus(newStatus);
+            eventPublisher.publishEvent(new RobotAvailabilityChangedEvent(r.getId(), r.getRobotCode(), previousStatus, newStatus));
+        });
     }
 }

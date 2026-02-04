@@ -79,8 +79,9 @@ public class MissionRepository {
                 .findAny();
     }
 
-    public void failAll() {
-        em.createQuery("select m from Mission m", Mission.class)
+    public void failAllExceptFinished() {
+        em.createQuery("select m from Mission m where m.missionStatus != :finished", Mission.class)
+                .setParameter("finished", MissionStatus.FINISHED)
                 .getResultList()
                 .forEach(Mission::failed);
     }

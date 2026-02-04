@@ -246,6 +246,67 @@ class MissionServiceTest extends IntegrationTestSupport {
         assertThat(idleRobot.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
     }
 
+    @DisplayName("failAllExceptFinished 호출 시 FINISHED가 아닌 모든 미션이 FAILED 상태로 변경되고, FINISHED 미션은 유지된다.")
+    @Test
+    void failAllExceptFinished() {
+        // given
+        User user1 = User.createUser("user1@mm.com");
+        User user2 = User.createUser("user2@mm.com");
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
+        locationRepository.save(location);
+
+        Robot robot = Robot.createRobot("R-001", "AA:BB:CC:DD:EE:FF");
+        robotRepository.save(robot);
+
+        // 다양한 상태의 미션 생성
+        Mission mission1 = Mission.createMission(user1, location);
+        mission1.assignRobot(robot);
+        Long missionId1 = missionRepository.save(mission1);
+
+        Mission mission2 = Mission.createMission(user2, location);
+        mission2.assignRobot(robot);
+        mission2.dispatch();
+        Long missionId2 = missionRepository.save(mission2);
+
+        Mission mission3 = Mission.createMission(user1, location);
+        mission3.assignRobot(robot);
+        mission3.dispatch();
+        mission3.arrive();
+        Long missionId3 = missionRepository.save(mission3);
+
+        // FINISHED 상태의 미션 생성
+        Mission finishedMission = Mission.createMission(user2, location);
+        finishedMission.assignRobot(robot);
+        finishedMission.dispatch();
+        finishedMission.arrive();
+        finishedMission.lock();
+        finishedMission.unlock();
+        finishedMission.finish();
+        Long finishedMissionId = missionRepository.save(finishedMission);
+
+        flushAndClear();
+
+        // when
+        missionService.failAllExceptFinished();
+        flushAndClear();
+
+        // then - FINISHED가 아닌 미션들은 FAILED로 변경
+        Mission failedMission1 = missionRepository.findById(missionId1).orElseThrow();
+        Mission failedMission2 = missionRepository.findById(missionId2).orElseThrow();
+        Mission failedMission3 = missionRepository.findById(missionId3).orElseThrow();
+
+        assertThat(failedMission1.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+        assertThat(failedMission2.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+        assertThat(failedMission3.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+
+        // then - FINISHED 미션은 그대로 유지
+        Mission unchangedMission = missionRepository.findById(finishedMissionId).orElseThrow();
+        assertThat(unchangedMission.getMissionStatus()).isEqualTo(MissionStatus.FINISHED);
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();

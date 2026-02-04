@@ -213,9 +213,9 @@ public class MissionService {
         }
     }
 
-    // warning
+    // warning: FINISHED 제외한 모든 진행중인 미션을 FAILED로 변경
     @Transactional
-    public void failAll() {
-        missionRepository.failAll();
+    public void failAllExceptFinished() {
+        missionRepository.failAllExceptFinished();
     }
 }

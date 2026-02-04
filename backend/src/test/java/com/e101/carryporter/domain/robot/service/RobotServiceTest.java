@@ -549,6 +549,61 @@ class RobotServiceTest extends IntegrationTestSupport {
         assertThat(cachedRobotId).isEqualTo(existingRobot.getId());
     }
 
+    @DisplayName("changeStatusAll 호출 시 모든 로봇이 지정된 상태로 변경되고 RobotAvailabilityChangedEvent가 발행된다.")
+    @Test
+    void changeStatusAll() {
+        // given - 다양한 상태의 로봇 생성
+        Robot robot1 = Robot.createRobot("e101-TEST01", "AA:BB:CC:DD:EE:01");
+        robot1.changeStatus(RobotStatus.BUSY);
+        robotRepository.save(robot1);
+
+        Robot robot2 = Robot.createRobot("e101-TEST02", "AA:BB:CC:DD:EE:02");
+        robot2.changeStatus(RobotStatus.OFFLINE);
+        robotRepository.save(robot2);
+
+        Robot robot3 = Robot.createRobot("e101-TEST03", "AA:BB:CC:DD:EE:03");
+        robot3.changeStatus(RobotStatus.IDLE);
+        robotRepository.save(robot3);
+
+        // Redis에 로봇 상태 등록
+        cacheService.registerRobotStatus(robot1.getId(), RobotRealTimeInfo.builder()
+                .macAddress(robot1.getMacAddress())
+                .status(RobotStatus.BUSY)
+                .battery(100)
+                .build());
+
+        cacheService.registerRobotStatus(robot2.getId(), RobotRealTimeInfo.builder()
+                .macAddress(robot2.getMacAddress())
+                .status(RobotStatus.OFFLINE)
+                .battery(100)
+                .build());
+
+        cacheService.registerRobotStatus(robot3.getId(), RobotRealTimeInfo.builder()
+                .macAddress(robot3.getMacAddress())
+                .status(RobotStatus.IDLE)
+                .battery(100)
+                .build());
+
+        flushAndClear();
+
+        // when
+        robotService.changeStatusAll(RobotStatus.IDLE);
+        flushAndClear();
+
+        // then - DB 상태 확인
+        Robot updatedRobot1 = robotRepository.findById(robot1.getId()).orElseThrow();
+        Robot updatedRobot2 = robotRepository.findById(robot2.getId()).orElseThrow();
+        Robot updatedRobot3 = robotRepository.findById(robot3.getId()).orElseThrow();
+
+        assertThat(updatedRobot1.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
+        assertThat(updatedRobot2.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
+        assertThat(updatedRobot3.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
+
+        // then - 이벤트 발행 확인 (3개의 로봇에 대해 3번 발행)
+        long eventCount = events.stream(com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent.class).count();
+        assertThat(eventCount).isEqualTo(3);
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
