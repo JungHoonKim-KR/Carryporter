@@ -22,9 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-# Env
-.env
-.env.*
+# Env (로컬 환경변수만 무시, development/production은 커밋)
+.env.local
+.env.*.local
 
 # Cache
 .cache
