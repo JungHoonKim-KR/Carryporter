@@ -11,13 +11,11 @@ import { useAuthStore } from '../store/authStore';
  * 미션 생성 API
  */
 export const createMission = async (
-  _data: CreateMissionRequest
+  data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
-  // 기존 로직 유지
-  const requestData = { "callLocationId": 1 }; 
   const response = await apiClient.post<CreateMissionResponse>(
     '/api/missions',
-    requestData
+    data
   );
   return response.data;
 };
@@ -37,6 +35,7 @@ export const subscribeMissionUpdates = (
     onUnlocked?: (data: SSEEventData) => void;
     onAborted?: (data: SSEEventData) => void;
     onLocked?: (data: SSEEventData) => void;
+    onReturned?: (data: SSEEventData) => void; // 복귀 완료 이벤트 추가
     onError?: (error: Error) => void;
   }
 ): (() => void) => {
@@ -57,6 +56,7 @@ export const subscribeMissionUpdates = (
     'MissionUnlockedEvent': callbacks.onUnlocked || (() => {}),
     'MissionAbortedEvent': callbacks.onAborted || (() => {}),
     'MissionLockedEvent': callbacks.onLocked || (() => {}),
+    'MissionReturnedEvent': callbacks.onReturned || (() => {}), // 복귀 완료 이벤트
   };
 
   // fetchEventSource 실행
@@ -70,7 +70,7 @@ export const subscribeMissionUpdates = (
     openWhenHidden: true, // 탭이 백그라운드에 있어도 연결 유지
 
     // 연결 성공
-    async onopen(response) {
+    async onopen(response: any) {
       if (response.ok) {
         if (import.meta.env.DEV) console.log('[SSE] Connected');
         callbacks.onConnect?.();
@@ -82,7 +82,7 @@ export const subscribeMissionUpdates = (
     },
 
     // 메시지 수신
-    onmessage(msg) {
+    onmessage(msg: any) {
       // CONNECT 이벤트
       if (msg.event === 'CONNECT') {
         if (import.meta.env.DEV) console.log('[SSE] CONNECT event');
@@ -110,7 +110,7 @@ export const subscribeMissionUpdates = (
     },
 
     // 에러 처리
-    onerror(err) {
+    onerror(err: any) {
       if (import.meta.env.DEV) console.error('[SSE] Error:', err);
 
       // AbortError는 정상 종료
