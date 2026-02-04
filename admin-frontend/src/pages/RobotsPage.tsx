@@ -11,8 +11,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, Zap, LayoutGrid, Activity, Maximize2 } from 'lucide-react'
-import { useRobotSSE } from '@/hooks/UserRobotSSE'
-import { useRobotFetch, RobotItem } from '@/hooks/useRobotFetch'   // ← 추가
+import { useSseStore } from '@/store/sseStore'
+import { useRobotFetch, RobotItem } from '@/hooks/useRobotFetch'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -34,8 +34,10 @@ export default function RobotsPage() {
   // ── 1. 백엔드 API → 초기 로봇 목록 (한 번 로드) ──────────
   const { robots: apiRobots, loading: apiLoading, error: apiError, refetch } = useRobotFetch();
 
-  // ── 2. SSE → 실시간 이벤트 ────────────────────────────────
-  const { robots: sseRobots, isConnected, lastMessage } = useRobotSSE();
+  // ── 2. SSE → 실시간 이벤트 (Store에서 가져오기) ──────────
+  const sseRobots = useSseStore(state => state.robots);
+  const isConnected = useSseStore(state => state.isConnected);
+  const lastMessage = useSseStore(state => state.lastMessage);
 
   // ── 3. 병합: API 기본 데이터 위에 SSE 실시간 상태를 덮어쓰기 ──
   //   • robotCode를 키로 사용하여 SSE에서 온 status로 갱신
