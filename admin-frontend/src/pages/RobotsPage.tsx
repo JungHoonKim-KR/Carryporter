@@ -217,12 +217,7 @@ export default function RobotsPage() {
                <RobotStage robots={mergedRobots} showDummyIfEmpty={true} />
             </div>
 
-            <div className="absolute top-3 left-3 flex gap-2 pointer-events-none z-20">
-               <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2 text-[10px] font-bold text-cyan-700 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-cyan-300 shadow-lg">
-                 <Radio className="w-3 h-3 text-cyan-500 animate-pulse" />
-                 <span>SCANNING AREA</span>
-               </motion.div>
-            </div>
+          
             <div className="absolute bottom-3 right-3 z-20">
                <button className="p-2 bg-white/95 backdrop-blur-md shadow-xl rounded-lg hover:scale-110 transition-transform border border-slate-300">
                  <Maximize2 className="w-4 h-4 text-slate-600" />
