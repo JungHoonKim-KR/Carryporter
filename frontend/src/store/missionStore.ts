@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Mission, MissionStatus, MissionType, StoredLuggage } from '../types/mission.types';
+import type { Mission, MissionStatus, MissionType, StoredLuggage, UnifiedFlowStep } from '../types/mission.types';
 
 interface MissionState {
   // 미션 정보
@@ -25,6 +25,9 @@ interface MissionState {
 
   // 무게 애니메이션 상태
   isWeightAnimating: boolean;
+
+  // 통합 플로우 단계
+  unifiedFlowStep: UnifiedFlowStep | null;
 
   // 액션
   setCurrentMission: (mission: Mission) => void;
@@ -51,6 +54,9 @@ interface MissionState {
   addStoredLuggage: (luggage: StoredLuggage) => void;
   removeStoredLuggage: (luggageId: string) => void;
   hasStoredLuggages: () => boolean;
+
+  // 통합 플로우 관리
+  setUnifiedFlowStep: (step: UnifiedFlowStep | null) => void;
 }
 
 export const useMissionStore = create<MissionState>()(
@@ -70,6 +76,9 @@ export const useMissionStore = create<MissionState>()(
       isCreating: false,
       isVerifying: false,
       isWeightAnimating: false,
+
+      // 통합 플로우 초기값
+      unifiedFlowStep: null,
 
       setCurrentMission: (mission) => set({ currentMission: mission }),
 
@@ -174,6 +183,11 @@ export const useMissionStore = create<MissionState>()(
        * 보관된 짐이 있는지 확인
        */
       hasStoredLuggages: () => get().storedLuggages.length > 0,
+
+      /**
+       * 통합 플로우 단계 설정
+       */
+      setUnifiedFlowStep: (step) => set({ unifiedFlowStep: step }),
     }),
     {
       name: 'mission-storage', // localStorage 키

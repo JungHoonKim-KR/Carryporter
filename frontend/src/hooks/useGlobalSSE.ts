@@ -97,12 +97,6 @@ export const useGlobalSSE = () => {
         resetHeartbeat(); // ✅ Heartbeat 타이머 시작
       },
 
-      // ✅ Heartbeat 이벤트 (백엔드에서 15초마다 전송)
-      onHeartbeat: () => {
-        console.debug('[SSE] Heartbeat 수신');
-        resetHeartbeat(); // 타이머 리셋
-      },
-
       onRobotAssigned: (data: SSEEventData) => {
         console.log('[SSE] 로봇 배정:', data);
         updateMissionStatus({

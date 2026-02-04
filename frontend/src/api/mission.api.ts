@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
  * 미션 생성 API
  */
 export const createMission = async (
-  data: CreateMissionRequest
+  _data: CreateMissionRequest
 ): Promise<CreateMissionResponse> => {
   // 기존 로직 유지
   const requestData = { "callLocationId": 1 }; 

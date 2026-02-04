@@ -5,7 +5,7 @@ import { subscribeMissionUpdates } from '../api/mission.api';
 export const useMissionSSE = () => {
   // ✅ getState() 대신 selector를 써야 리액트가 변경을 감지합니다.
   const currentMission = useMissionStore(state => state.currentMission);
-  const { setConnected, setConnectionError, updateMissionStatus } = useMissionStore();
+  const { setConnected, setConnectionError, updateMissionStatus, setUnifiedFlowStep } = useMissionStore();
 
   useEffect(() => {
     // 미션이 없으면 대기 (미션이 생기면 이 useEffect가 다시 실행됨)
@@ -22,38 +22,25 @@ export const useMissionSSE = () => {
         setConnectionError(null);
       },
       onRobotAssigned: (data) => {
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'ASSIGNED', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
-        });
+        updateMissionStatus({ status: 'ASSIGNED', robotCode: data.robotCode });
       },
       onMissionStarted: (data) => {
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'MOVING', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
-        });
+        updateMissionStatus({ status: 'MOVING', robotCode: data.robotCode });
       },
       onRobotArrival: (data) => {
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'ARRIVED', robotCode: data.robotCode, 
-          timestamp: data.timestamp, message: data.msg 
-        });
+        updateMissionStatus({ status: 'ARRIVED', robotCode: data.robotCode });
       },
-      onUnlocked: (data) => {
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'UNLOCKED', timestamp: data.timestamp, message: data.msg 
-        });
+      onUnlocked: (_data) => {
+        updateMissionStatus({ status: 'UNLOCKED' });
       },
-      onLocked: (data) => {
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'LOCKED', timestamp: data.timestamp, message: data.msg 
-        });
+      onLocked: (_data) => {
+        updateMissionStatus({ status: 'LOCKED' });
+        // SSE에서 LOCKED 수신 시 체크리스트 단계로 전환
+        setUnifiedFlowStep('CHECKLIST_CONFIRM');
       },
       onAborted: (data) => {
         alert(data.msg);
-        updateMissionStatus({
-          missionId: currentMission.id, status: 'FINISHED', timestamp: data.timestamp, message: data.msg 
-        });
+        updateMissionStatus({ status: 'FINISHED' });
       },
       onError: (error) => {
         setConnected(false);

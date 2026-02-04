@@ -65,7 +65,7 @@ export const VerificationModal = ({
       setIsVerifying(true);
       setError('');
 
-      const result = await verifyMission(missionId, Number(pwd));
+      const result = await verifyMission(String(missionId), Number(pwd));
       if (import.meta.env.DEV) {
         console.log('[VerificationModal] 인증 성공:', result);
       }

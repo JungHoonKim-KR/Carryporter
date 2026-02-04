@@ -3,11 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/missionStore';
 import { Button } from '@/components/ui/button';
 import { VerificationModal } from '../components/mission/VerificationModal';
-import { MissionTypeSelector } from '../components/mission/MissionTypeSelector';
-import { StorageFlowModal } from '../components/mission/StorageFlowModal';
-import { ReturnFlowModal } from '../components/mission/ReturnFlowModal';
+import { UnifiedFlowModal } from '../components/mission/UnifiedFlowModal';
 import { TimelineStep } from '../components/mission/TimelineStep';
-import type { MissionType } from '../types/mission.types';
 
 /**
  * 미션 추적 페이지
@@ -18,8 +15,6 @@ const MissionTrackPage = () => {
   const {
     currentMission,
     clearMission,
-    setMissionType,
-    hasStoredLuggages,
     // ✅ missionStore에서 직접 가져오기 (useMissionSSE 제거)
     isConnected,
     connectionError,
@@ -29,9 +24,7 @@ const MissionTrackPage = () => {
 
   // UI 상태 관리
   const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [showStorageFlow, setShowStorageFlow] = useState(false);
-  const [showReturnFlow, setShowReturnFlow] = useState(false);
+  const [showUnifiedFlow, setShowUnifiedFlow] = useState(false);
 
   // ✅ 연결 상태 UI (계획대로 구현)
   const connectionStatus = useMemo(() => {
@@ -72,33 +65,20 @@ const MissionTrackPage = () => {
 
   // ARRIVED 상태 → 인증 모달 자동 표시
   useEffect(() => {
-    if (currentMission?.status === 'ARRIVED' && !currentMission?.missionType) {
+    if (currentMission?.status === 'ARRIVED') {
       setShowVerifyModal(true);
     }
-  }, [currentMission?.status, currentMission?.missionType]);
+  }, [currentMission?.status]);
 
-  // 인증 성공 후 타입 선택 표시
+  // 인증 성공 후 통합 플로우 표시
   const handleVerificationSuccess = () => {
     setShowVerifyModal(false);
-    setShowTypeSelector(true);
-  };
-
-  // 미션 타입 선택
-  const handleTypeSelect = (type: MissionType) => {
-    setMissionType(type);
-    setShowTypeSelector(false);
-
-    if (type === 'STORAGE') {
-      setShowStorageFlow(true);
-    } else {
-      setShowReturnFlow(true);
-    }
+    setShowUnifiedFlow(true);
   };
 
   // 플로우 완료
   const handleFlowComplete = () => {
-    setShowStorageFlow(false);
-    setShowReturnFlow(false);
+    setShowUnifiedFlow(false);
   };
 
   // 미션 완료
@@ -128,23 +108,9 @@ const MissionTrackPage = () => {
 
   const status = currentMission.status;
 
-  // 보관/반납 플로우 모달이 표시 중이면 해당 UI만 렌더링
-  if (showStorageFlow) {
-    return <StorageFlowModal onComplete={handleFlowComplete} />;
-  }
-
-  if (showReturnFlow) {
-    return <ReturnFlowModal onComplete={handleFlowComplete} />;
-  }
-
-  // 타입 선택 UI가 표시 중이면 해당 UI만 렌더링
-  if (showTypeSelector) {
-    return (
-      <MissionTypeSelector
-        onSelect={handleTypeSelect}
-        hasStoredLuggage={hasStoredLuggages()}
-      />
-    );
+  // 통합 플로우 모달이 표시 중이면 해당 UI만 렌더링
+  if (showUnifiedFlow) {
+    return <UnifiedFlowModal onComplete={handleFlowComplete} />;
   }
 
   return (
@@ -227,11 +193,6 @@ const MissionTrackPage = () => {
               label="도착"
               active={status === 'ARRIVED'}
               completed={['UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
-            />
-            <TimelineStep
-              label="짐 무게 측정"
-              active={status === 'UNLOCKED'}
-              completed={['LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
             />
             <TimelineStep
               label="완료"
