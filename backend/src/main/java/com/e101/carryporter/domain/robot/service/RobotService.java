@@ -120,7 +120,8 @@ public class RobotService {
                     mission.getRobot().getRobotCode(),
                     mission.getCallLocation().getLocationName(),
                     isNew ? null : mission.getLocker().getLockerCode(),
-                    isNew ? "FIRST" : "RECALL"
+                    isNew ? "FIRST" : "RECALL",
+                    mission.getRobot().getMacAddress()
             ));
 
             log.info("미션 배차 완료: userId={}, missionId={}, robotId={}",
