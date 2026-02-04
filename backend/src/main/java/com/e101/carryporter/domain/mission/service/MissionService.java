@@ -4,8 +4,6 @@ import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
 import com.e101.carryporter.domain.locker.entity.Locker;
 import com.e101.carryporter.domain.locker.entity.LockerStatus;
-import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
-import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
@@ -25,8 +23,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -53,13 +52,21 @@ public class MissionService {
         Location location = locationService.findById(request.getCallLocationId());
 
         // STORING 상태 있으면 조회 없으면 새로 생성
-        Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
-                .orElseGet(() -> Mission.createMission(user, location));
+        Mission mission;
+        boolean isNew = false;
+        Optional<Mission> missionOpt = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING);
+
+        if (missionOpt.isEmpty()) {
+            mission = Mission.createMission(user, location);
+            isNew = true;
+        } else {
+            mission = missionOpt.get();
+        }
 
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
-        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId));
+        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, isNew));
 
         return createdMissionId;
     }

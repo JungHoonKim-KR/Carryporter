@@ -4,13 +4,18 @@ import com.e101.carryporter.domain.admin.event.AdminLockRequestEvent;
 import com.e101.carryporter.domain.admin.event.AdminUnlockRequestEvent;
 import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.repository.LocationRepository;
+import com.e101.carryporter.domain.locker.entity.Locker;
+import com.e101.carryporter.domain.locker.repository.LockerRepository;
+import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.event.MissionFinalizedEvent;
 import com.e101.carryporter.domain.mission.event.MissionStartedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
+import com.e101.carryporter.domain.mission.service.MissionService;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.entity.RobotRealTimeInfo;
 import com.e101.carryporter.domain.robot.entity.RobotStatus;
+import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.user.entity.User;
 import com.e101.carryporter.domain.user.repository.UserRepository;
@@ -23,11 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.event.ApplicationEvents;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 
@@ -43,6 +43,9 @@ class RobotServiceTest extends IntegrationTestSupport {
     RobotService robotService;
 
     @Autowired
+    MissionService missionService;
+
+    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -50,6 +53,9 @@ class RobotServiceTest extends IntegrationTestSupport {
 
     @Autowired
     LocationRepository locationRepository;
+
+    @Autowired
+    LockerRepository lockerRepository;
 
     @Autowired
     EntityManager em;
@@ -258,6 +264,106 @@ class RobotServiceTest extends IntegrationTestSupport {
         assertThatThrownBy(() -> robotService.finalizeMission(missionId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("해당 미션을 찾을 수 없습니다.");
+    }
+
+    @DisplayName("새 미션에 로봇을 배정하면 RobotAssignedEvent가 FIRST 타입으로 발행된다.")
+    @Test
+    void assignRobotToMission_WithNewMission_ShouldPublishRobotAssignedEventWithFIRST() {
+        // given
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("e101-TEST01", "AA:BB:CC:DD:EE:FF");
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("Gate A12", "탑승구 A12");
+        locationRepository.save(callLocation);
+
+        Mission mission = Mission.createMission(user, callLocation);
+        Long missionId = missionRepository.save(mission);
+
+        // Redis에 로봇 등록
+        cacheService.saveMacMapping(robot.getMacAddress(), robot.getId());
+        cacheService.registerRobotStatus(robot.getId(), RobotRealTimeInfo.builder()
+                .macAddress(robot.getMacAddress())
+                .status(RobotStatus.IDLE)
+                .battery(100)
+                .build());
+
+        flushAndClear();
+
+        // when - isNew = true
+        robotService.assignRobotToMission(missionId, true);
+
+        // then
+        long publishedCount = events.stream(RobotAssignedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        RobotAssignedEvent publishedEvent = events.stream(RobotAssignedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.userId()).isEqualTo(user.getId());
+        assertThat(publishedEvent.missionId()).isEqualTo(missionId);
+        assertThat(publishedEvent.robotCode()).isEqualTo(robot.getRobotCode());
+        assertThat(publishedEvent.callLocationName()).isEqualTo(callLocation.getLocationName());
+        assertThat(publishedEvent.lockerCode()).isNull(); // 새 미션이므로 null
+        assertThat(publishedEvent.requestType()).isEqualTo("FIRST"); // 새 미션이므로 FIRST
+    }
+
+    @DisplayName("STORING 상태 미션에 로봇을 배정하면 RobotAssignedEvent가 RECALL 타입으로 발행된다.")
+    @Test
+    void assignRobotToMission_WithStoringMission_ShouldPublishRobotAssignedEventWithRECALL() {
+        // given
+        User user = User.createUser("test@mm.com");
+        userRepository.save(user);
+
+        Robot robot = Robot.createRobot("e101-TEST02", "BB:CC:DD:EE:FF:AA");
+        robotRepository.save(robot);
+
+        Location callLocation = Location.createLocation("Gate B5", "탑승구 B5");
+        locationRepository.save(callLocation);
+
+        Locker locker = Locker.createLocker("L001");
+        lockerRepository.save(locker);
+
+        Mission mission = Mission.createMission(user, callLocation);
+        mission.assignLocker(locker); // 보관함 할당
+        Long missionId = missionRepository.save(mission);
+
+        // 미션을 STORING 상태로 변경
+        em.createQuery("UPDATE Mission m SET m.missionStatus = :status WHERE m.id = :id")
+                .setParameter("status", MissionStatus.STORING)
+                .setParameter("id", missionId)
+                .executeUpdate();
+
+        // Redis에 로봇 등록
+        cacheService.saveMacMapping(robot.getMacAddress(), robot.getId());
+        cacheService.registerRobotStatus(robot.getId(), RobotRealTimeInfo.builder()
+                .macAddress(robot.getMacAddress())
+                .status(RobotStatus.IDLE)
+                .battery(100)
+                .build());
+
+        flushAndClear();
+
+        // when - isNew = false
+        robotService.assignRobotToMission(missionId, false);
+
+        // then
+        long publishedCount = events.stream(RobotAssignedEvent.class).count();
+        assertThat(publishedCount).isEqualTo(1);
+
+        RobotAssignedEvent publishedEvent = events.stream(RobotAssignedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.userId()).isEqualTo(user.getId());
+        assertThat(publishedEvent.missionId()).isEqualTo(missionId);
+        assertThat(publishedEvent.robotCode()).isEqualTo(robot.getRobotCode());
+        assertThat(publishedEvent.callLocationName()).isEqualTo(callLocation.getLocationName());
+        assertThat(publishedEvent.lockerCode()).isEqualTo(locker.getLockerCode()); // 보관 중이므로 lockerCode 존재
+        assertThat(publishedEvent.requestType()).isEqualTo("RECALL"); // 재호출이므로 RECALL
     }
 
     // ==================== registerRobot 테스트 ====================

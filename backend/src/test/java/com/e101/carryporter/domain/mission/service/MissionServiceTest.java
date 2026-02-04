@@ -48,7 +48,7 @@ class MissionServiceTest extends IntegrationTestSupport {
     @Autowired
     ApplicationEvents events;
 
-    @DisplayName("새 미션을 생성하면 새 미션이 생성되었다는 이벤트가 발행된다.")
+    @DisplayName("새 미션을 생성하면 새 미션이 생성되었다는 이벤트가 isNew=true로 발행된다.")
     @Test
     void createMission() {
 
@@ -83,9 +83,10 @@ class MissionServiceTest extends IntegrationTestSupport {
                 .orElseThrow();
 
         assertThat(publishedEvent.missionId()).isEqualTo(missionId);
+        assertThat(publishedEvent.isNew()).isTrue(); // 새 미션이므로 true
     }
 
-    @DisplayName("STORING 상태의 미션이 이미 있으면 새로운 미션을 생성하지 않고 기존 미션을 반환한다.")
+    @DisplayName("STORING 상태의 미션이 이미 있으면 새로운 미션을 생성하지 않고 기존 미션을 반환하며 isNew=false로 이벤트가 발행된다.")
     @Test
     void createMissionWithExistingStoringMission() {
         // given
@@ -123,9 +124,20 @@ class MissionServiceTest extends IntegrationTestSupport {
         Mission mission = missionRepository.findById(returnedMissionId).orElseThrow();
         assertThat(mission.getMissionStatus()).isEqualTo(MissionStatus.STORING);
         assertThat(mission.getCallLocation().getId()).isEqualTo(location1.getId()); // 기존 위치 유지
+
+        // MissionCreatedEvent 검증
+        Long eventCount = events.stream(MissionCreatedEvent.class).count();
+        assertThat(eventCount).isEqualTo(1);
+
+        MissionCreatedEvent publishedEvent = events.stream(MissionCreatedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(existingMissionId);
+        assertThat(publishedEvent.isNew()).isFalse(); // 기존 미션이므로 false
     }
 
-    @DisplayName("STORING 상태의 미션이 없으면 새로운 미션을 생성한다.")
+    @DisplayName("STORING 상태의 미션이 없으면 새로운 미션을 생성하고 isNew=true로 이벤트가 발행된다.")
     @Test
     void createMissionWithoutStoringMission() {
         // given
@@ -138,6 +150,7 @@ class MissionServiceTest extends IntegrationTestSupport {
         Long locationId2 = locationRepository.save(location2);
 
         // REQUESTED 상태의 미션만 있음 (STORING 아님)
+        // repository에 직접 저장하므로 이벤트 발생하지 않음
         Mission requestedMission = Mission.createMission(user, location1);
         missionRepository.save(requestedMission);
         flushAndClear();
@@ -154,6 +167,17 @@ class MissionServiceTest extends IntegrationTestSupport {
         Mission newMission = missionRepository.findById(newMissionId).orElseThrow();
         assertThat(newMission.getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
         assertThat(newMission.getCallLocation().getId()).isEqualTo(locationId2);
+
+        // MissionCreatedEvent 검증
+        long eventCount = events.stream(MissionCreatedEvent.class).count();
+        assertThat(eventCount).isEqualTo(1); // missionService.createMission만 호출했으므로 1번
+
+        MissionCreatedEvent publishedEvent = events.stream(MissionCreatedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(newMissionId);
+        assertThat(publishedEvent.isNew()).isTrue(); // 새 미션이므로 true
     }
 
     @DisplayName("미션 실패 시 미션 상태가 FAILED로 변경된다.")

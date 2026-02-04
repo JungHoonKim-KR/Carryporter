@@ -97,7 +97,7 @@ public class RobotService {
      * 미션에 로봇 할당 (가용 로봇 획득 + DB 배정)
      */
     @Transactional
-    public void assignRobotToMission(Long missionId) {
+    public void assignRobotToMission(Long missionId, boolean isNew) {
         Long availableRobotId = null;
 
         try {
@@ -117,8 +117,8 @@ public class RobotService {
                     mission.getId(),
                     mission.getRobot().getRobotCode(),
                     mission.getCallLocation().getLocationName(),
-                    null,
-                    "FIRST"
+                    isNew ? null : mission.getLocker().getLockerCode(),
+                    isNew ? "FIRST" : "RECALL"
             ));
 
             log.info("미션 배차 완료: userId={}, missionId={}, robotId={}",
