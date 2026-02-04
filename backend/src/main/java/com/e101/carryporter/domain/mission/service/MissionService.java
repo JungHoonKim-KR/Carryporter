@@ -213,4 +213,9 @@ public class MissionService {
         }
     }
 
+    // warning
+    @Transactional
+    public void failAll() {
+        missionRepository.failAll();
+    }
 }

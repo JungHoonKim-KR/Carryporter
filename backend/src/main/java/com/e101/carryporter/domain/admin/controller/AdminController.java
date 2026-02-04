@@ -29,6 +29,17 @@ public class AdminController {
     private final RobotService robotService;
     private final AdminService adminService;
     private final AdminLockerService adminLockerService;
+    private final MissionService missionService;
+
+    @PostMapping("/boom")
+    public ResponseEntity<Void> boom() {
+        log.debug("모든 미션 Failed");
+        missionService.failAll();
+
+        log.debug("[DB] 모든 로봇 IDLE");
+        log.debug("[Redis] 모든 로봇 IDLE 및 가용 큐 복귀");
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/join")
     public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
@@ -58,7 +69,7 @@ public class AdminController {
 
 
     @PostMapping("/missions/{missionId}/unlock")
-    public ResponseEntity<Void> unlockRobot( @PathVariable Long missionId) {
+    public ResponseEntity<Void> unlockRobot(@PathVariable Long missionId) {
         log.debug("관리자 권한 잠금 해제 요청 mission id = {}", missionId);
 
         robotService.unlockByAdmin(missionId);

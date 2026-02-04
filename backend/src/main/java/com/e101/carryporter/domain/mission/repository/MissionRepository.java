@@ -78,4 +78,10 @@ public class MissionRepository {
                 .stream()
                 .findAny();
     }
+
+    public void failAll() {
+        em.createQuery("select m from Mission m", Mission.class)
+                .getResultList()
+                .forEach(Mission::failed);
+    }
 }
