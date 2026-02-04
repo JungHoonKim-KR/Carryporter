@@ -26,7 +26,7 @@ public class AdminSseNotificationHandler {
      */
     @EventListener
     public void handleRobotAssignedEvent(RobotAssignedEvent event) {
-        sseService.broadcastToAdmins("[AdminSseNotificationHandler] RobotAssignedEvent", event);
+        sseService.broadcastToAdmins("RobotAssignedEvent", event);
     }
 
     /**
@@ -97,6 +97,16 @@ public class AdminSseNotificationHandler {
     public void handleRobotReturnedEvent(RobotReturnedEvent event) {
         log.debug("[AdminSseNotificationHandler] 로봇 복귀 완료!! mission id = {}", event.missionId());
         sseService.broadcastToAdmins("RobotReturnedEvent", event);
+    }
+
+    /**
+     * 8. 미션 종료 알림
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleMissionFinalizedEvent(MissionFinalizedEvent event) {
+        log.debug("[AdminSseNotificationHandler] mission 종료: missionId = {}, message = {}", event.missionId(), event.message());
+        sseService.broadcastToAdmins("MissionFailedEvent", event);
     }
 
     /**

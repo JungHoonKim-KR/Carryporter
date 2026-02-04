@@ -6,6 +6,7 @@ package com.e101.carryporter.domain.mission.event;
  */
 public record MissionFinalizedEvent(
         Long missionId,
-        Long robotId
+        Long robotId,
+        String message
 ) {
 }
