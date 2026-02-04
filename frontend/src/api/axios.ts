@@ -5,7 +5,7 @@ import { useAuthStore } from "../store/authStore";
 const apiClient = axios.create({
     // 개발 환경: Vite 프록시 사용 (CORS 우회)
     // 프로덕션 환경: 환경 변수의 API 서버 URL 사용
-    baseURL: import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.DEV ? "" : import.meta.env.VITE_API_URL,
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
