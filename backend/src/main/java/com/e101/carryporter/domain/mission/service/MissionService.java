@@ -4,8 +4,6 @@ import com.e101.carryporter.domain.location.entity.Location;
 import com.e101.carryporter.domain.location.service.LocationService;
 import com.e101.carryporter.domain.locker.entity.Locker;
 import com.e101.carryporter.domain.locker.entity.LockerStatus;
-import com.e101.carryporter.domain.locker.exception.LockerErrorCode;
-import com.e101.carryporter.domain.locker.repository.LockerRepository;
 import com.e101.carryporter.domain.mission.entity.Mission;
 import com.e101.carryporter.domain.mission.entity.MissionStatus;
 import com.e101.carryporter.domain.mission.event.MissionCreatedEvent;
@@ -25,8 +23,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -56,10 +55,12 @@ public class MissionService {
         Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
                 .orElseGet(() -> Mission.createMission(user, location));
 
+        // 새로 생성된 mission 은 save 전까지 id 가 null
+        boolean isNew = mission.getId() == null;
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
-        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId));
+        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, isNew));
 
         return createdMissionId;
     }
@@ -212,4 +213,9 @@ public class MissionService {
         }
     }
 
+    // warning: FINISHED 제외한 모든 진행중인 미션을 FAILED로 변경
+    @Transactional
+    public void failAllExceptFinished() {
+        missionRepository.failAllExceptFinished();
+    }
 }

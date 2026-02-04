@@ -54,4 +54,12 @@ public class AdminLockerService {
         mission.assignLocker(locker);
         locker.updateStatus(LockerStatus.OCCUPIED);
     }
+
+    @Transactional
+    public void changeStatusAll(LockerStatus newStatus) {
+        lockerRepository.findAll()
+                .forEach(l -> {
+                    l.updateStatus(newStatus);
+                });
+    }
 }

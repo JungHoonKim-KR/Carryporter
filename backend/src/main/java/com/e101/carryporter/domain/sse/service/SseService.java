@@ -1,17 +1,16 @@
 package com.e101.carryporter.domain.sse.service;
 
 import com.e101.carryporter.domain.sse.repository.SseEmitterRepository;
-import com.e101.carryporter.domain.user.entity.Role; // Role Enum 추가
+import com.e101.carryporter.domain.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -23,55 +22,85 @@ public class SseService {
     // 연결 유지 시간: 60분
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
 
-    // 하트비트 간격: 45초 (Nginx 기본 타임아웃 60초보다 짧아야 함)
-    private static final Long HEARTBEAT_INTERVAL = 15L;
-
     public SseEmitter subscribe(Long id, String role) {
+        // [핵심] 기존에 연결된 Emitter가 있다면 강제로 끊어서 정리
+        stopExistingEmitter(id, role);
+
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        // 1. 하트비트 스케줄러 설정
-        // 각 연결마다 독립적인 하트비트를 보내기 위해 스케줄러를 생성합니다.
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        // 콜백 설정
+        emitter.onCompletion(() -> removeEmitter(id, role, "Completion"));
+        emitter.onTimeout(() -> removeEmitter(id, role, "Timeout"));
+        emitter.onError((e) -> removeEmitter(id, role, "Error"));
 
-        // 45초마다 빈 이벤트를 전송하여 연결 유지
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                emitter.send(SseEmitter.event()
-                        .name("heartbeat")
-                        .data("keep-alive"));
-            } catch (IOException e) {
-                log.debug("[SSE-HEARTBEAT] 연결 종료로 인한 하트비트 중단 | ID: {}", id);
-                scheduler.shutdown();
-            }
-        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
-
-        // 2. 콜백 설정 (연결 종료/타임아웃 시 스케줄러도 함께 종료)
+        // Repository 저장
         if (Role.ADMIN.name().equals(role)) {
-            emitter.onCompletion(() -> {
-                emitterRepository.deleteAdmin(id);
-                scheduler.shutdown();
-            });
-            emitter.onTimeout(() -> {
-                emitterRepository.deleteAdmin(id);
-                scheduler.shutdown();
-            });
             emitterRepository.saveAdmin(id, emitter);
         } else {
-            emitter.onCompletion(() -> {
-                emitterRepository.deleteUser(id);
-                scheduler.shutdown();
-            });
-            emitter.onTimeout(() -> {
-                emitterRepository.deleteUser(id);
-                scheduler.shutdown();
-            });
             emitterRepository.saveUser(id, emitter);
         }
 
-        // 3. 최초 연결 더미 데이터 전송
+        // 최초 연결 더미 전송 (이때 실패하면 즉시 정리됨)
         sendToClient(emitter, id, "CONNECT", "Connected! [Role: " + role + "]");
 
         return emitter;
+    }
+
+    /**
+     * 기존 연결을 찾아 명시적으로 종료시키는 메서드
+     */
+    private void stopExistingEmitter(Long id, String role) {
+        SseEmitter existing = emitterRepository.findUser(id);
+
+        if (existing != null) {
+            log.info("[SSE] 기존 연결 종료 시도 | ID: {}", id);
+            try {
+                existing.complete(); // 기존 연결을 우아하게 닫음
+            } catch (Exception e) {
+                log.warn("[SSE] 기존 연결 종료 중 에러 발생 | ID: {}", id);
+            } finally {
+                removeEmitter(id, role, "Re-subscription");
+            }
+        }
+    }
+
+    /**
+     * Repository에서 안전하게 제거하는 공통 메서드
+     */
+    private void removeEmitter(Long id, String role, String reason) {
+        log.debug("[SSE] 연결 제거 요청 | ID: {} | 사유: {}", id, reason);
+        if (Role.ADMIN.name().equals(role)) {
+            emitterRepository.deleteAdmin(id);
+        } else {
+            emitterRepository.deleteUser(id);
+        }
+    }
+
+    /**
+     * 중앙 집중형 하트비트 - 15초마다 전체 연결에 ping
+     */
+    @Scheduled(fixedRate = 15000) // 15초마다 실행
+    public void sendHeartbeat() {
+        Map<Long, SseEmitter> allEmitters = new HashMap<>();
+        allEmitters.putAll(emitterRepository.findAllUsers());
+        allEmitters.putAll(emitterRepository.findAllAdmins());
+
+        if (!allEmitters.isEmpty()) {
+            log.debug("[SSE-HEARTBEAT] 하트비트 전송 | 연결 수: {}", allEmitters.size());
+        }
+
+        allEmitters.forEach((id, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
+            } catch (IOException e) {
+                // 연결이 끊긴 것이 확인되면 Repository에서 제거
+                log.debug("[SSE-HEARTBEAT] 하트비트 전송 실패, 연결 정리 | ID: {}", id);
+                emitter.completeWithError(e);
+                // 양쪽 다 시도 (role 정보를 알 수 없으므로)
+                emitterRepository.deleteUser(id);
+                emitterRepository.deleteAdmin(id);
+            }
+        });
     }
 
     /**
@@ -88,14 +117,13 @@ public class SseService {
         });
     }
 
-
     /**
      * [ADMIN] 모든 관리자에게 알림 전송
-     * @param eventName MissionStatus.name() 혹은 커스텀 이벤트 이름
      */
     public void broadcastToAdmins(String eventName, Object data) {
         Map<Long, SseEmitter> admins = emitterRepository.findAllAdmins();
-        log.info(admins.toString());
+        log.info("[SSE-SERVICE] 관리자 전체 전송 | event={} | count={}",
+                eventName, admins.size());
         admins.forEach((id, emitter) -> {
             sendToClient(emitter, id, eventName, data);
         });
@@ -118,22 +146,23 @@ public class SseService {
      * 실제 전송 로직
      */
     private void sendToClient(SseEmitter emitter, Long id, String eventName, Object data) {
+        if (emitter == null) return;
+
         try {
             emitter.send(SseEmitter.event()
                     .id(String.valueOf(id))
                     .name(eventName)
-                    .data(data)); // ✨ 여기서 Object(Map 등)가 JSON 문자열로 자동 변환됨
+                    .data(data));
 
         } catch (IOException e) {
-            log.error("[SSE-SERVICE] 전송 중 입출력 에러 발생 | ID: {} | Error: {}", id, e.getMessage());
-            // 연결이 유효하지 않으므로 삭제
+            log.debug("[SSE-SERVICE] 클라이언트 연결 끊김 (IOException) | ID: {}", id);
+            // 여기서 발생한 IOException이 DispatcherServlet까지 가지 않도록 catch하여 종료 처리
+            emitter.completeWithError(e);
+            // 양쪽 다 제거 시도
             emitterRepository.deleteUser(id);
             emitterRepository.deleteAdmin(id);
-            emitter.completeWithError(e);
         } catch (Exception e) {
             log.error("[SSE-SERVICE] 알 수 없는 전송 에러 | ID: {}", id, e);
         }
     }
-
-
 }

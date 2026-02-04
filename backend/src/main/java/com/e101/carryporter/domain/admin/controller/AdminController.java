@@ -7,7 +7,9 @@ import com.e101.carryporter.domain.admin.controller.dto.response.RobotResponseDt
 import com.e101.carryporter.domain.admin.service.AdminLockerService;
 import com.e101.carryporter.domain.admin.service.AdminService;
 import com.e101.carryporter.domain.auth.controller.dto.response.TokenResponseDto;
+import com.e101.carryporter.domain.locker.entity.LockerStatus;
 import com.e101.carryporter.domain.mission.service.MissionService;
+import com.e101.carryporter.domain.robot.entity.RobotStatus;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,22 @@ public class AdminController {
     private final RobotService robotService;
     private final AdminService adminService;
     private final AdminLockerService adminLockerService;
+    private final MissionService missionService;
+
+    @PostMapping("/boom")
+    public ResponseEntity<Void> boom() {
+        log.debug("FINISHED 제외한 모든 미션 Failed");
+        missionService.failAllExceptFinished();
+
+        log.debug("[DB] 모든 로봇 IDLE");
+        log.debug("[Redis] 모든 로봇 IDLE 및 가용 큐 복귀");
+        robotService.changeStatusAll(RobotStatus.IDLE);
+
+        log.debug("[BD] 모든 Locker AVAILABLE");
+        adminLockerService.changeStatusAll(LockerStatus.AVAILABLE);
+
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/join")
     public ResponseEntity<Void> join(@RequestBody @Valid JoinRequestDto requestDto) {
@@ -58,7 +76,7 @@ public class AdminController {
 
 
     @PostMapping("/missions/{missionId}/unlock")
-    public ResponseEntity<Void> unlockRobot( @PathVariable Long missionId) {
+    public ResponseEntity<Void> unlockRobot(@PathVariable Long missionId) {
         log.debug("관리자 권한 잠금 해제 요청 mission id = {}", missionId);
 
         robotService.unlockByAdmin(missionId);

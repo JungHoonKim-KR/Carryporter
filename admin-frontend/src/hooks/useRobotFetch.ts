@@ -20,55 +20,56 @@ export interface RobotApiResponse {
 // 프론트엔드에서 사용하는 통일 타입
 // 기존 SSE robots 객체와 같은 구조로 맞춤
 // ─────────────────────────────────────────────
+export interface RobotApiResponse {
+  id: number;
+  robotCode: string;
+  macAddress: string;
+  robotStatus: string;
+}
+
 export interface RobotItem {
   id: number;
   robotCode: string;
   macAddress: string;
   status: 'available' | 'working' | 'error' | 'offline';
-  // SSE에서 추가로 올 수 있는 필드
   x?: number;
   y?: number;
   currentTask?: string;
 }
 
-// 개발 환경에서는 빈 문자열 (vite 프록시 사용), 프로덕션에서는 환경 변수 사용
 const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
 
-// ─────────────────────────────────────────────
-// 백엔드 RobotStatus (대문자) → 프론트 status (소문자) 매핑
-// 백엔드에 새 status가 추가되면 여기에도 추가
-// ─────────────────────────────────────────────
 function mapStatus(backendStatus: string): RobotItem['status'] {
   switch (backendStatus?.toUpperCase()) {
-    case 'AVAILABLE': return 'available';
-    case 'WORKING':   return 'working';
-    case 'ERROR':     return 'error';
-    case 'OFFLINE':   return 'offline';
-    default:          return 'offline';
+    case 'IDLE':     return 'available';
+    case 'BUSY':     return 'working';
+    case 'OFFLINE':  return 'offline';
+    default:         return 'offline';
   }
 }
 
-// ─────────────────────────────────────────────
-// API 호출 함수들 (훅 밖으로 분리 → 다른 곳에서도 재사용 가능)
-// ─────────────────────────────────────────────
-
-// 전체 목록: GET /api/robots
 export async function fetchAllRobots(): Promise<RobotApiResponse[]> {
-  const res = await fetch(`${API_BASE}/api/robots`);
-  if (!res.ok) throw new Error(`전체 로봇 조회 실패 (${res.status})`);
-  return res.json();
-}
+  const token = localStorage.getItem('accessToken'); 
+  const baseUrl = API_BASE ? `/${API_BASE}` : '';
+  const url = `${baseUrl}/api/admin/robots`.replace(/\/+/g, '/');
 
-// 단건 조회: GET /api/robots/{robotId}
-export async function fetchRobotById(robotId: number): Promise<RobotApiResponse> {
-  const res = await fetch(`${API_BASE}/api/robots/${robotId}`);
-  if (!res.ok) throw new Error(`로봇 ${robotId} 조회 실패 (${res.status})`);
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) throw new Error("인증이 만료되었습니다.");
+    throw new Error(`전체 로봇 조회 실패 (${res.status})`);
+  }
   return res.json();
 }
 
 // ─────────────────────────────────────────────
-// 커스턴 훅: useRobotFetch
-// 마운트 시 자동으로 전체 로봇 목록을 가져옴
+// 커스텀 훅: useRobotFetch
 // ─────────────────────────────────────────────
 export function useRobotFetch() {
   const [robots, setRobots]     = useState<RobotItem[]>([]);
@@ -82,13 +83,26 @@ export function useRobotFetch() {
 
       const apiRobots = await fetchAllRobots();
 
-      // 백엔드 응답 → 프론트엔드 통일 타입으로 변환
-      const mapped: RobotItem[] = apiRobots.map((r) => ({
-        id:          r.id,
-        robotCode:   r.robotCode,
-        macAddress:  r.macAddress,
-        status:      mapStatus(r.robotStatus),
-      }));
+      // ✅ [수정됨] 로봇 겹침 방지 로직 적용
+      const mapped: RobotItem[] = apiRobots.map((r, index) => {
+        // 1. 간격 설정 (3D 뷰에서 10으로 나누므로, 20은 실제 2만큼 떨어짐)
+        const spacing = 20; 
+        
+        // 2. 전체 로봇이 중앙에 오도록 시작점 계산
+        // (로봇 수 - 1) * 간격 / 2 만큼 왼쪽(-)으로 이동시켜 시작
+        const totalWidth = (apiRobots.length - 1) * spacing;
+        const startX = -totalWidth / 2;
+
+        return {
+          id:          r.id,
+          robotCode:   r.robotCode,
+          macAddress:  r.macAddress,
+          status:      mapStatus(r.robotStatus),
+          // 3. 인덱스에 따라 x 좌표 할당 (startX 부터 spacing 만큼 띄움)
+          x: startX + (index * spacing), 
+          y: -50, // 메인 스테이션 위치 (화면 하단)
+        };
+      });
 
       setRobots(mapped);
     } catch (e) {

@@ -22,7 +22,7 @@ type ProcessStep = 'LOCKER_SELECT' | 'LOCK_ROBOT' | 'READY_TO_START';
 
 export default function MissionProcessModal({ data, onClose, onMissionStart }: MissionProcessModalProps) {
   const [step, setStep] = useState<ProcessStep>(
-    data.requestType === 'RECALL' ? 'LOCK_ROBOT' : 'LOCKER_SELECT'
+    data.requestType === 'RECALL' ? 'READY_TO_START' : 'LOCKER_SELECT'
   );
 
   // 실제 배정된 사물함 코드
@@ -65,7 +65,7 @@ const handleAssignLocker = async () => {
     // ✅ 성공 시 알림을 띄우거나 바로 다음 단계로 전환
     console.log("✅ 배정 성공");
     setSelectedLockerCode(tempSelectedLocker.lockerCode);
-    setStep('LOCK_ROBOT'); 
+    setStep('READY_TO_START'); 
   } catch (err) {
       console.error("❌ 사물함 배정 실패:", err);
       alert("사물함 배정에 실패했습니다. 다시 시도해주세요.");
@@ -74,18 +74,18 @@ const handleAssignLocker = async () => {
     }
   };
 
-  // 2. 로봇 잠금 요청
-  const handleLockRobot = async () => {
-    setIsProcessing(true);
-    try {
-      await api.post(`/api/admin/missions/${data.missionId}/lock`, {});
-      setStep('READY_TO_START'); 
-    } catch (err) {
-      console.error("❌ 잠금 요청 실패:", err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  // // 2. 로봇 잠금 요청
+  // const handleLockRobot = async () => {
+  //   setIsProcessing(true);
+  //   try {
+  //     await api.post(`/api/admin/missions/${data.missionId}/lock`, {});
+  //     setStep('READY_TO_START'); 
+  //   } catch (err) {
+  //     console.error("❌ 잠금 요청 실패:", err);
+  //   } finally {
+  //     setIsProcessing(false);
+  //   }
+  // };
 
   // 3. 미션 출발 요청
   const handleStartMission = async () => {
@@ -185,7 +185,7 @@ const handleAssignLocker = async () => {
             </div>
           )}
 
-          {/* --- [STEP 2] 로봇 잠금 --- */}
+          {/* --- [STEP 2] 로봇 잠금 ---
           {step === 'LOCK_ROBOT' && (
             <div className="text-center py-4">
                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
@@ -211,7 +211,7 @@ const handleAssignLocker = async () => {
                  {isProcessing ? '처리 중...' : <> <Lock size={18} /> 로봇 잠금 (DOOR LOCK) </>}
                </button>
             </div>
-          )}
+          )} */}
 
           {/* --- [STEP 3] 최종 출발 --- */}
           {step === 'READY_TO_START' && (

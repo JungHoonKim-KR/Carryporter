@@ -13,15 +13,10 @@ build
 *.local
 
 # ===== Environment Variables =====
-# 중요: 환경변수 파일은 절대 커밋하지 마세요!
-.env
+# .local 파일만 무시 (개인별 로컬 설정)
+# .env.development, .env.production은 커밋 (팀 공유 설정)
 .env.local
-.env.development
-.env.development.local
-.env.test
-.env.test.local
-.env.production
-.env.production.local
+.env.*.local
 
 # ===== Logs =====
 logs
