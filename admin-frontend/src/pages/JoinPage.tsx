@@ -3,7 +3,7 @@ import { useNavigate, NavLink } from 'react-router-dom'
 import { useThemeStore } from '@/store/themeStore'
 import { cn } from '@/lib/utils'
 import { Sun, Moon, Mail, Lock, User, Loader2, ArrowLeft } from 'lucide-react'
-import { joinApi } from '@/api/authApi' // 🚨 joinApi import 확인
+import { joinApi } from '@/api/authApi' 
 
 export default function JoinPage() {
     const navigate = useNavigate()
