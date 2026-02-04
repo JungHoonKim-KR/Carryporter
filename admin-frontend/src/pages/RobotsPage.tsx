@@ -97,32 +97,70 @@ export default function RobotsPage() {
   // SSE 이벤트 리스너
   useEffect(() => {
     if (!lastMessage) return;
+    
     try {
+      // 🔥 1차 시도: JSON 파싱 (이미 JSON 객체인 경우)
       const parsed = JSON.parse(lastMessage);
-      if (parsed.eventName === 'RobotAssignedEvent' || (parsed.userId && parsed.requestType)) {
-        setAssignedEvent({
-          userId: parsed.userId || parsed.data?.userId,
-          missionId: parsed.missionId || parsed.data?.missionId,
-          robotCode: parsed.robotCode || parsed.data?.robotCode,
-          callLocationName: parsed.callLocationName || parsed.data?.callLocationName,
-          locker_code: parsed.locker_code || parsed.data?.locker_code,
-          requestType: parsed.requestType || parsed.data?.requestType || 'FIRST',
+      handleParsedEvent(parsed);
+    } catch (e) {
+      // 🔥 2차 시도: SSE 형식 파싱 (event:\ndata:\n 형식)
+      try {
+        const lines = lastMessage.split('\n');
+        let eventName = '';
+        let dataStr = '';
+
+        lines.forEach(line => {
+          if (line.startsWith('event:')) {
+            eventName = line.replace('event:', '').trim();
+          } else if (line.startsWith('data:')) {
+            dataStr = line.replace('data:', '').trim();
+          }
         });
+
+        // data 부분을 JSON 파싱
+        if (dataStr) {
+          const parsed = JSON.parse(dataStr);
+          // eventName을 parsed 객체에 추가
+          parsed.eventName = parsed.eventName || eventName;
+          handleParsedEvent(parsed);
+        }
+      } catch (innerErr) {
+        console.log('SSE 파싱 실패 (무시):', innerErr);
       }
-      else if (parsed.eventName === 'RobotReturnedAdminEvent' || (parsed.lockerCode && parsed.robotCode && parsed.missionId)) {
-        const data = {
-          userId: parsed.userId || parsed.data?.userId,
-          robotCode: parsed.robotCode || parsed.data?.robotCode,
-          missionId: parsed.missionId || parsed.data?.missionId,
-          lockerId: parsed.lockerId || parsed.data?.lockerId,
-          lockerCode: parsed.lockerCode || parsed.data?.lockerCode,
-          message: parsed.message || parsed.data?.message,
-        };
-        toast.success(`🤖 ${data.robotCode} 복귀 완료!`);
-        setReturnData(data);
-      }
-    } catch (e) {}
+    }
   }, [lastMessage]);
+
+  // 🔥 파싱된 이벤트 처리 함수
+  const handleParsedEvent = (parsed: any) => {
+    console.log('📨 파싱된 이벤트:', parsed);
+
+    // RobotAssignedEvent 처리
+    if (parsed.eventName === 'RobotAssignedEvent' || (parsed.userId && parsed.requestType)) {
+      console.log('🚀 RobotAssignedEvent 감지! 모달 오픈');
+      
+      setAssignedEvent({
+        userId: parsed.userId || parsed.data?.userId,
+        missionId: parsed.missionId || parsed.data?.missionId,
+        robotCode: parsed.robotCode || parsed.data?.robotCode,
+        callLocationName: parsed.callLocationName || parsed.data?.callLocationName,
+        locker_code: parsed.locker_code || parsed.data?.locker_code,
+        requestType: parsed.requestType || parsed.data?.requestType || 'FIRST',
+      });
+    }
+    // RobotReturnedAdminEvent 처리
+    else if (parsed.eventName === 'RobotReturnedAdminEvent' || (parsed.lockerCode && parsed.robotCode && parsed.missionId)) {
+      const data = {
+        userId: parsed.userId || parsed.data?.userId,
+        robotCode: parsed.robotCode || parsed.data?.robotCode,
+        missionId: parsed.missionId || parsed.data?.missionId,
+        lockerId: parsed.lockerId || parsed.data?.lockerId,
+        lockerCode: parsed.lockerCode || parsed.data?.lockerCode,
+        message: parsed.message || parsed.data?.message,
+      };
+      toast.success(`🤖 ${data.robotCode} 복귀 완료!`);
+      setReturnData(data);
+    }
+  };
 
   // 핸들러 함수들
   const handleLockerSelect = (lockerId: number) => { setSelectedLocker(lockerId); setStep('CONFIRM_LOCKER'); };
@@ -217,12 +255,6 @@ export default function RobotsPage() {
                <RobotStage robots={mergedRobots} showDummyIfEmpty={true} />
             </div>
 
-            <div className="absolute top-3 left-3 flex gap-2 pointer-events-none z-20">
-               <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2 text-[10px] font-bold text-cyan-700 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-cyan-300 shadow-lg">
-                 <Radio className="w-3 h-3 text-cyan-500 animate-pulse" />
-                 <span>SCANNING AREA</span>
-               </motion.div>
-            </div>
             <div className="absolute bottom-3 right-3 z-20">
                <button className="p-2 bg-white/95 backdrop-blur-md shadow-xl rounded-lg hover:scale-110 transition-transform border border-slate-300">
                  <Maximize2 className="w-4 h-4 text-slate-600" />
