@@ -1,253 +1,374 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMissionStore } from '../store/missionStore';
-import { Button } from '@/components/ui/button';
-import { VerificationModal } from '../components/mission/VerificationModal';
-import { UnifiedFlowModal } from '../components/mission/UnifiedFlowModal';
-import { TimelineStep } from '../components/mission/TimelineStep';
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMissionStore } from "../store/missionStore";
+import { Button } from "@/components/ui/button";
+import { VerificationModal } from "../components/mission/VerificationModal";
+import { UnifiedFlowModal } from "../components/mission/UnifiedFlowModal";
+import { TimelineStep } from "../components/mission/TimelineStep";
+import { ProgressBar } from "../components/mission/ProgressBar";
+import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * 미션 추적 페이지
  * 로봇 도착 후 인증 → 보관/반납 선택 → 각 플로우 실행
  */
 const MissionTrackPage = () => {
-  const navigate = useNavigate();
-  const {
-    currentMission,
-    clearMission,
-    // ✅ missionStore에서 직접 가져오기 (useMissionSSE 제거)
-    isConnected,
-    connectionError,
-    connectionQuality,
-    reconnectAttempts,
-  } = useMissionStore();
+    const navigate = useNavigate();
+    const {
+        currentMission,
+        clearMission,
+        // ✅ missionStore에서 직접 가져오기 (useMissionSSE 제거)
+        isConnected,
+        connectionError,
+        connectionQuality,
+        reconnectAttempts,
+    } = useMissionStore();
 
-  // UI 상태 관리
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [showUnifiedFlow, setShowUnifiedFlow] = useState(false);
+    // UI 상태 관리
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showUnifiedFlow, setShowUnifiedFlow] = useState(false);
 
-  // ✅ 연결 상태 UI (계획대로 구현)
-  const connectionStatus = useMemo(() => {
-    if (!isConnected && reconnectAttempts > 0) {
-      return {
-        label: `재연결 중... (${reconnectAttempts}/10)`,
-        color: 'bg-yellow-50 text-yellow-600',
-        dotColor: 'bg-yellow-500',
-        animate: true,
-      };
-    }
+    // ✅ 연결 상태 UI (계획대로 구현)
+    const connectionStatus = useMemo(() => {
+        if (!isConnected && reconnectAttempts > 0) {
+            return {
+                label: `재연결 중... (${reconnectAttempts}/10)`,
+                color: "bg-yellow-50 text-yellow-600",
+                dotColor: "bg-yellow-500",
+                animate: true,
+            };
+        }
 
-    if (isConnected && connectionQuality === 'poor') {
-      return {
-        label: '연결 불안정',
-        color: 'bg-orange-50 text-orange-600',
-        dotColor: 'bg-orange-500',
-        animate: false,
-      };
-    }
+        if (isConnected && connectionQuality === "poor") {
+            return {
+                label: "연결 불안정",
+                color: "bg-orange-50 text-orange-600",
+                dotColor: "bg-orange-500",
+                animate: false,
+            };
+        }
 
-    if (isConnected) {
-      return {
-        label: '실시간',
-        color: 'bg-toss-green/20 text-toss-green',
-        dotColor: 'bg-toss-green',
-        animate: true,
-      };
-    }
+        if (isConnected) {
+            return {
+                label: "실시간",
+                color: "bg-toss-green/20 text-toss-green",
+                dotColor: "bg-toss-green",
+                animate: true,
+            };
+        }
 
-    return {
-      label: '연결 끊김',
-      color: 'bg-red-50 text-red-500',
-      dotColor: 'bg-red-500',
-      animate: false,
+        return {
+            label: "연결 끊김",
+            color: "bg-red-50 text-red-500",
+            dotColor: "bg-red-500",
+            animate: false,
+        };
+    }, [isConnected, connectionQuality, reconnectAttempts]);
+
+    // ARRIVED 상태 → 인증 모달 자동 표시
+    useEffect(() => {
+        if (currentMission?.status === "ARRIVED") {
+            setShowVerifyModal(true);
+        }
+    }, [currentMission?.status]);
+
+    // 인증 성공 후 통합 플로우 표시
+    const handleVerificationSuccess = () => {
+        setShowVerifyModal(false);
+        setShowUnifiedFlow(true);
     };
-  }, [isConnected, connectionQuality, reconnectAttempts]);
 
-  // ARRIVED 상태 → 인증 모달 자동 표시
-  useEffect(() => {
-    if (currentMission?.status === 'ARRIVED') {
-      setShowVerifyModal(true);
+    // 플로우 완료
+    const handleFlowComplete = () => {
+        setShowUnifiedFlow(false);
+    };
+
+    // 미션 완료
+    const handleComplete = () => {
+        clearMission();
+        navigate("/home");
+    };
+
+    // 미션 정보가 없으면 홈으로
+    if (!currentMission) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+                <div className="text-center">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg
+                            className="w-10 h-10 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                        </svg>
+                    </div>
+                    <p className="text-gray-600 mb-6">미션 정보가 없습니다.</p>
+                    <Button
+                        onClick={() => navigate("/home")}
+                        className="bg-toss-blue-500 text-white"
+                    >
+                        홈으로 돌아가기
+                    </Button>
+                </div>
+            </div>
+        );
     }
-  }, [currentMission?.status]);
 
-  // 인증 성공 후 통합 플로우 표시
-  const handleVerificationSuccess = () => {
-    setShowVerifyModal(false);
-    setShowUnifiedFlow(true);
-  };
+    const status = currentMission.status;
 
-  // 플로우 완료
-  const handleFlowComplete = () => {
-    setShowUnifiedFlow(false);
-  };
+    // 진행률 계산 (0-5단계)
+    const progressStep = useMemo(() => {
+        switch (status) {
+            case "REQUESTED":
+                return 1;
+            case "ASSIGNED":
+                return 2;
+            case "MOVING":
+                return 3;
+            case "ARRIVED":
+            case "UNLOCKED":
+            case "LOCKED":
+                return 4;
+            case "RETURNING":
+            case "RETURNED":
+            case "FINISHED":
+                return 5;
+            default:
+                return 0;
+        }
+    }, [status]);
 
-  // 미션 완료
-  const handleComplete = () => {
-    clearMission();
-    navigate('/home');
-  };
+    // 통합 플로우 모달이 표시 중이면 해당 UI만 렌더링
+    if (showUnifiedFlow) {
+        return <UnifiedFlowModal onComplete={handleFlowComplete} />;
+    }
 
-  // 미션 정보가 없으면 홈으로
-  if (!currentMission) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <p className="text-gray-600 mb-6">미션 정보가 없습니다.</p>
-          <Button onClick={() => navigate('/home')} className="bg-toss-blue-500 text-white">
-            홈으로 돌아가기
-          </Button>
-        </div>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-gray-50">
+            {/* 헤더 */}
+            <header className="bg-gray-50 pt-safe">
+                <div className="max-w-md mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                                <img
+                                    src="/images/logo.png"
+                                    alt="CARRY PORTER Logo"
+                                    className="w-6 h-6 object-contain brightness-0 invert"
+                                />
+                            </div>
+                            <div>
+                                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">
+                                    CARRY PORTER
+                                </h1>
+                            </div>
+                        </div>
 
-  const status = currentMission.status;
+                        {/* 실시간 연결 상태 */}
+                        <div
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${connectionStatus.color}`}
+                        >
+                            <div
+                                className={`w-2 h-2 rounded-full ${connectionStatus.dotColor} ${connectionStatus.animate ? "animate-pulse" : ""}`}
+                            />
+                            {connectionStatus.label}
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-  // 통합 플로우 모달이 표시 중이면 해당 UI만 렌더링
-  if (showUnifiedFlow) {
-    return <UnifiedFlowModal onComplete={handleFlowComplete} />;
-  }
+            {/* 메인 컨텐츠 */}
+            <main className="max-w-md mx-auto px-6 py-6">
+                {/* 상태 메시지 */}
+                <div className="mb-6 animate-fade-in-up">
+                    <h2 className="text-gray-900 text-2xl font-bold mb-1">
+                        미션 진행중 🚀
+                    </h2>
+                    <p className="text-gray-600 text-sm">
+                        {status === "MOVING" && "로봇이 이동 중입니다"}
+                        {status === "ARRIVED" && "로봇이 도착했습니다"}
+                        {status === "UNLOCKED" && "짐 무게 측정"} {/* 추가됨 */}
+                        {status === "LOCKED" && "수령 완료"} {/* 변경됨 */}
+                        {status === "RETURNING" && "로봇이 복귀 중입니다"}
+                        {status === "RETURNED" && "보관 완료"}
+                        {status === "FINISHED" && "미션 완료!"}
+                        {![
+                            "MOVING",
+                            "ARRIVED",
+                            "UNLOCKED",
+                            "LOCKED",
+                            "RETURNING",
+                            "RETURNED",
+                            "FINISHED",
+                        ].includes(status) && "작업 중입니다"}
+                    </p>
+                    {connectionError && (
+                        <p className="text-red-500 text-xs mt-1">
+                            연결 오류: {connectionError.message}
+                        </p>
+                    )}
+                </div>
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <header className="bg-gray-50 pt-safe">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                <img
-                  src="/images/logo.png"
-                  alt="CARRY PORTER Logo"
-                  className="w-6 h-6 object-contain brightness-0 invert"
+                {/* 타임라인 카드 */}
+                <motion.div
+                    className="bg-white rounded-2xl p-5 shadow-sm mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                >
+                    <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
+                        <svg
+                            className="w-5 h-5 text-toss-blue-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                        </svg>
+                        진행 상황
+                    </h3>
+
+                    {/* Progress Bar */}
+                    <div className="mb-6">
+                        <ProgressBar
+                            currentStep={progressStep}
+                            totalSteps={5}
+                        />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={status}
+                            className="space-y-4"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <TimelineStep
+                                label="요청됨"
+                                active={status === "REQUESTED"}
+                                completed={status !== "REQUESTED"}
+                            />
+                            <TimelineStep
+                                label="로봇 배정"
+                                active={status === "ASSIGNED"}
+                                completed={[
+                                    "MOVING",
+                                    "ARRIVED",
+                                    "UNLOCKED",
+                                    "LOCKED",
+                                    "RETURNING",
+                                    "RETURNED",
+                                    "FINISHED",
+                                ].includes(status)}
+                            />
+                            <TimelineStep
+                                label="이동 중"
+                                active={status === "MOVING"}
+                                completed={[
+                                    "ARRIVED",
+                                    "UNLOCKED",
+                                    "LOCKED",
+                                    "RETURNING",
+                                    "RETURNED",
+                                    "FINISHED",
+                                ].includes(status)}
+                            />
+                            <TimelineStep
+                                label="도착"
+                                active={status === "ARRIVED"}
+                                completed={[
+                                    "UNLOCKED",
+                                    "LOCKED",
+                                    "RETURNING",
+                                    "RETURNED",
+                                    "FINISHED",
+                                ].includes(status)}
+                            />
+                            <TimelineStep
+                                label="완료"
+                                active={status === "FINISHED"}
+                                completed={status === "FINISHED"}
+                            />
+                        </motion.div>
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* 로봇 정보 카드 */}
+                {currentMission?.robotCode && (
+                    <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+                        <h3 className="text-gray-900 font-bold text-base mb-3 flex items-center gap-2">
+                            <svg
+                                className="w-5 h-5 text-toss-blue-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                                />
+                            </svg>
+                            배정 로봇
+                        </h3>
+                        <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+                            <div className="w-12 h-12 bg-toss-blue-500 rounded-xl flex items-center justify-center">
+                                <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-xs">
+                                    로봇 코드
+                                </p>
+                                <p className="text-gray-900 text-xl font-bold">
+                                    {currentMission.robotCode}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 완료 버튼 (FINISHED 상태) */}
+                {status === "FINISHED" && (
+                    <Button
+                        onClick={handleComplete}
+                        className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
+                    >
+                        완료
+                    </Button>
+                )}
+            </main>
+
+            {/* 인증 모달 (ARRIVED 상태) */}
+            {showVerifyModal && currentMission && (
+                <VerificationModal
+                    missionId={Number(currentMission.id)}
+                    onSuccess={handleVerificationSuccess}
+                    onClose={() => setShowVerifyModal(false)}
                 />
-              </div>
-              <div>
-                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">CARRY PORTER</h1>
-              </div>
-            </div>
-
-            {/* 실시간 연결 상태 */}
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${connectionStatus.color}`}>
-              <div className={`w-2 h-2 rounded-full ${connectionStatus.dotColor} ${connectionStatus.animate ? 'animate-pulse' : ''}`} />
-              {connectionStatus.label}
-            </div>
-          </div>
+            )}
         </div>
-      </header>
-
-      {/* 메인 컨텐츠 */}
-      <main className="max-w-md mx-auto px-6 py-6">
-        {/* 상태 메시지 */}
-        <div className="mb-6 animate-fade-in-up">
-          <h2 className="text-gray-900 text-2xl font-bold mb-1">
-            미션 진행중 🚀
-          </h2>
-          <p className="text-gray-600 text-sm">
-            {status === 'MOVING' && '로봇이 이동 중입니다'}
-            {status === 'ARRIVED' && '로봇이 도착했습니다'}
-            {status === 'UNLOCKED' && '짐 무게 측정'} {/* 추가됨 */}
-            {status === 'LOCKED' && '수령 완료'} {/* 변경됨 */}
-            {status === 'RETURNING' && '로봇이 복귀 중입니다'}
-            {status === 'RETURNED' && '보관 완료'}
-            {status === 'FINISHED' && '미션 완료!'}
-            {!['MOVING', 'ARRIVED', 'UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status) && '작업 중입니다'}
-          </p>
-          {connectionError && (
-            <p className="text-red-500 text-xs mt-1">
-              연결 오류: {connectionError.message}
-            </p>
-          )}
-        </div>
-
-        {/* 타임라인 카드 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
-          <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            진행 상황
-          </h3>
-          <div className="space-y-4">
-            <TimelineStep
-              label="요청됨"
-              active={status === 'REQUESTED'}
-              completed={status !== 'REQUESTED'}
-            />
-            <TimelineStep
-              label="로봇 배정"
-              active={status === 'ASSIGNED'}
-              completed={['MOVING', 'ARRIVED', 'UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
-            />
-            <TimelineStep
-              label="이동 중"
-              active={status === 'MOVING'}
-              completed={['ARRIVED', 'UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
-            />
-            <TimelineStep
-              label="도착"
-              active={status === 'ARRIVED'}
-              completed={['UNLOCKED', 'LOCKED', 'RETURNING', 'RETURNED', 'FINISHED'].includes(status)}
-            />
-            <TimelineStep
-              label="완료"
-              active={status === 'FINISHED'}
-              completed={status === 'FINISHED'}
-            />
-          </div>
-        </div>
-
-        {/* 로봇 정보 카드 */}
-        {currentMission?.robotCode && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
-            <h3 className="text-gray-900 font-bold text-base mb-3 flex items-center gap-2">
-              <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-              </svg>
-              배정 로봇
-            </h3>
-            <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-12 h-12 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">로봇 코드</p>
-                <p className="text-gray-900 text-xl font-bold">
-                  {currentMission.robotCode}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 완료 버튼 (FINISHED 상태) */}
-        {status === 'FINISHED' && (
-          <Button
-            onClick={handleComplete}
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
-          >
-            완료
-          </Button>
-        )}
-      </main>
-
-      {/* 인증 모달 (ARRIVED 상태) */}
-      {showVerifyModal && currentMission && (
-        <VerificationModal
-          missionId={Number(currentMission.id)}
-          onSuccess={handleVerificationSuccess}
-          onClose={() => setShowVerifyModal(false)}
-        />
-      )}
-    </div>
-  );
+    );
 };
 
 export default MissionTrackPage;
