@@ -33,7 +33,7 @@ export default function MainLayout() {
             {/* <Sidebar /> */}
 
             {/* 메인 컨텐츠 */}
-            <main className="min-h-screen p-6">
+            <main className="min-h-screen">
                 <Outlet />
             </main>
         </div>
