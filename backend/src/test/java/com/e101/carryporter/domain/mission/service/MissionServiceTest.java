@@ -48,7 +48,7 @@ class MissionServiceTest extends IntegrationTestSupport {
     @Autowired
     ApplicationEvents events;
 
-    @DisplayName("새 미션을 생성하면 새 미션이 생성되었다는 이벤트가 발행된다.")
+    @DisplayName("새 미션을 생성하면 새 미션이 생성되었다는 이벤트가 isNew=true로 발행된다.")
     @Test
     void createMission() {
 
@@ -83,9 +83,10 @@ class MissionServiceTest extends IntegrationTestSupport {
                 .orElseThrow();
 
         assertThat(publishedEvent.missionId()).isEqualTo(missionId);
+        assertThat(publishedEvent.isNew()).isTrue(); // 새 미션이므로 true
     }
 
-    @DisplayName("STORING 상태의 미션이 이미 있으면 새로운 미션을 생성하지 않고 기존 미션을 반환한다.")
+    @DisplayName("STORING 상태의 미션이 이미 있으면 새로운 미션을 생성하지 않고 기존 미션을 반환하며 isNew=false로 이벤트가 발행된다.")
     @Test
     void createMissionWithExistingStoringMission() {
         // given
@@ -123,9 +124,20 @@ class MissionServiceTest extends IntegrationTestSupport {
         Mission mission = missionRepository.findById(returnedMissionId).orElseThrow();
         assertThat(mission.getMissionStatus()).isEqualTo(MissionStatus.STORING);
         assertThat(mission.getCallLocation().getId()).isEqualTo(location1.getId()); // 기존 위치 유지
+
+        // MissionCreatedEvent 검증
+        Long eventCount = events.stream(MissionCreatedEvent.class).count();
+        assertThat(eventCount).isEqualTo(1);
+
+        MissionCreatedEvent publishedEvent = events.stream(MissionCreatedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(existingMissionId);
+        assertThat(publishedEvent.isNew()).isFalse(); // 기존 미션이므로 false
     }
 
-    @DisplayName("STORING 상태의 미션이 없으면 새로운 미션을 생성한다.")
+    @DisplayName("STORING 상태의 미션이 없으면 새로운 미션을 생성하고 isNew=true로 이벤트가 발행된다.")
     @Test
     void createMissionWithoutStoringMission() {
         // given
@@ -138,6 +150,7 @@ class MissionServiceTest extends IntegrationTestSupport {
         Long locationId2 = locationRepository.save(location2);
 
         // REQUESTED 상태의 미션만 있음 (STORING 아님)
+        // repository에 직접 저장하므로 이벤트 발생하지 않음
         Mission requestedMission = Mission.createMission(user, location1);
         missionRepository.save(requestedMission);
         flushAndClear();
@@ -154,6 +167,17 @@ class MissionServiceTest extends IntegrationTestSupport {
         Mission newMission = missionRepository.findById(newMissionId).orElseThrow();
         assertThat(newMission.getMissionStatus()).isEqualTo(MissionStatus.REQUESTED);
         assertThat(newMission.getCallLocation().getId()).isEqualTo(locationId2);
+
+        // MissionCreatedEvent 검증
+        long eventCount = events.stream(MissionCreatedEvent.class).count();
+        assertThat(eventCount).isEqualTo(1); // missionService.createMission만 호출했으므로 1번
+
+        MissionCreatedEvent publishedEvent = events.stream(MissionCreatedEvent.class)
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(publishedEvent.missionId()).isEqualTo(newMissionId);
+        assertThat(publishedEvent.isNew()).isTrue(); // 새 미션이므로 true
     }
 
     @DisplayName("미션 실패 시 미션 상태가 FAILED로 변경된다.")
@@ -220,6 +244,67 @@ class MissionServiceTest extends IntegrationTestSupport {
 
         Robot idleRobot = robotRepository.findById(robot.getId()).orElseThrow();
         assertThat(idleRobot.getRobotStatus()).isEqualTo(RobotStatus.IDLE);
+    }
+
+    @DisplayName("failAllExceptFinished 호출 시 FINISHED가 아닌 모든 미션이 FAILED 상태로 변경되고, FINISHED 미션은 유지된다.")
+    @Test
+    void failAllExceptFinished() {
+        // given
+        User user1 = User.createUser("user1@mm.com");
+        User user2 = User.createUser("user2@mm.com");
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        Location location = Location.createLocation("Gate A12", "탑승구 A12");
+        locationRepository.save(location);
+
+        Robot robot = Robot.createRobot("R-001", "AA:BB:CC:DD:EE:FF");
+        robotRepository.save(robot);
+
+        // 다양한 상태의 미션 생성
+        Mission mission1 = Mission.createMission(user1, location);
+        mission1.assignRobot(robot);
+        Long missionId1 = missionRepository.save(mission1);
+
+        Mission mission2 = Mission.createMission(user2, location);
+        mission2.assignRobot(robot);
+        mission2.dispatch();
+        Long missionId2 = missionRepository.save(mission2);
+
+        Mission mission3 = Mission.createMission(user1, location);
+        mission3.assignRobot(robot);
+        mission3.dispatch();
+        mission3.arrive();
+        Long missionId3 = missionRepository.save(mission3);
+
+        // FINISHED 상태의 미션 생성
+        Mission finishedMission = Mission.createMission(user2, location);
+        finishedMission.assignRobot(robot);
+        finishedMission.dispatch();
+        finishedMission.arrive();
+        finishedMission.lock();
+        finishedMission.unlock();
+        finishedMission.finish();
+        Long finishedMissionId = missionRepository.save(finishedMission);
+
+        flushAndClear();
+
+        // when
+        missionService.failAllExceptFinished();
+        flushAndClear();
+
+        // then - FINISHED가 아닌 미션들은 FAILED로 변경
+        Mission failedMission1 = missionRepository.findById(missionId1).orElseThrow();
+        Mission failedMission2 = missionRepository.findById(missionId2).orElseThrow();
+        Mission failedMission3 = missionRepository.findById(missionId3).orElseThrow();
+
+        assertThat(failedMission1.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+        assertThat(failedMission2.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+        assertThat(failedMission3.getMissionStatus()).isEqualTo(MissionStatus.FAILED);
+
+        // then - FINISHED 미션은 그대로 유지
+        Mission unchangedMission = missionRepository.findById(finishedMissionId).orElseThrow();
+        assertThat(unchangedMission.getMissionStatus()).isEqualTo(MissionStatus.FINISHED);
     }
 
     private void flushAndClear() {

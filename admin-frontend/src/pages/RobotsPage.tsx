@@ -26,8 +26,10 @@ export default function RobotsPage() {
   // ── 1. 백엔드 API → 초기 로봇 목록 ──────────
   const { robots: apiRobots, loading: apiLoading, error: apiError, refetch } = useRobotFetch();
 
-  // ── 2. SSE → 실시간 이벤트 ────────────────────────────────
-  const { robots: sseRobots, isConnected, lastMessage } = useRobotSSE();
+  // ── 2. SSE → 실시간 이벤트 (Store에서 가져오기) ──────────
+  const sseRobots = useSseStore(state => state.robots);
+  const isConnected = useSseStore(state => state.isConnected);
+  const lastMessage = useSseStore(state => state.lastMessage);
 
   // ── 3. 사용자 수 조회 ─────────────
   const [userCount, setUserCount] = useState<number>(0);
