@@ -52,17 +52,11 @@ public class MissionService {
         Location location = locationService.findById(request.getCallLocationId());
 
         // STORING 상태 있으면 조회 없으면 새로 생성
-        Mission mission;
-        boolean isNew = false;
-        Optional<Mission> missionOpt = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING);
+        Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
+                .orElseGet(() -> Mission.createMission(user, location));
 
-        if (missionOpt.isEmpty()) {
-            mission = Mission.createMission(user, location);
-            isNew = true;
-        } else {
-            mission = missionOpt.get();
-        }
-
+        // 새로 생성된 mission 은 save 전까지 id 가 null
+        boolean isNew = mission.getId() == null;
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
