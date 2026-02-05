@@ -78,7 +78,7 @@ export interface MissionStatusEvent {
     message?: string; // SSE의 msg 필드 저장 (선택사항)
 }
 
-// SSE 이벤트 타입 (8가지)
+// SSE 이벤트 타입 (9가지)
 export type SSEEventType =
     | "Connect"
     | "RobotAssignedEvent"
@@ -87,7 +87,8 @@ export type SSEEventType =
     | "UserAuthSuccessEvent"
     | "MissionUnlockedEvent"
     | "MissionAbortedEvent"
-    | "MissionLockedEvent";
+    | "MissionLockedEvent"
+    | "RobotReturnedEvent";
 
 // SSE 이벤트 데이터 구조 (공통)
 export interface SSEEventData {

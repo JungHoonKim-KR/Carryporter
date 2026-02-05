@@ -74,7 +74,7 @@ export const useMissionSSE = () => {
             console.log("[useMissionSSE] 연결 종료 및 정리");
             unsubscribe();
         };
-    }, [currentMission?.id]); // ✨ 미션 ID가 생기는 순간 구독이 시작됩니다.
+    }, [currentMission?.id]); // 미션 ID가 생기는 순간 구독이 시작됩니다.
 
     const { isConnected, connectionError } = useMissionStore();
     return { isConnected, connectionError };
