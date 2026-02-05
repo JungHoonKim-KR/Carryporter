@@ -40,6 +40,19 @@ public class MissionRepository {
     }
 
     /**
+     * MAC 주소로 특정 상태인 미션 조회 (같은 MAC을 가진 모든 로봇 포함)
+     */
+    public Optional<Mission> findByMacAddressAndStatus(String macAddress, MissionStatus status) {
+        List<Mission> results = em.createQuery(
+                        "SELECT m FROM Mission m JOIN m.robot r WHERE r.macAddress = :macAddress AND m.missionStatus = :status",
+                        Mission.class)
+                .setParameter("macAddress", macAddress)
+                .setParameter("status", status)
+                .getResultList();
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    /**
      * 로봇의 진행 중인 미션 조회 (FINISHED 제외)
      */
     public Optional<Mission> findActiveByRobot(Robot robot) {
