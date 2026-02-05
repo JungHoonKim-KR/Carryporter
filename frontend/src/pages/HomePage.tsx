@@ -101,7 +101,7 @@ const HomePage = () => {
 
         {/* 내 짐 */}
         <button
-          onClick={() => navigate('/ticket/detail')}
+          onClick={() => navigate('/luggage/list')}
           className="w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center gap-3 mb-6 animate-fade-in-up"
           style={{ animationDelay: '200ms' }}
         >
