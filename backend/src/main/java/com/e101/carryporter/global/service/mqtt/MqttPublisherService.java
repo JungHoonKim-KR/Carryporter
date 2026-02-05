@@ -31,7 +31,7 @@ public class MqttPublisherService {
      * 사용법: sendCommand("AA:BB:CC...", "deliver", "{\"destX\":10, \"destY\":20}");
      */
     public void sendCommand(String mac, String action, String jsonPayload) {
-        String topic = String.format("robot/%s/command/%s", mac, action);
+        String topic = String.format("robot/%s/command/%s","D4:F3:2D:32:3C:AB" , action);
         publish(topic, jsonPayload);
     }
 
