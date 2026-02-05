@@ -3,6 +3,7 @@ package com.e101.carryporter.domain.sse.listener;
 import com.e101.carryporter.domain.mission.event.*;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
 import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
+import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import lombok.RequiredArgsConstructor;
@@ -100,6 +101,13 @@ public class UserSseNotificationHandler {
     public void handleMissionFailedEvent(MissionFailedEvent event) {
         log.debug("mission 생성 실패: missionId = {}, userId = {}, message = {}", event.missionId(), event.userId(), event.message());
         sendNotification(event.userId(), event.getClass().getSimpleName(), event.message(), null);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleRobotReturnedEvent(RobotReturnedEvent event) {
+        log.debug("로봇 관리소에 도착: missionId = {}, userId = {}. robotId = {}, mac address = {}", event.missionId(), event.userId(), event.robotId(), event.robotMacAddress());
+        sendNotification(event.userId(), event.getClass().getSimpleName(), "로봇이 관리소에 도착했습니다." , null);
     }
 
     /**
