@@ -26,6 +26,8 @@ import static org.mockito.Mockito.verify;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @DisplayName("MqttCommandHandler 통합 테스트")
 // MqttHandler는 COMMIT 발생 or 트랜잭션이 없는 경우에만 동작하도록 설계 했기 때문
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -127,7 +129,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
             // given
             Double homeX = 0.0;
             Double homeY = 0.0;
-            ReturnStartedEvent event = new ReturnStartedEvent(TEST_MISSION_ID, TEST_MAC, homeX, homeY);
+            ReturnStartedEvent event = new ReturnStartedEvent(TEST_MISSION_ID, TEST_MAC, homeX, homeY, "abc", LocalDateTime.now());
 
             // when
             eventPublisher.publishEvent(event);

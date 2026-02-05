@@ -14,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -114,7 +116,7 @@ class MqttCommandHandlerTest {
             // given
             Double homeX = 0.0;
             Double homeY = 0.0;
-            ReturnStartedEvent event = new ReturnStartedEvent(TEST_MISSION_ID, TEST_MAC, homeX, homeY);
+            ReturnStartedEvent event = new ReturnStartedEvent(TEST_MISSION_ID, TEST_MAC, homeX, homeY, "abc", LocalDateTime.now());
 
             // when
             mqttCommandHandler.handleReturnStarted(event);

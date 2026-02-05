@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -60,7 +61,7 @@ public class MissionService {
         Long createdMissionId = missionRepository.save(mission);
 
         // 새 미션 생성 완료 이벤트 발행
-        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, isNew));
+        eventPublisher.publishEvent(new MissionCreatedEvent(createdMissionId, userId, isNew));
 
         return createdMissionId;
     }
@@ -137,10 +138,10 @@ public class MissionService {
     }
 
     @Transactional
-    public void store(Long missionId, Long robotId){
+    public void store(Long missionId, Long robotId) {
         log.debug("미션 보관 missionId = {}, robotId = {}", missionId, robotId);
         Mission mission = missionRepository.findById(missionId)
-                .orElseThrow(()-> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(MissionErrorCode.MISSION_NOT_FOUND));
         mission.store();
 
         Robot robot = robotRepository.findById(robotId)
@@ -188,7 +189,14 @@ public class MissionService {
         Robot robot = mission.getRobot();
         String macAddress = robot.getMacAddress();
 
-        eventPublisher.publishEvent(new ReturnStartedEvent(missionId, macAddress, 0.0, 0.0));
+        eventPublisher.publishEvent(new ReturnStartedEvent(
+                missionId,
+                macAddress,
+                0.0,
+                0.0,
+                mission.getLocker().getLockerCode(),
+                LocalDateTime.now()
+        ));
     }
 
     @Transactional
