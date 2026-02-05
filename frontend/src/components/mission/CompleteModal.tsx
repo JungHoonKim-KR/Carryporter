@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 export const CompleteModal = () => {
   const navigate = useNavigate();
   const { currentMission, clearMission } = useMissionStore();
-  
-  const weight = currentMission?.weightInfo?.luggageWeight || 0;
 
   const handleGoHome = () => {
     clearMission();
@@ -36,9 +34,6 @@ export const CompleteModal = () => {
             <p className="text-xs text-gray-500 mb-2">보관 위치</p>
             <p className="text-lg font-bold text-gray-900">
               {currentMission.lockerInfo.lockerName}
-            </p>
-            <p className="text-sm text-gray-600 mt-2">
-              무게: {weight.toFixed(1)}kg
             </p>
           </div>
         )}

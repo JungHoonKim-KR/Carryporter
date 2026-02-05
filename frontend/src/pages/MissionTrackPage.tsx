@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useMissionStore } from "../store/missionStore";
 import { Button } from "@/components/ui/button";
 import { VerificationModal } from "../components/mission/VerificationModal";
-import { WeightModal } from "../components/mission/WeightModal";
 import { ChecklistModal } from "../components/mission/ChecklistModal";
 import { ReturningModal } from "../components/mission/ReturningModal";
 import { CompleteModal } from "../components/mission/CompleteModal";
@@ -15,8 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
  * 미션 추적 페이지
  * 상태별 모달 표시 (배경은 항상 타임라인이 흐릿하게 보임):
  * - ARRIVED: 인증 모달
- * - UNLOCKED: 무게 측정 모달
- * - LOCKED: 체크리스트 모달
+ * - UNLOCKED: 체크리스트 모달
  * - 복귀 완료: 완료 모달
  */
 const MissionTrackPage = () => {
@@ -31,7 +29,7 @@ const MissionTrackPage = () => {
     } = useMissionStore();
 
     // 플로우 단계 상태 (모달 전환용)
-    const [flowStep, setFlowStep] = useState<'none' | 'weight' | 'checklist' | 'returning' | 'complete'>('none');
+    const [flowStep, setFlowStep] = useState<'none' | 'checklist' | 'returning' | 'complete'>('none');
 
     // 연결 상태 UI
     const connectionStatus = useMemo(() => {
@@ -67,15 +65,9 @@ const MissionTrackPage = () => {
         };
     }, [isConnected, connectionQuality, reconnectAttempts]);
 
-    // 인증 성공 → 무게 측정 모달
+    // 인증 성공 → 체크리스트 모달
     const handleVerificationSuccess = () => {
         updateMissionStatus({ status: 'UNLOCKED' });
-        setFlowStep('weight');
-    };
-
-    // 잠금 성공 → 체크리스트 모달
-    const handleLockSuccess = () => {
-        updateMissionStatus({ status: 'LOCKED' });
         setFlowStep('checklist');
     };
 
@@ -137,7 +129,6 @@ const MissionTrackPage = () => {
 
     // 모달 표시 조건
     const showVerifyModal = status === "ARRIVED" && flowStep === 'none';
-    const showWeightModal = flowStep === 'weight';
     const showChecklistModal = flowStep === 'checklist';
     const showReturningModal = flowStep === 'returning';
     const showCompleteModal = flowStep === 'complete';
@@ -172,7 +163,7 @@ const MissionTrackPage = () => {
                     <p className="text-gray-600 text-sm">
                         {status === "MOVING" && "로봇이 이동 중입니다"}
                         {status === "ARRIVED" && "로봇이 도착했습니다"}
-                        {status === "UNLOCKED" && "짐 무게 측정"}
+                        {status === "UNLOCKED" && "짐 확인 중"}
                         {status === "LOCKED" && "수령 완료"}
                         {status === "RETURNING" && "로봇이 복귀 중입니다"}
                         {status === "RETURNED" && "보관 완료"}
@@ -257,9 +248,6 @@ const MissionTrackPage = () => {
                     missionId={Number(currentMission.id)}
                     onSuccess={handleVerificationSuccess}
                 />
-            )}
-            {showWeightModal && (
-                <WeightModal onLockSuccess={handleLockSuccess} />
             )}
             {showChecklistModal && (
                 <ChecklistModal onReturnSuccess={handleReturnSuccess} />
