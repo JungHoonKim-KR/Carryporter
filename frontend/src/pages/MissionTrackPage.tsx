@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
  * 상태별 모달 표시 (배경은 항상 타임라인이 흐릿하게 보임):
  * - ARRIVED: 인증 모달
  * - UNLOCKED: 체크리스트 모달
+ * - UNLOCKED: 체크리스트 모달
  * - 복귀 완료: 완료 모달
  */
 const MissionTrackPage = () => {
@@ -67,6 +68,7 @@ const MissionTrackPage = () => {
         };
     }, [isConnected, connectionQuality, reconnectAttempts]);
 
+    // 인증 성공 → 체크리스트 모달
     // 인증 성공 → 체크리스트 모달
     const handleVerificationSuccess = () => {
         updateMissionStatus({ status: "UNLOCKED" });
@@ -200,6 +202,7 @@ const MissionTrackPage = () => {
                     <p className="text-gray-600 text-sm">
                         {status === "MOVING" && "로봇이 이동 중입니다"}
                         {status === "ARRIVED" && "로봇이 도착했습니다"}
+                        {status === "UNLOCKED" && "짐 확인 중"}
                         {status === "UNLOCKED" && "짐 확인 중"}
                         {status === "LOCKED" && "수령 완료"}
                         {status === "RETURNING" && "로봇이 복귀 중입니다"}
