@@ -100,3 +100,19 @@ export interface SSEEventData {
 export interface VerifyMissionRequest {
     password: number; // 4자리 (예: 1234)
 }
+
+// 통합 플로우 단계 (UnifiedFlowModal용)
+export type UnifiedFlowStep =
+    | "WEIGHT_CHECK" // 무게 측정 중
+    | "WEIGHT_RESULT" // 무게 측정 결과
+    | "LOCK_REQUESTED" // 잠금 요청
+    | "CHECKLIST_CONFIRM" // 체크리스트 확인
+    | "RETURN_REQUESTED" // 복귀 요청
+    | "RETURN_COMPLETE"; // 복귀 완료
+
+// 체크리스트 항목
+export interface ChecklistItem {
+    id: string;
+    label: string;
+    checked: boolean;
+}
