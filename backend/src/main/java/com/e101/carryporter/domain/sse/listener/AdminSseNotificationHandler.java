@@ -92,13 +92,6 @@ public class AdminSseNotificationHandler {
         sseService.broadcastToAdmins("RobotReturnedAdminEvent", event);
     }
 
-    @Async
-    @TransactionalEventListener
-    public void handleRobotReturnedEvent(RobotReturnedEvent event) {
-        log.debug("[AdminSseNotificationHandler] 로봇 복귀 완료!! mission id = {}", event.missionId());
-        sseService.broadcastToAdmins("RobotReturnedEvent", event);
-    }
-
     /**
      * 8. 미션 종료 알림
      */

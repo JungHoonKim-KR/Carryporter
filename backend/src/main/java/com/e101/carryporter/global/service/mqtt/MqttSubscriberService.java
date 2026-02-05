@@ -101,6 +101,15 @@ public class MqttSubscriberService {
                         mission.getUser().getId(),
                         mac
                 ));
+
+                eventPublisher.publishEvent(new RobotReturnedAdminEvent(
+                        mission.getUser().getId(),
+                        robot.getRobotCode(),
+                        mission.getId(),
+                        mission.getLocker().getId(),
+                        mission.getLocker().getLockerCode(),
+                        String.format("%d 번에 배정된 %s 로봇이 관리소에 복귀 했습니다.", mission.getId(), robot.getRobotCode())
+                ));
             });
         } catch (Exception e) {
             log.error("복귀 시작 처리 실패 - MAC: {}, error: {}", mac, e.getMessage());
