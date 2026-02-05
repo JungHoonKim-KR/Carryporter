@@ -107,8 +107,8 @@ const LoginPage = () => {
             {/* 메인 컨텐츠 */}
             <main className="max-w-md mx-auto px-6 py-6">
                 {/* 환영 메시지 */}
-                <div className="mb-8 animate-fade-in-up">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="mb-5 animate-fade-in-up">
+                    <h2 className="text-xl font-bold text-gray-900 mb-1">
                         환영합니다! 👋
                     </h2>
                     <p className="text-gray-500">
@@ -120,11 +120,11 @@ const LoginPage = () => {
                 <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
                     <form
                         onSubmit={handleSubmit(onSubmit)}
-                        className="space-y-6"
+                        className="space-y-4"
                     >
                         {/* 폼 제목 */}
                         <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-gray-900">
+                            <h2 className="text-xl font-bold text-gray-900">
                                 로그인
                             </h2>
                             <p className="text-sm text-gray-600">
@@ -133,7 +133,7 @@ const LoginPage = () => {
                         </div>
 
                         {/* 모든 입력 필드 */}
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                             {/* 1. 이메일 필드 */}
                             <div className="space-y-2">
                                 <label
@@ -195,7 +195,7 @@ const LoginPage = () => {
                             </div>
 
                             {/* 4. 약관 동의 */}
-                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
                                 <TermsCheckbox
                                     control={control}
                                     name="agreeTerms"
@@ -211,14 +211,12 @@ const LoginPage = () => {
                             </div>
 
                             {/* 약관 설명 */}
-                            <div className="text-xs text-gray-500 space-y-1">
+                            <div className="text-[10px] text-gray-500 space-y-0.5">
                                 <p>
-                                    · 보관 정책: 짐 보관 시 안전 및 책임 범위에
-                                    대한 내용입니다.
+                                    · 보관 정책: 짐 보관 안전 및 책임 범위
                                 </p>
                                 <p>
-                                    · 서비스 이용약관: 로봇 호출 서비스 이용 시
-                                    준수사항입니다.
+                                    · 이용약관: 로봇 호출 서비스 준수사항
                                 </p>
                             </div>
                         </div>

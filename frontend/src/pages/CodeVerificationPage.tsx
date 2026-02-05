@@ -182,13 +182,13 @@ const CodeVerificationPage = () => {
           </h3>
 
           {/* CODE 버튼들 */}
-          <div className="space-y-3 mb-6">
+          <div className="space-y-2.5 mb-5">
             {codeOptions.map((code) => (
               <button
                 key={code}
                 onClick={() => handleCodeSelect(code)}
                 className={`
-                  w-full h-24 text-5xl font-extrabold rounded-xl border-2 transition-all
+                  w-full h-20 text-4xl font-extrabold rounded-xl border-2 transition-all
                   ${selectedCode === code
                     ? 'bg-toss-blue-500 border-toss-blue-500 text-white shadow-md'
                     : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
