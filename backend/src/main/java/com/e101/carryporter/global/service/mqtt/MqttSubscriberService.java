@@ -97,8 +97,8 @@ public class MqttSubscriberService {
 
                 eventPublisher.publishEvent(new RobotReturnedEvent(
                         mission.getId(),
-                        robot.getId(),
                         mission.getUser().getId(),
+                        robot.getId(),
                         mac
                 ));
 
@@ -224,8 +224,8 @@ public class MqttSubscriberService {
 //              log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
                 eventPublisher.publishEvent(new RobotReturnedEvent(
                         mission.getId(),
-                        mission.getRobot().getId(),
                         mission.getUser().getId(),
+                        mission.getRobot().getId(),
                         mac
                 ));
 
