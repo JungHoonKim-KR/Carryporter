@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   X, Unlock, CheckCircle, BatteryCharging,
-  Archive, RotateCcw, User
+  Archive, RotateCcw, User, Send // ✅ Send 아이콘 추가 (선택사항)
 } from 'lucide-react';
-import { api } from '@/api/axiosConfig'; // ✅ api 인스턴스 사용
+import { api } from '@/api/axiosConfig';
 import { RobotReturnedAdminEvent } from '@/types/robotEvents';
 import { toast } from 'react-toastify';
 
@@ -14,7 +14,6 @@ interface Props {
   onComplete: () => void;
 }
 
-// 단계 정의: 문열기 대기 -> 작업(보관/반납) 선택 -> 충전 복귀
 type Step = 'WAIT_OPEN' | 'PROCESS_TASK' | 'READY_TO_CHARGE';
 type ActionType = 'STORE' | 'RETURN' | null;
 
@@ -22,83 +21,73 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
   
   const [step, setStep] = useState<Step>('WAIT_OPEN');
   const [actionType, setActionType] = useState<ActionType>(null);
+  
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSent, setIsSent] = useState(false); // ✅ 전송 완료 상태 추가
 
-  // 1️⃣ [API] 로봇 도어 잠금 해제 (UNLOCK) 요청
-  // URL: POST /api/admin/missions/{missionId}/unlock
+  // 1️⃣ [API] 로봇 도어 잠금 해제
   const handleUnlockRobot = async () => {
     setIsProcessing(true);
     try {
-      console.log(`📡 [API] 잠금 해제 요청: Mission=${data.missionId}`);
-      
-      // ✅ 잠금 요청과 동일한 방식이지만 엔드포인트만 unlock으로 변경
-      await api.post(`/api/admin/missions/${data.missionId}/unlock`, {});
+      // await api.post(`/api/admin/missions/${data.missionId}/unlock`, {});
+      // (테스트용 주석: 실제 API 호출 시 주석 해제)
+      await new Promise(resolve => setTimeout(resolve, 500)); 
 
       console.log("✅ 도어 개방 성공");
       setStep('PROCESS_TASK'); 
-
     } catch (err) {
-      console.error("❌ 도어 개방 요청 실패:", err);
       toast.error("도어 개방 요청에 실패했습니다.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 2️⃣ [API] 작업 완료 (반납 시 Finalize API 호출)
+  // 2️⃣ [API] 작업 완료
   const handleTaskComplete = async () => {
     if (!actionType) {
         toast.warning("보관 또는 반납을 선택해주세요.");
         return;
     }
-
     setIsProcessing(true);
     
     try {
-      // ✅ 반납(RETURN) 선택 시 락커 해제 및 미션 종료 API 호출
       if (actionType === 'RETURN') {
-        console.log(`📡 [API] 반납(Finalize) 요청: Mission=${data.missionId}`);
-        
-        // ✨ [수정됨] Body 없이 경로(Path Variable)만 사용하여 호출
-        // POST /api/admin/missions/{missionId}/finalize
         await api.post(`/api/admin/missions/${data.missionId}/finalize`, {});
-
         toast.success("반납 처리 및 락커 해제가 완료되었습니다.");
-      } 
-      
-      // ✅ 보관(STORE)의 경우
-else if (actionType === 'STORE') {
-  console.log(`📦 [API] 보관(Store) 요청: Mission=${data.missionId}`);
-  
-  // 백엔드 컨트롤러의 @PostMapping("missions/{missionId}/store") 와 매핑됨
-  // 전제: 컨트롤러 클래스 레벨 매핑이 "/api/admin" 이어야 함
-  await api.post(`/api/admin/missions/${data.missionId}/store`, {});
+      } else if (actionType === 'STORE') {
+        await api.post(`/api/admin/missions/${data.missionId}/store`, {});
+        toast.success("물품 보관 처리가 완료되었습니다.");
+      }
 
-  toast.success("물품 보관 처리가 완료되었습니다.");
-}
-      // API 성공 후 UI 단계 변경 (딜레이 효과 유지)
       setTimeout(() => {
         setStep('READY_TO_CHARGE');
         setIsProcessing(false);
       }, 500);
 
     } catch (err) {
-      console.error("❌ 작업 완료 처리 실패:", err);
-      toast.error("작업 완료 처리에 실패했습니다. 다시 시도해주세요.");
+      console.error(err);
+      toast.error("작업 처리에 실패했습니다.");
       setIsProcessing(false);
     }
   };
 
-  // 3️⃣ [UI Only] 충전 복귀 요청 -> API 연동 X
+  // 3️⃣ [UI Only] 충전 복귀 요청 (수정된 부분)
   const handleGoCharge = async () => {
-    setIsProcessing(true);
+    setIsProcessing(true); // 1. 버튼 비활성화 및 '전송 중' 표시
 
-    // TODO: 나중에 여기에 충전 복귀 API (POST /return-charge) 연결
+    // TODO: 실제 API 호출 (예: await api.post(...))
+    // 여기서는 통신하는 척 0.5초 대기
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // 2. 상태 변경: 처리 끝(false) -> 전송 완료(true)
+    setIsProcessing(false);
+    setIsSent(true); 
+
+    toast.success(`${data.robotCode} 충전 스테이션으로 이동합니다.`);
     
+    // 3. 사용자가 "전송 완료" 문구를 볼 수 있게 0.8초 뒤에 모달 닫기
     setTimeout(() => {
-      console.log("⚡ 충전 복귀 명령 전송");
-      toast.success(`${data.robotCode} 충전 스테이션으로 이동합니다.`);
-      onComplete(); // 모달 닫기
+      onComplete(); 
     }, 800);
   };
 
@@ -121,14 +110,12 @@ else if (actionType === 'STORE') {
 
           <div className="flex items-center justify-between mb-4">
             <span className="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-700">
-               🏁 로봇 복귀 감지
+                🏁 로봇 복귀 감지
             </span>
             <span className="text-slate-400 font-mono text-xs">Mission #{data.missionId}</span>
           </div>
           
-          <h2 className="text-xl font-bold text-slate-800 mb-2">
-             관리소 도착 완료
-          </h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">관리소 도착 완료</h2>
           <div className="flex items-center gap-4 text-sm text-slate-600">
              <div className="flex items-center gap-1"><User size={14}/> {data.userId}</div>
              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"/> {data.robotCode}</div>
@@ -138,16 +125,14 @@ else if (actionType === 'STORE') {
         {/* 바디 */}
         <div className="overflow-y-auto flex-1 p-6 custom-scrollbar">
             
-          {/* --- [STEP 1] 도어 개방 --- */}
+          {/* STEP 1: 도어 개방 */}
           {step === 'WAIT_OPEN' && (
             <div className="text-center py-4">
                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
                  <Unlock size={36} />
                </div>
                <h3 className="text-lg font-bold text-slate-800">도어 개방이 필요합니다</h3>
-               <p className="text-slate-500 mt-2 mb-8 text-sm">
-                 로봇이 도착했습니다.<br/>내부 물품 확인을 위해 잠금을 해제해주세요.
-               </p>
+               <p className="text-slate-500 mt-2 mb-8 text-sm">로봇이 도착했습니다.<br/>내부 물품 확인을 위해 잠금을 해제해주세요.</p>
 
                <button 
                  onClick={handleUnlockRobot}
@@ -159,7 +144,7 @@ else if (actionType === 'STORE') {
             </div>
           )}
 
-          {/* --- [STEP 2] 작업 선택 (보관 vs 반납) --- */}
+          {/* STEP 2: 작업 선택 */}
           {step === 'PROCESS_TASK' && (
             <div>
                <div className="bg-purple-50 border border-purple-100 p-4 rounded-lg mb-6 text-center">
@@ -209,7 +194,7 @@ else if (actionType === 'STORE') {
             </div>
           )}
 
-          {/* --- [STEP 3] 충전 복귀 --- */}
+          {/* STEP 3: 충전 복귀 (✨ 수정됨) */}
           {step === 'READY_TO_CHARGE' && (
             <div className="text-center py-4">
                <motion.div 
@@ -225,12 +210,25 @@ else if (actionType === 'STORE') {
                  </div>
                </motion.div>
 
+               {/* ✅ 버튼 상태 변화 로직 적용 */}
                <button 
                  onClick={handleGoCharge}
-                 disabled={isProcessing}
-                 className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg"
+                 disabled={isProcessing || isSent} // 전송 중이거나, 전송 완료되면 클릭 방지
+                 className={`
+                   w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg
+                   ${isSent 
+                      ? 'bg-green-600 text-white scale-105' // 전송 완료 시 초록색
+                      : 'bg-slate-900 text-white hover:bg-slate-800' // 기본 상태
+                   }
+                 `}
                >
-                 {isProcessing ? '전송 중...' : <> <BatteryCharging size={18} /> 충전 스테이션 복귀 </>}
+                 {isProcessing ? (
+                    '전송 중...' 
+                 ) : isSent ? (
+                    <> <CheckCircle size={18} /> 명령 전송 완료! </> // 완료 텍스트
+                 ) : (
+                    <> <BatteryCharging size={18} /> 충전 스테이션 복귀 </>
+                 )}
                </button>
             </div>
           )}
