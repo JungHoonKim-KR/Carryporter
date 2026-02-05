@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMissionStore } from '../../store/missionStore';
-import { returnMission } from '../../api/mission.api';
+import { lockMission, returnMission } from '../../api/mission.api';
 import { Button } from '@/components/ui/button';
 import type { StoredLuggage } from '../../types/mission.types';
 
@@ -24,7 +24,6 @@ export const ChecklistModal = ({ onReturnSuccess }: ChecklistModalProps) => {
   });
 
   const allChecked = checklist.workCompleted && checklist.lockerChecked && checklist.confirmReturn;
-  const weight = currentMission?.weightInfo?.luggageWeight || 0;
 
   const handleChecklistChange = (key: keyof typeof checklist) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
@@ -35,26 +34,29 @@ export const ChecklistModal = ({ onReturnSuccess }: ChecklistModalProps) => {
 
     setIsReturning(true);
     try {
+      // 1단계: 잠금 API 호출
+      await lockMission(Number(currentMission.id));
+
+      // 2단계: 복귀 API 호출
       await returnMission(Number(currentMission.id));
-      
-      // 보관 정보 저장
+
+      // 3단계: 보관 정보 저장 (weight 제거됨)
       const storedLuggage: StoredLuggage = {
         id: `luggage-${Date.now()}`,
         missionId: currentMission.id,
         lockerId: currentMission.lockerInfo?.lockerId || `A-${Math.floor(Math.random() * 200) + 1}`,
         lockerName: currentMission.lockerInfo?.lockerName || `Locker A-${Math.floor(Math.random() * 200) + 1}`,
-        weight: weight,
         storedAt: new Date().toISOString(),
         robotCode: currentMission.robotCode,
         destination: currentMission.destination,
       };
       addStoredLuggage(storedLuggage);
 
-      // 복귀 API 호출 성공 → 복귀 중 모달로 전환
+      // 4단계: 복귀 중 모달로 전환
       // SSE에서 RETURNED 이벤트가 오면 완료 모달로 전환됨
       onReturnSuccess();
     } catch (error) {
-      console.error('[ChecklistModal] 복귀 실패:', error);
+      console.error('[ChecklistModal] 잠금/복귀 실패:', error);
       setIsReturning(false);
     }
     // isReturning을 false로 바꾸지 않음 - 모달이 전환되므로
