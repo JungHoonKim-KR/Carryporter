@@ -56,7 +56,7 @@ export const subscribeMissionUpdates = (
     'MissionUnlockedEvent': callbacks.onUnlocked || (() => {}),
     'MissionAbortedEvent': callbacks.onAborted || (() => {}),
     'MissionLockedEvent': callbacks.onLocked || (() => {}),
-    'MissionReturnedEvent': callbacks.onReturned || (() => {}), // 복귀 완료 이벤트
+    'RobotReturnedEvent': callbacks.onReturned || (() => {}), // 복귀 완료 이벤트
   };
 
   // fetchEventSource 실행
