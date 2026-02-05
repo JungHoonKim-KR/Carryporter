@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css'
 // --- 컴포넌트 임포트 ---
 import RobotStage from '@/components/robot/RobotStage'
 import RobotDetailModal from '@/components/robot/RobotDetailModal'
-import ActiveTaskList from '@/components/dashboard/ActiveTaskList'
+import RobotActivityTerminal from '@/components/robot/RobotActivityTerminal'
 import MiniLockerWidget from '@/components/locker/MiniLockerWidget'
 import LockerSelectionModal from '@/components/locker/LockerSelectionModal'
 import MissionControlModal from '@/components/mission/MissionControlModal'
@@ -22,6 +22,18 @@ type WorkflowStep = 'IDLE' | 'SELECT_LOCKER' | 'CONFIRM_LOCKER' | 'MISSION_START
 
 const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
 
+// SSE MOVE 이벤트를 로그로 변환
+const convertMoveEventToLog = (moveData: any) => {
+  const now = new Date()
+  return {
+    id: `log-${Date.now()}-${Math.random()}`,
+    timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+    robotId: moveData.robotCode || moveData.robotId || 'RB-XXX',
+    action: `Moving to (${moveData.x}, ${moveData.y})${moveData.status ? ` - ${moveData.status}` : ''}`,
+    type: 'move' as const
+  }
+}
+
 export default function RobotsPage() {
   const { robots: apiRobots, refetch } = useRobotFetch();
   const sseRobots = useSseStore(state => state.robots);
@@ -30,6 +42,7 @@ export default function RobotsPage() {
   
   const [userCount, setUserCount] = useState<number>(0);
   const [lockers, setLockers] = useState<any[]>([]);
+  const [realTimeLogs, setRealTimeLogs] = useState<any[]>([]);
 
   // 사용자 수 조회
   useEffect(() => {
@@ -86,7 +99,6 @@ export default function RobotsPage() {
   }, [apiRobots, sseRobots]);
 
   // State
-  const [showLockerInfo, setShowLockerInfo] = useState(false);
   const [selectedTaskRobot, setSelectedTaskRobot] = useState<any>(null);
   const [step, setStep] = useState<WorkflowStep>('IDLE');
   const [assignedRobot, setAssignedRobot] = useState<string | null>(null);
@@ -125,7 +137,7 @@ export default function RobotsPage() {
           handleParsedEvent(parsed);
         }
       } catch (innerErr) {
-        console.log('SSE 파싱 실패 (무시):', innerErr);
+        // 무시
       }
     }
   }, [lastMessage]);
@@ -133,6 +145,13 @@ export default function RobotsPage() {
   // 🔥 파싱된 이벤트 처리 함수
   const handleParsedEvent = (parsed: any) => {
     console.log('📨 파싱된 이벤트:', parsed);
+
+    // MOVE 이벤트 처리 → 터미널 로그 추가
+    if (parsed.eventName === 'MOVE' || parsed.event === 'MOVE') {
+      const newLog = convertMoveEventToLog(parsed);
+      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
+      return;
+    }
 
     // RobotAssignedEvent 처리
     if (parsed.eventName === 'RobotAssignedEvent' || (parsed.userId && parsed.requestType)) {
@@ -146,6 +165,17 @@ export default function RobotsPage() {
         locker_code: parsed.locker_code || parsed.data?.locker_code,
         requestType: parsed.requestType || parsed.data?.requestType || 'FIRST',
       });
+
+      // 로그에도 추가
+      const now = new Date();
+      const newLog = {
+        id: `log-${Date.now()}`,
+        timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+        robotId: parsed.robotCode || parsed.data?.robotCode || 'SYSTEM',
+        action: `Mission assigned to ${parsed.userId || 'user'}`,
+        type: 'info' as const
+      };
+      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
     }
     // RobotReturnedAdminEvent 처리
     else if (parsed.eventName === 'RobotReturnedAdminEvent' || (parsed.lockerCode && parsed.robotCode && parsed.missionId)) {
@@ -159,6 +189,17 @@ export default function RobotsPage() {
       };
       toast.success(`🤖 ${data.robotCode} 복귀 완료!`);
       setReturnData(data);
+
+      // 로그에도 추가
+      const now = new Date();
+      const newLog = {
+        id: `log-${Date.now()}`,
+        timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+        robotId: data.robotCode,
+        action: `Returned to base - Mission ${data.missionId} complete`,
+        type: 'success' as const
+      };
+      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
     }
   };
 
@@ -176,8 +217,6 @@ export default function RobotsPage() {
     const available = mergedRobots.filter(r => r.status === 'available').length;
     return { total, working, available };
   }, [mergedRobots]);
-
-  const workingRobotsList = useMemo(() => mergedRobots.filter(r => r.status === 'working'), [mergedRobots]);
 
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col relative bg-slate-100">
@@ -219,22 +258,6 @@ export default function RobotsPage() {
         </div>
       </motion.header>
 
-      {/* 🔥 실시간 프로그레스 바 */}
-      <div className="flex-none h-1 bg-slate-200 overflow-hidden relative">
-        <motion.div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
-          animate={{
-            x: ['-100%', '200%']
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          style={{ width: '50%' }}
-        />
-      </div>
-
       {/* 메인 컨텐츠 */}
       <div className="flex-1 min-h-0 p-2 flex gap-2 z-10">
 
@@ -269,7 +292,7 @@ export default function RobotsPage() {
             className="h-24 flex gap-2"
           >
             <div className="flex-1 min-w-0">
-               <MiniLockerWidget onClick={() => setShowLockerInfo(true)} lockers={lockers} />
+               <MiniLockerWidget onClick={() => {}} lockers={lockers} />
             </div>
 
             <div className="flex-none w-80 grid grid-cols-3 gap-2">
@@ -280,51 +303,35 @@ export default function RobotsPage() {
           </motion.div>
         </div>
 
-        {/* 🔥 오른쪽: Active Mission (작게) + 실시간 활동 (크게) */}
+        {/* 🔥 오른쪽: 터미널 로그 (작게) + 실시간 활동 (크게) */}
         <aside className="w-80 flex-none flex flex-col gap-2">
           
-          {/* Active Mission - 높이 축소 */}
-          <motion.div
+          {/* 🔥 터미널 로그 - 작게 */}
+          <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="h-52 flex-none flex flex-col rounded-xl overflow-hidden border border-amber-300 bg-white shadow-xl relative"
+            transition={{ delay: 0.1 }}
+            className="h-64 flex-none relative"
           >
-            {/* 🔥 상단 프로그레스 바 */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-amber-100 overflow-hidden">
+             {/* 🔥 상단 프로그레스 바 */}
+             <div className="absolute top-0 left-0 right-0 h-1 bg-slate-800 overflow-hidden z-30 rounded-t-xl">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-400 to-orange-400"
+                className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400"
                 animate={{
                   x: ['-100%', '100%']
                 }}
                 transition={{
-                  duration: 2,
+                  duration: 2.5,
                   repeat: Infinity,
                   ease: "linear"
                 }}
-                style={{ width: '50%' }}
+                style={{ width: '60%' }}
               />
             </div>
-
-            <div className="flex-none px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 flex items-center justify-between">
-               <div className="flex items-center gap-2">
-                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
-                   <Activity className="w-4 h-4 text-amber-600" />
-                 </motion.div>
-                 <h3 className="text-sm font-black text-amber-800 tracking-wider">ACTIVE MISSIONS</h3>
-               </div>
-               <span className="text-xs font-black text-amber-700 bg-amber-200 px-2 py-0.5 rounded border border-amber-300">{stats.working}</span>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-              <ActiveTaskList
-                robots={workingRobotsList}
-                count={stats.working}
-                onRobotClick={(robot) => setSelectedTaskRobot(robot)}
-              />
-            </div>
+             <RobotActivityTerminal realLogs={realTimeLogs} />
           </motion.div>
 
-          {/* 🔥 실시간 활동 로그 - 높이 증가 */}
+          {/* 🔥 실시간 활동 로그 - 크게 */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
