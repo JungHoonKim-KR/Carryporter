@@ -32,7 +32,6 @@ export const WeightModal = ({ onLockSuccess }: WeightModalProps) => {
   // 무게 애니메이션
   useEffect(() => {
     if (weight > 0 && phase === 'measuring') {
-      let start = 0;
       const duration = 2000;
       const startTime = Date.now();
 
