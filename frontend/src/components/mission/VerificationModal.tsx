@@ -4,7 +4,7 @@ import { verifyMission } from "../../api/mission.api";
 interface VerificationModalProps {
     missionId: number;
     onSuccess: () => void;
-    onClose: () => void;
+    onClose?: () => void; // optional로 변경
 }
 
 // 숫자 배열을 랜덤하게 섞는 함수 (Fisher-Yates shuffle)
@@ -67,14 +67,14 @@ export const VerificationModal = ({
             setIsVerifying(true);
             setError("");
 
-            const result = await verifyMission(String(missionId), Number(pwd));
+            const result = await verifyMission(Number(missionId), Number(pwd));
             if (import.meta.env.DEV) {
                 console.log("[VerificationModal] 인증 성공:", result);
             }
 
             // 인증 성공
             onSuccess();
-            onClose();
+            onClose?.(); // optional chaining으로 안전하게 호출
         } catch (err) {
             console.error("인증 실패:", err);
             // 비밀번호 불일치 시 에러 메시지와 함께 초기화
@@ -89,7 +89,7 @@ export const VerificationModal = ({
 
     const handleClose = () => {
         setIsVisible(false);
-        setTimeout(onClose, 300);
+        setTimeout(() => onClose?.(), 300); // optional chaining으로 안전하게 호출
     };
 
     // 키패드 레이아웃: 3x3 그리드 + 마지막 행 (빈칸, 숫자, 백스페이스)

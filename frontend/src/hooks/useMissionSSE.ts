@@ -5,12 +5,8 @@ import { subscribeMissionUpdates } from "../api/mission.api";
 export const useMissionSSE = () => {
     // ✅ getState() 대신 selector를 써야 리액트가 변경을 감지합니다.
     const currentMission = useMissionStore((state) => state.currentMission);
-    const {
-        setConnected,
-        setConnectionError,
-        updateMissionStatus,
-        setUnifiedFlowStep,
-    } = useMissionStore();
+    const { setConnected, setConnectionError, updateMissionStatus } =
+        useMissionStore();
 
     useEffect(() => {
         // 미션이 없으면 대기 (미션이 생기면 이 useEffect가 다시 실행됨)
@@ -44,14 +40,21 @@ export const useMissionSSE = () => {
                     robotCode: data.robotCode,
                 });
             },
-            onUnlocked: (_data) => {
+            onUnlocked: () => {
                 updateMissionStatus({
                     status: "UNLOCKED",
                 });
             },
-            onLocked: (_data) => {
+            onLocked: () => {
+                console.log("[SSE] 🔒 미션 잠금됨");
                 updateMissionStatus({
                     status: "LOCKED",
+                });
+            },
+            onReturned: () => {
+                console.log("[SSE] 🏠 로봇 복귀 완료");
+                updateMissionStatus({
+                    status: "RETURNED",
                 });
             },
             onAborted: (data) => {

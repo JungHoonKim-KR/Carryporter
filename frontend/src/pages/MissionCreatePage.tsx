@@ -23,6 +23,9 @@ const MissionCreatePage = () => {
     const [locationId, setLocationId] = useState<number | null>(null);
     const [error, setError] = useState("");
 
+    // ✅ selectedLocation을 handleSubmit 위로 이동
+    const selectedLocation = ALL_LOCATIONS.find((l) => l.id === locationId);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -33,6 +36,12 @@ const MissionCreatePage = () => {
 
         if (!locationId) {
             setError("정류장 또는 탑승구를 선택해주세요.");
+            return;
+        }
+
+        // ✅ 추가 검증: selectedLocation이 없으면 에러
+        if (!selectedLocation) {
+            setError("유효하지 않은 위치입니다.");
             return;
         }
 
@@ -66,7 +75,7 @@ const MissionCreatePage = () => {
                 startLocation: locationId, // 호출 위치 = 시작 위치
                 endLocation: 0, // 목적지는 SSE로 받음 (임시값)
                 status: "REQUESTED",
-                destination: selectedLocation?.name, // 목적지 이름 저장
+                destination: selectedLocation.name, // ✅ 옵셔널 체이닝 제거 (이미 검증됨)
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             });
@@ -85,10 +94,6 @@ const MissionCreatePage = () => {
         }
     };
 
-    // 선택된 위치 찾기
-    const selectedLocation = ALL_LOCATIONS.find((l) => l.id === locationId);
-
-    // LocationSelector에 전달할 데이터
     const handleLocationSelect = (id: number) => {
         setLocationId(id);
         setError("");

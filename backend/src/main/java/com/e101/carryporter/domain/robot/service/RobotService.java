@@ -204,7 +204,7 @@ public class RobotService {
             throw new BusinessException(RobotErrorCode.ROBOT_NOT_FOUND);
         }
         Long robotId = mission.getRobot().getId();
-        eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId));
+        eventPublisher.publishEvent(new MissionFinalizedEvent(missionId, robotId, "미션이 종료되었습니다."));
     }
 
     public void storeMission(Long missionId){

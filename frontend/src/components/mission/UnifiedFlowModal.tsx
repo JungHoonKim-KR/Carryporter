@@ -28,6 +28,11 @@ export const UnifiedFlowModal = ({ onComplete }: UnifiedFlowModalProps) => {
     handleGoHome,
   } = useUnifiedFlow();
 
+  // 디버깅: 현재 step 상태 확인
+  if (import.meta.env.DEV) {
+    console.log('[UnifiedFlowModal] 현재 step:', step, '무게:', currentMission?.weightInfo?.luggageWeight);
+  }
+
   // 단계별 인덱스 계산 (Progress bar용)
   const stepIndex = {
     WEIGHT_CHECK: 1,
