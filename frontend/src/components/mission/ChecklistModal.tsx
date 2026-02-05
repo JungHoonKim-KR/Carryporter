@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useMissionStore } from '../../store/missionStore';
 import { lockMission, returnMission } from '../../api/mission.api';
 import { Button } from '@/components/ui/button';
-import type { StoredLuggage } from '../../types/mission.types';
 
 interface ChecklistModalProps {
   onReturnSuccess: () => void;
@@ -14,7 +13,7 @@ interface ChecklistModalProps {
  * 체크리스트 확인 → 복귀 버튼
  */
 export const ChecklistModal = ({ onReturnSuccess }: ChecklistModalProps) => {
-  const { currentMission, addStoredLuggage } = useMissionStore();
+  const { currentMission, updateMissionStatus } = useMissionStore();
   
   const [isReturning, setIsReturning] = useState(false);
   const [checklist, setChecklist] = useState({
@@ -37,22 +36,13 @@ export const ChecklistModal = ({ onReturnSuccess }: ChecklistModalProps) => {
       // 1단계: 잠금 API 호출
       await lockMission(Number(currentMission.id));
 
+      // ✅ 임시 해결: SSE가 오지 않으므로 프론트엔드에서 강제로 상태 업데이트
+      updateMissionStatus({ status: 'LOCKED' });
+
       // 2단계: 복귀 API 호출
       await returnMission(Number(currentMission.id));
 
-      // 3단계: 보관 정보 저장 (weight 제거됨)
-      const storedLuggage: StoredLuggage = {
-        id: `luggage-${Date.now()}`,
-        missionId: currentMission.id,
-        lockerId: currentMission.lockerInfo?.lockerId || `A-${Math.floor(Math.random() * 200) + 1}`,
-        lockerName: currentMission.lockerInfo?.lockerName || `Locker A-${Math.floor(Math.random() * 200) + 1}`,
-        storedAt: new Date().toISOString(),
-        robotCode: currentMission.robotCode,
-        destination: currentMission.destination,
-      };
-      addStoredLuggage(storedLuggage);
-
-      // 4단계: 복귀 중 모달로 전환
+      // 3단계: 복귀 중 모달로 전환
       // SSE에서 RETURNED 이벤트가 오면 완료 모달로 전환됨
       onReturnSuccess();
     } catch (error) {

@@ -94,6 +94,30 @@ const MissionTrackPage = () => {
         navigate("/home");
     };
 
+    // ✅ 진행률 계산 (early return 전에 호출)
+    const progressStep = useMemo(() => {
+        if (!currentMission) return 0;
+
+        switch (currentMission.status) {
+            case "REQUESTED":
+                return 1;
+            case "ASSIGNED":
+                return 2;
+            case "MOVING":
+                return 3;
+            case "ARRIVED":
+            case "UNLOCKED":
+            case "LOCKED":
+                return 4;
+            case "RETURNING":
+            case "RETURNED":
+            case "FINISHED":
+                return 5;
+            default:
+                return 0;
+        }
+    }, [currentMission?.status]);
+
     // 미션 정보가 없으면 홈으로
     if (!currentMission) {
         return (
@@ -127,28 +151,6 @@ const MissionTrackPage = () => {
     }
 
     const status = currentMission.status;
-
-    // 진행률 계산 (0-5단계)
-    const progressStep = useMemo(() => {
-        switch (status) {
-            case "REQUESTED":
-                return 1;
-            case "ASSIGNED":
-                return 2;
-            case "MOVING":
-                return 3;
-            case "ARRIVED":
-            case "UNLOCKED":
-            case "LOCKED":
-                return 4;
-            case "RETURNING":
-            case "RETURNED":
-            case "FINISHED":
-                return 5;
-            default:
-                return 0;
-        }
-    }, [status]);
 
     // 모달 표시 조건
     const showVerifyModal = status === "ARRIVED" && flowStep === "none";
