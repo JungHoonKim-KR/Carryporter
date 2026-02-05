@@ -99,6 +99,13 @@ export const useGlobalSSE = () => {
                 });
             },
 
+            onReturned: (data: SSEEventData) => {
+                console.log("[SSE] 로봇 복귀:", data);
+                updateMissionStatus({
+                    status: "RETURNED",
+                });
+            },
+
             onError: (error: Error) => {
                 console.error("[SSE] 연결 에러:", error);
                 setConnected(false);
