@@ -98,7 +98,17 @@ public class MqttSubscriberService {
                 eventPublisher.publishEvent(new RobotReturnedEvent(
                         mission.getId(),
                         robot.getId(),
+                        mission.getUser().getId(),
                         mac
+                ));
+
+                eventPublisher.publishEvent(new RobotReturnedAdminEvent(
+                        mission.getUser().getId(),
+                        robot.getRobotCode(),
+                        mission.getId(),
+                        mission.getLocker().getId(),
+                        mission.getLocker().getLockerCode(),
+                        String.format("%d 번에 배정된 %s 로봇이 관리소에 복귀 했습니다.", mission.getId(), robot.getRobotCode())
                 ));
             });
         } catch (Exception e) {
@@ -209,7 +219,16 @@ public class MqttSubscriberService {
                 Robot robot = mission.getRobot();
                 log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(), robot.getId());
 
-                eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
+
+//              eventPublisher.publishEvent(new RobotReturnedEvent(mission.getId(), robot.getId(), mac));
+//              log.info("로봇 관리소 복귀 - MAC: {}, missionId: {}, robotId: {}", mac, mission.getId(),  robot.getId());
+                eventPublisher.publishEvent(new RobotReturnedEvent(
+                        mission.getId(),
+                        mission.getRobot().getId(),
+                        mission.getUser().getId(),
+                        mac
+                ));
+
                 eventPublisher.publishEvent(new RobotReturnedAdminEvent(
                         mission.getUser().getId(),
                         robot.getRobotCode(),

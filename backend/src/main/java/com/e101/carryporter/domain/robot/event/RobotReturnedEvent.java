@@ -7,6 +7,7 @@ package com.e101.carryporter.domain.robot.event;
  */
 public record RobotReturnedEvent(
         Long missionId,
+        Long userId,
         Long robotId,
         String robotMacAddress
 ) {

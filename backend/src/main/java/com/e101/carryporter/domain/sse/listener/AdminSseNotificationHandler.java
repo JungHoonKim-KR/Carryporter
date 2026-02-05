@@ -92,13 +92,6 @@ public class AdminSseNotificationHandler {
         sseService.broadcastToAdmins("RobotReturnedAdminEvent", event);
     }
 
-    @Async
-    @TransactionalEventListener
-    public void handleRobotReturnedEvent(RobotReturnedEvent event) {
-        log.debug("[AdminSseNotificationHandler] 로봇 복귀 완료!! mission id = {}", event.missionId());
-        sseService.broadcastToAdmins("RobotReturnedEvent", event);
-    }
-
     /**
      * 8. 미션 종료 알림
      */
@@ -110,7 +103,17 @@ public class AdminSseNotificationHandler {
     }
 
     /**
-     * 8. 로봇 배정 실패 알림
+     * 9. 사물함 보관 알림
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleMissionStoredEvent(MissionStoredEvent event) {
+        log.debug("[AdminSseNotificationHandler] 물건을 사물함에 보관 완료!: missionId = {}, message = {}", event.missionId(), "물건을 사물함에 보관 완료!");
+        sseService.broadcastToAdmins("MissionStoredEvent", event);
+    }
+
+    /**
+     * 10. 로봇 배정 실패 알림
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -118,6 +121,7 @@ public class AdminSseNotificationHandler {
         log.debug("[AdminSseNotificationHandler] mission 생성 실패: missionId = {}, userId = {}, message = {}", event.missionId(), event.userId(), event.message());
         sseService.broadcastToAdmins("MissionFailedEvent", event);
     }
+
 }
 
 
