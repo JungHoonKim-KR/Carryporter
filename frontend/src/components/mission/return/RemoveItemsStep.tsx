@@ -37,10 +37,6 @@ export const RemoveItemsStep = ({
             <span className="text-gray-500">보관 위치</span>
             <span className="font-semibold">{selectedLuggage.lockerName}</span>
           </div>
-          <div className="flex justify-between text-sm mt-2">
-            <span className="text-gray-500">짐 무게</span>
-            <span className="font-semibold">{selectedLuggage.weight.toFixed(1)} kg</span>
-          </div>
         </div>
       </div>
 

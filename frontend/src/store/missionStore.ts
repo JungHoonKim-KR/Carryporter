@@ -23,9 +23,6 @@ interface MissionState {
   isCreating: boolean;
   isVerifying: boolean;
 
-  // 무게 애니메이션 상태
-  isWeightAnimating: boolean;
-
   // 액션
   setCurrentMission: (mission: Mission) => void;
   updateMissionStatus: (update: { status: MissionStatus; robotCode?: string }) => void;
@@ -39,10 +36,6 @@ interface MissionState {
   setConnectionQuality: (quality: 'good' | 'poor' | 'disconnected') => void;
   setCreating: (creating: boolean) => void;
   setVerifying: (verifying: boolean) => void;
-  setWeightAnimating: (animating: boolean) => void;
-
-  // 무게 정보 생성 (LOCKED 상태일 때 호출)
-  generateWeightInfo: () => void;
 
   // 미션 타입 설정 (보관/반납)
   setMissionType: (missionType: MissionType) => void;
@@ -69,7 +62,6 @@ export const useMissionStore = create<MissionState>()(
 
       isCreating: false,
       isVerifying: false,
-      isWeightAnimating: false,
 
       setCurrentMission: (mission) => set({ currentMission: mission }),
 
@@ -92,7 +84,6 @@ export const useMissionStore = create<MissionState>()(
           currentMission: null,
           isConnected: false,
           connectionError: null,
-          isWeightAnimating: false,
         }),
 
       // ✅ 재연결 액션 구현
@@ -116,33 +107,6 @@ export const useMissionStore = create<MissionState>()(
 
       setCreating: (creating) => set({ isCreating: creating }),
       setVerifying: (verifying) => set({ isVerifying: verifying }),
-      setWeightAnimating: (animating) => set({ isWeightAnimating: animating }),
-
-      /**
-       * 무게 정보 랜덤 생성
-       * LOCKED 상태일 때 호출하여 프론트엔드에서 무게 데이터를 생성합니다.
-       */
-      generateWeightInfo: () =>
-        set((state) => {
-          const luggageWeight = Math.random() * 20 + 5; // 5-25kg 랜덤
-
-          if (import.meta.env.DEV) console.log('[MissionStore] 무게 정보 생성:', {
-            luggageWeight: luggageWeight.toFixed(1),
-          });
-
-          return {
-            currentMission: state.currentMission
-              ? {
-                ...state.currentMission,
-                weightInfo: {
-                  initialWeight: 0, // 카트 무게 제거
-                  finalWeight: parseFloat(luggageWeight.toFixed(1)),
-                  luggageWeight: parseFloat(luggageWeight.toFixed(1)),
-                },
-              }
-              : null,
-          };
-        }),
 
       /**
        * 미션 타입 설정 (보관/반납)
