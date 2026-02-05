@@ -66,11 +66,16 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
         toast.success("반납 처리 및 락커 해제가 완료되었습니다.");
       } 
       
-      // ✅ 보관(STORE)의 경우 (필요 시 로직 추가)
-      else if (actionType === 'STORE') {
-         console.log("📦 보관 처리 로직 수행");
-      }
+      // ✅ 보관(STORE)의 경우
+else if (actionType === 'STORE') {
+  console.log(`📦 [API] 보관(Store) 요청: Mission=${data.missionId}`);
+  
+  // 백엔드 컨트롤러의 @PostMapping("missions/{missionId}/store") 와 매핑됨
+  // 전제: 컨트롤러 클래스 레벨 매핑이 "/api/admin" 이어야 함
+  await api.post(`/api/admin/missions/${data.missionId}/store`, {});
 
+  toast.success("물품 보관 처리가 완료되었습니다.");
+}
       // API 성공 후 UI 단계 변경 (딜레이 효과 유지)
       setTimeout(() => {
         setStep('READY_TO_CHARGE');
