@@ -16,7 +16,6 @@ export interface StoredLuggage {
     missionId: string;
     lockerId: string;
     lockerName: string;
-    weight: number; // kg
     storedAt: string; // ISO 날짜
     robotCode?: string;
     destination?: string; // 정류장/게이트 이름 (예: "1번 정류장", "탑승구 1")
@@ -57,11 +56,6 @@ export interface Mission {
     lockerInfo?: {
         lockerId: string; // "A-127"
         lockerName: string; // "Locker A-127"
-    };
-    weightInfo?: {
-        initialWeight: number; // 3.7 (카트 무게)
-        finalWeight: number; // 18.0 (짐 포함)
-        luggageWeight: number; // 14.3 (실제 짐 무게)
     };
     // 반납 시 참조하는 보관 정보
     storedLuggageId?: string;
@@ -104,8 +98,6 @@ export interface VerifyMissionRequest {
 
 // 통합 플로우 단계 (UnifiedFlowModal용)
 export type UnifiedFlowStep =
-    | "WEIGHT_CHECK" // 무게 측정 중
-    | "WEIGHT_RESULT" // 무게 측정 결과
     | "LOCK_REQUESTED" // 잠금 요청
     | "CHECKLIST_CONFIRM" // 체크리스트 확인
     | "RETURN_REQUESTED" // 복귀 요청

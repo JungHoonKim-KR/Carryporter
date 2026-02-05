@@ -167,7 +167,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <p className="text-gray-900 font-semibold text-sm">{luggage.lockerName}</p>
                     <p className="text-gray-600 text-xs">
-                      {luggage.weight.toFixed(1)}kg • {new Date(luggage.storedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(luggage.storedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
