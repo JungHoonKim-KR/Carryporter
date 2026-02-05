@@ -78,7 +78,7 @@ export interface MissionStatusEvent {
     message?: string; // SSE의 msg 필드 저장 (선택사항)
 }
 
-// SSE 이벤트 타입 (8가지)
+// SSE 이벤트 타입 (9가지)
 export type SSEEventType =
     | "Connect"
     | "RobotAssignedEvent"
@@ -87,7 +87,8 @@ export type SSEEventType =
     | "UserAuthSuccessEvent"
     | "MissionUnlockedEvent"
     | "MissionAbortedEvent"
-    | "MissionLockedEvent";
+    | "MissionLockedEvent"
+    | "RobotReturnedEvent";
 
 // SSE 이벤트 데이터 구조 (공통)
 export interface SSEEventData {
@@ -99,4 +100,20 @@ export interface SSEEventData {
 // 비밀번호 인증
 export interface VerifyMissionRequest {
     password: number; // 4자리 (예: 1234)
+}
+
+// 통합 플로우 단계 (UnifiedFlowModal용)
+export type UnifiedFlowStep =
+    | "WEIGHT_CHECK" // 무게 측정 중
+    | "WEIGHT_RESULT" // 무게 측정 결과
+    | "LOCK_REQUESTED" // 잠금 요청
+    | "CHECKLIST_CONFIRM" // 체크리스트 확인
+    | "RETURN_REQUESTED" // 복귀 요청
+    | "RETURN_COMPLETE"; // 복귀 완료
+
+// 체크리스트 항목
+export interface ChecklistItem {
+    id: string;
+    label: string;
+    checked: boolean;
 }

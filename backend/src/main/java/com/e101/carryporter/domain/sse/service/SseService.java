@@ -153,7 +153,7 @@ public class SseService {
                     .id(String.valueOf(id))
                     .name(eventName)
                     .data(data));
-
+            log.debug("[SSE-SERVICE] 클라이언트에게 전송 완료 | ID: {}", id);
         } catch (IOException e) {
             log.debug("[SSE-SERVICE] 클라이언트 연결 끊김 (IOException) | ID: {}", id);
             // 여기서 발생한 IOException이 DispatcherServlet까지 가지 않도록 catch하여 종료 처리
