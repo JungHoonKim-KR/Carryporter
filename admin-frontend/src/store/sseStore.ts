@@ -13,6 +13,8 @@ interface SseStore {
   robots: RobotData[];
   isConnected: boolean;
   lastMessage: string | null;
+  alertEvent: string | null; // 알림 전용 필드 추가
+  setAlertEvent: (event: string | null) => void;
 
   // Actions
   setRobots: (robots: RobotData[]) => void;
@@ -26,6 +28,7 @@ export const useSseStore = create<SseStore>((set) => ({
   robots: [],
   isConnected: false,
   lastMessage: null,
+  alertEvent: null,
 
   // Actions
   setRobots: (robots) => set({ robots }),
@@ -33,6 +36,8 @@ export const useSseStore = create<SseStore>((set) => ({
   setIsConnected: (connected) => set({ isConnected: connected }),
 
   setLastMessage: (message) => set({ lastMessage: message }),
+  
+  setAlertEvent: (event) => set({ alertEvent: event }),
 
   updateRobotStatus: (robotId, updates) => set((state) => ({
     robots: state.robots.map((robot) =>
