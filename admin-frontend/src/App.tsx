@@ -4,6 +4,7 @@ import RobotsPage from './pages/RobotsPage'
 import LockersPage from './pages/LockersPage'
 import LoginPage from './pages/LoginPage'
 import JoinPage from './pages/JoinPage'
+import AlertPage from './pages/AlertPage'
 
 /**
  * 메인 앱 컴포넌트
@@ -18,7 +19,8 @@ function App() {
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/robots" element={<RobotsPage />} />
                     <Route path="/lockers" element={<LockersPage />} />
-                    <Route path="/join" element={<JoinPage />} /> {/* 경로 추가 */}
+                    <Route path="/join" element={<JoinPage />} /> 
+                    <Route path="/alert" element={<AlertPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>
