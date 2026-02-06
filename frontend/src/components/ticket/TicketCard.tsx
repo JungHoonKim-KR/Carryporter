@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { formatCityName, formatTime } from "../../utils/imageUtils";
 import type { TicketInfo, TicketCardVariant } from "../../types/ticket.types";
 import { cn } from "@/lib/utils";
+import { useTiltEffect } from "@/hooks/useTiltEffect";
 
 interface TicketCardProps {
     ticket: TicketInfo;
@@ -15,32 +15,7 @@ const TicketCard = ({
     onClick,
 }: TicketCardProps) => {
     const isCompact = variant === "compact";
-
-    // 3D 틸트 효과를 위한 state
-    const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({});
-
-    // 마우스 움직임에 따른 3D 틸트
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const card = e.currentTarget;
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
-        const centerX = x - 0.5;
-        const centerY = y - 0.5;
-        const rotateX = centerY * -16;
-        const rotateY = centerX * 16;
-
-        setTiltStyle({
-            transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-        });
-    };
-
-    const handleMouseLeave = () => {
-        setTiltStyle({
-            transform:
-                "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
-        });
-    };
+    const { tiltStyle, handleMouseMove, handleMouseLeave } = useTiltEffect();
 
     return (
         <div

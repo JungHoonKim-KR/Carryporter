@@ -21,8 +21,8 @@ export const Logo = ({
   };
 
   const filterClasses = {
-    default: 'brightness-0 invert',
-    white: '',
+    default: '',
+    white: 'brightness-0 invert',
   };
 
   return (

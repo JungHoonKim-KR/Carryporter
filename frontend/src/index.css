@@ -34,14 +34,14 @@
     --color-toss-blue-900: #001433;
 
     /* ===== Sub Colors (새 팔레트) ===== */
-    --color-sub-orange: #FFB03A;
-    --color-sub-orange-light: #FFC76A;
-    --color-sub-yellow: #FFCD5A;
-    --color-sub-yellow-light: #FFE08A;
-    --color-sub-red: #ED4F5C;
-    --color-sub-red-light: #FF7F8C;
-    --color-sub-cyan: #00FFA3;
-    --color-sub-cyan-light: #5AFFC3;
+    --color-sub-orange: #ffb03a;
+    --color-sub-orange-light: #ffc76a;
+    --color-sub-yellow: #ffcd5a;
+    --color-sub-yellow-light: #ffe08a;
+    --color-sub-red: #ed4f5c;
+    --color-sub-red-light: #ff7f8c;
+    --color-sub-cyan: #00ffa3;
+    --color-sub-cyan-light: #5affc3;
 
     /* ===== 세컨더리 컬러 (다양한 상태 표현) - 기존 유지 ===== */
     --color-toss-green: #00c853;
@@ -56,16 +56,16 @@
     --color-toss-yellow-light: #ffff00;
 
     /* ===== Gray Scale (새 팔레트 적용) ===== */
-    --color-gray-900: #18171C;
-    --color-gray-800: #2C2C34;
-    --color-gray-700: #3B3A3F;
-    --color-gray-600: #62626C;
-    --color-gray-500: #86858A;
-    --color-gray-400: #C0BEBF;
-    --color-gray-300: #E3E3E5;
-    --color-gray-200: #EEEEEE;
-    --color-gray-100: #F5F5F5;
-    --color-gray-50: #FAFAFA;
+    --color-gray-900: #18171c;
+    --color-gray-800: #2c2c34;
+    --color-gray-700: #3b3a3f;
+    --color-gray-600: #62626c;
+    --color-gray-500: #86858a;
+    --color-gray-400: #c0bebf;
+    --color-gray-300: #e3e3e5;
+    --color-gray-200: #eeeeee;
+    --color-gray-100: #f5f5f5;
+    --color-gray-50: #fafafa;
 
     /* ===== shadcn/ui 색상 변수 (Toss Blue 통합) ===== */
     --color-background: 0 0% 100%;
@@ -125,34 +125,34 @@
     font-size: 1.5rem; /* 24px */
     font-weight: 700;
     font-family: "Beckman", sans-serif;
-    color: #18171C;
+    color: #18171c;
 }
 
 .text-heading-2 {
     font-size: 1.25rem; /* 20px */
     font-weight: 700;
-    color: #18171C;
+    color: #18171c;
 }
 
 .text-heading-3 {
     font-size: 1.125rem; /* 18px */
     font-weight: 600;
-    color: #18171C;
+    color: #18171c;
 }
 
 .text-body {
     font-size: 1rem; /* 16px */
-    color: #3B3A3F;
+    color: #3b3a3f;
 }
 
 .text-body-small {
     font-size: 0.875rem; /* 14px */
-    color: #62626C;
+    color: #62626c;
 }
 
 .text-caption {
     font-size: 0.75rem; /* 12px */
-    color: #86858A;
+    color: #86858a;
 }
 
 /* Toss 스타일 그라데이션 배경 */
@@ -733,43 +733,5 @@ body {
     }
     50% {
         filter: hue-rotate(30deg);
-    }
-}
-
-/* ============================================
-   비행기 애니메이션
-   ============================================ */
-
-/* Plane Glide - 부드러운 비행 (좌우 이동 + 상하 움직임) */
-@keyframes plane-glide {
-    0%,
-    100% {
-        transform: translateX(-100%) translateY(0);
-    }
-    50% {
-        transform: translateX(100%) translateY(-3px);
-    }
-}
-
-/* Plane Fly - 단순 좌우 이동 */
-@keyframes plane-fly {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
-}
-
-/* Plane Pulse - 깜빡이는 효과 */
-@keyframes plane-pulse {
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.15);
-        opacity: 0.8;
     }
 }

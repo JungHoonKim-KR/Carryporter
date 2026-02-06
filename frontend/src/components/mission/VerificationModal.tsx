@@ -1,21 +1,13 @@
 import { useState, useEffect } from "react";
 import { verifyMission } from "../../api/mission.api";
+import { shuffleArray } from "@/utils/array";
+import NumpadKeyboard from "@/components/mission/NumpadKeyboard";
 
 interface VerificationModalProps {
     missionId: number;
     onSuccess: () => void;
     onClose?: () => void; // optional로 변경
 }
-
-// 숫자 배열을 랜덤하게 섞는 함수 (Fisher-Yates shuffle)
-const shuffleArray = (array: number[]): number[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-};
 
 export const VerificationModal = ({
     missionId,
@@ -175,42 +167,13 @@ export const VerificationModal = ({
                 </div>
 
                 {/* 하단 영역 - 숫자 키패드 */}
-                <div className="px-6 pb-10">
-                    {/* 숫자 키패드 - 랜덤 배치, 텍스트만 파란색 */}
-                    <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
-                        {/* 첫 번째~세 번째 줄: 랜덤 숫자 9개 */}
-                        {gridNumbers.map((num, index) => (
-                            <button
-                                key={`num-${index}`}
-                                type="button"
-                                disabled={isVerifying}
-                                onClick={() => handleNumberClick(num)}
-                                className="h-16 rounded-2xl text-3xl font-normal transition-all duration-150 active:scale-95 disabled:opacity-50 bg-transparent text-[#0064FF] hover:bg-[#0064FF]/10 active:bg-[#0064FF]/20"
-                            >
-                                {num}
-                            </button>
-                        ))}
-
-                        {/* 네 번째 줄: 빈 공간, 마지막 숫자, 백스페이스 */}
-                        <div className="h-16" />
-                        <button
-                            type="button"
-                            disabled={isVerifying}
-                            onClick={() => handleNumberClick(lastNumber)}
-                            className="h-16 rounded-2xl text-3xl font-normal transition-all duration-150 active:scale-95 disabled:opacity-50 bg-transparent text-[#0064FF] hover:bg-[#0064FF]/10 active:bg-[#0064FF]/20"
-                        >
-                            {lastNumber}
-                        </button>
-                        <button
-                            type="button"
-                            disabled={isVerifying}
-                            onClick={handleBackspace}
-                            className="h-16 rounded-2xl text-2xl font-normal transition-all duration-150 active:scale-95 disabled:opacity-50 bg-transparent text-[#0064FF] hover:bg-[#0064FF]/10 active:bg-[#0064FF]/20"
-                        >
-                            ←
-                        </button>
-                    </div>
-                </div>
+                <NumpadKeyboard
+                    gridNumbers={gridNumbers}
+                    lastNumber={lastNumber}
+                    onNumberClick={handleNumberClick}
+                    onBackspace={handleBackspace}
+                    disabled={isVerifying}
+                />
             </div>
         </div>
     );
