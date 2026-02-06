@@ -43,15 +43,14 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
     void sendDispatchCommand() {
         // given
         String mac = "00:11:22:33:44:55";
-        double destX = 2.0;
-        double destY = 3.5;
+        String destination = "test_dest";
 
         // when
-        mqttPublisherService.sendDispatchCommand(mac, destX, destY);
+        mqttPublisherService.sendDispatchCommand(mac, destination);
 
         // then
         String expectedTopic = "robot/" + mac + "/command/dispatch";
-        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
+        String expectedPayload = String.format("{\"destination\":%s}", destination);
 
         printCapturedMessage("배송 명령", expectedTopic, expectedPayload);
     }

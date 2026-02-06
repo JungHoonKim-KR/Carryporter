@@ -5,7 +5,6 @@ public record MissionStartedEvent(
         Long missionId,
         String robotCode,
         String robotMacAddress,
-        Double destX,
-        Double destY
+        String destination
 ) {
 }
