@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { login } from '../api/auth.api';
 import { useAuthStore } from '../store/authStore';
+import { AppHeader } from '@/components/layouts/AppHeader';
 
 interface LocationState {
   email: string;
@@ -141,33 +142,16 @@ const CodeVerificationPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <header className="bg-gray-50 pt-safe">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                <img
-                  src="/images/logo.png"
-                  alt="CARRY PORTER Logo"
-                  className="w-6 h-6 object-contain brightness-0 invert"
-                />
-              </div>
-              <div>
-                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">CARRY PORTER</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-md mx-auto px-6 py-6">
         {/* 제목 */}
         <div className="mb-5 animate-fade-in-up">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
+          <h2 className="text-heading-2 mb-1">
             같은 번호 선택 🔢
           </h2>
-          <p className="text-gray-500">
+          <p className="text-body-small">
             편리한 인증을 위해 번호를 선택해주세요
           </p>
         </div>

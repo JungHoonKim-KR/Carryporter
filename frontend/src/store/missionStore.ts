@@ -19,10 +19,6 @@ interface MissionState {
   lastConnectedAt: string | null;     // 마지막 연결 시간
   connectionQuality: 'good' | 'poor' | 'disconnected'; // 연결 품질
 
-  // 로딩 상태
-  isCreating: boolean;
-  isVerifying: boolean;
-
   // 액션
   setCurrentMission: (mission: Mission) => void;
   updateMissionStatus: (update: { status: MissionStatus; robotCode?: string }) => void;
@@ -34,8 +30,6 @@ interface MissionState {
   incrementReconnectAttempts: () => void;
   resetReconnectAttempts: () => void;
   setConnectionQuality: (quality: 'good' | 'poor' | 'disconnected') => void;
-  setCreating: (creating: boolean) => void;
-  setVerifying: (verifying: boolean) => void;
 
   // 미션 타입 설정 (보관/반납)
   setMissionType: (missionType: MissionType) => void;
@@ -55,9 +49,6 @@ export const useMissionStore = create<MissionState>((set) => ({
   maxReconnectAttempts: 10,
   lastConnectedAt: null,
   connectionQuality: 'disconnected',
-
-  isCreating: false,
-  isVerifying: false,
 
   setCurrentMission: (mission) => set({ currentMission: mission }),
 
@@ -101,9 +92,6 @@ export const useMissionStore = create<MissionState>((set) => ({
     }),
 
   setConnectionQuality: (quality) => set({ connectionQuality: quality }),
-
-  setCreating: (creating) => set({ isCreating: creating }),
-  setVerifying: (verifying) => set({ isVerifying: verifying }),
 
   /**
    * 미션 타입 설정 (보관/반납)

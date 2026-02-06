@@ -1,110 +1,39 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { useTicketStore } from '../store/ticketStore';
 import { useMissionStore } from '../store/missionStore';
-import { getLatestTicket } from '../api/ticket.api';
-import { getUserStoringLocker } from '../api/locker.api';
+import { useTicketData } from '@/hooks/useTicketData';
+import { useLockerData } from '@/hooks/useLockerData';
 import { Button } from '@/components/ui/button';
 import TicketCard from '../components/ticket/TicketCard';
+import { AppHeader } from '@/components/layouts/AppHeader';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { currentTicket, setTicket } = useTicketStore();
-  const { currentLocker, setCurrentLocker, isConnected } = useMissionStore();
-  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
-  const [isLoadingLocker, setIsLoadingLocker] = useState(false);
-  const [lockerError, setLockerError] = useState<string | null>(null);
-
-  // 티켓 정보 자동 조회
-  useEffect(() => {
-    const loadTicket = async () => {
-      if (currentTicket) return;
-
-      const ticketId = localStorage.getItem('ticketId');
-      if (!ticketId) return;
-
-      try {
-        setIsLoadingTicket(true);
-        const ticketData = await getLatestTicket();
-        setTicket(ticketData);
-      } catch (error) {
-        console.error('티켓 정보 조회 실패:', error);
-        localStorage.removeItem('ticketId');
-      } finally {
-        setIsLoadingTicket(false);
-      }
-    };
-
-    loadTicket();
-  }, [currentTicket, setTicket]);
-
-  // 사물함 정보 자동 조회 (페이지 마운트 시마다 실행)
-  useEffect(() => {
-    const loadLocker = async () => {
-      try {
-        setIsLoadingLocker(true);
-        setLockerError(null);
-
-        const locker = await getUserStoringLocker();
-        setCurrentLocker(locker); // null일 수도 있음 (사물함 없음)
-      } catch (error: any) {
-        console.error('사물함 조회 실패:', error);
-
-        // 401은 interceptor가 처리
-        if (error.response?.status === 401) return;
-
-        // 네트워크 에러 표시
-        setLockerError('사물함 정보를 불러올 수 없습니다.');
-        setCurrentLocker(null);
-      } finally {
-        setIsLoadingLocker(false);
-      }
-    };
-
-    loadLocker();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 빈 배열: 컴포넌트 마운트 시에만 실행
+  const { isConnected } = useMissionStore();
+  const { currentTicket, isLoading: isLoadingTicket } = useTicketData();
+  const { currentLocker, isLoading: isLoadingLocker, error: lockerError } = useLockerData();
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <header className="bg-gray-50 pt-safe">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                <img
-                  src="/images/logo.png"
-                  alt="CARRY PORTER Logo"
-                  className="w-6 h-6 object-contain brightness-0 invert"
-                />
-              </div>
-              <div>
-                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">CARRY PORTER</h1>
-              </div>
-            </div>
-
-            {/* ✅ 연결 상태 인디케이터 */}
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-toss-green animate-pulse' : 'bg-gray-300'}`} />
-              <span className="text-xs text-gray-500">
-                {isConnected ? '실시간 연결' : '오프라인'}
-              </span>
-            </div>
+      <AppHeader
+        rightElement={
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-sub-cyan animate-pulse' : 'bg-gray-400'}`} />
+            <span className="text-caption">{isConnected ? '실시간 연결' : '오프라인'}</span>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-md mx-auto px-6 py-4">
         {/* 환영 메시지 */}
         <div className="mb-4 animate-fade-in-up">
-          <h2 className="text-gray-900 text-xl font-bold mb-1">
+          <h2 className="text-heading-2 mb-1">
             안녕하세요 👋
           </h2>
-          <p className="text-gray-600 text-sm">
+          <p className="text-body-small">
             {user?.email}님
           </p>
         </div>
@@ -121,8 +50,8 @@ const HomePage = () => {
             </svg>
           </div>
           <div className="flex-1 text-left">
-            <h3 className="text-gray-900 font-semibold text-base">로봇 호출</h3>
-            <p className="text-gray-500 text-sm">짐 운반 요청</p>
+            <h3 className="text-heading-3">로봇 호출</h3>
+            <p className="text-body-small">짐 운반 요청</p>
           </div>
           <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
