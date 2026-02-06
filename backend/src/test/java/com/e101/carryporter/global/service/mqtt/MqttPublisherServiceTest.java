@@ -50,7 +50,7 @@ class MqttPublisherServiceTest extends IntegrationTestSupport {
 
         // then
         String expectedTopic = "robot/" + mac + "/command/dispatch";
-        String expectedPayload = String.format("{\"destination\":%s}", destination);
+        String expectedPayload = String.format("{\"destination\":\"%s\"}", destination);
 
         printCapturedMessage("배송 명령", expectedTopic, expectedPayload);
     }

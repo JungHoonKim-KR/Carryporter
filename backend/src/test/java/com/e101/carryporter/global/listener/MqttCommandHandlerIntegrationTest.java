@@ -178,7 +178,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         String actualPayload = capturedMessage.getPayload();
 
         String expectedTopic = String.format("robot/%s/command/dispatch", mac);
-        String expectedPayload = String.format("{\"destination\":%s}", destination);
+        String expectedPayload = String.format("{\"destination\":\"%s\"}", destination);
 
         assertThat(actualTopic).isEqualTo(expectedTopic);
         assertThat(actualPayload).isEqualTo(expectedPayload);
