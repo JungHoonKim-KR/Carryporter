@@ -1,6 +1,6 @@
 import { useState, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Wifi, Cpu, Calendar, Clock, MapPin, User, FileText, Loader2, Activity, Zap, Signal } from 'lucide-react'
+import { X, Wifi, Cpu, Calendar, Clock, MapPin, User, FileText, Loader2, Activity, Zap, Signal, Package, TrendingUp, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // --- 3D 관련 임포트 ---
@@ -29,6 +29,67 @@ interface RobotDetailProps {
   modelUrl?: string;
 }
 
+// ✅ 실제 데이터처럼 보이는 가라 데이터 생성 함수
+const generateRealisticMissionData = (robotId: string | number): MissionHistory[] => {
+  const idString = String(robotId);
+  const now = new Date();
+  const missions: MissionHistory[] = [];
+  
+  // 최근 15개의 미션 생성
+  for (let i = 0; i < 15; i++) {
+    const daysAgo = Math.floor(i / 3);
+    const baseTime = new Date(now);
+    baseTime.setDate(baseTime.getDate() - daysAgo);
+    baseTime.setHours(9 + (i % 3) * 3, Math.floor(Math.random() * 60), 0);
+    
+    const assignedTime = baseTime.toISOString();
+    const startTime = new Date(baseTime.getTime() + 2 * 60000).toISOString(); // +2분
+    const arrivalTime = new Date(baseTime.getTime() + (5 + Math.random() * 10) * 60000).toISOString(); // +5-15분
+    const completeTime = new Date(baseTime.getTime() + (15 + Math.random() * 20) * 60000).toISOString(); // +15-35분
+    
+    const statuses: ('COMPLETED' | 'IN_PROGRESS' | 'CANCELLED')[] = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'COMPLETED', 'IN_PROGRESS', 'CANCELLED'];
+    const status = i === 0 ? 'IN_PROGRESS' : statuses[Math.floor(Math.random() * statuses.length)];
+    
+    const locations = ['GATE-1', 'GATE-2', 'STOP-1', 'STOP-2', 'DOCK-A', 'DOCK-B', 'ZONE-C1', 'ZONE-C2'];
+    const userIds = ['USER-2401', 'USER-2402', 'USER-2403', 'USER-2404', 'USER-2405', 'USER-2406'];
+    const adminIds = [null, null, null, 'ADMIN-01', 'ADMIN-02'];
+    
+    missions.push({
+      missionId: `MSN-${String(99234 - i).padStart(5, '0')}`,
+      userId: userIds[Math.floor(Math.random() * userIds.length)],
+      adminId: adminIds[Math.floor(Math.random() * adminIds.length)],
+      locationId: locations[Math.floor(Math.random() * locations.length)],
+      weight: parseFloat((2 + Math.random() * 28).toFixed(1)),
+      status,
+      times: {
+        assigned: assignedTime,
+        start: status !== 'CANCELLED' ? startTime : '',
+        arrival: status === 'COMPLETED' ? arrivalTime : '',
+        complete: status === 'COMPLETED' ? completeTime : ''
+      }
+    });
+  }
+  
+  return missions;
+};
+
+// ✅ 로봇별 실제같은 통계 데이터
+const generateRobotStats = (robotId: string | number) => {
+  const idString = String(robotId);
+  const baseHash = idString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  return {
+    totalMissions: 1200 + (baseHash % 500),
+    successRate: (95 + (baseHash % 4) + Math.random()).toFixed(1),
+    uptime: (97 + (baseHash % 3) + Math.random()).toFixed(1),
+    avgSpeed: (1.1 + (baseHash % 5) * 0.1).toFixed(1),
+    totalDistance: ((baseHash % 50) + 450).toFixed(1),
+    activeHours: 2400 + (baseHash % 800),
+    lastMaintenance: new Date(Date.now() - (baseHash % 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    nextMaintenance: new Date(Date.now() + ((30 - baseHash % 15)) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  };
+};
+
 // ✅ 안전한 시간 변환 헬퍼 함수
 const formatTime = (timeStr: string) => {
   if (!timeStr || !timeStr.includes('T')) return '--:--';
@@ -36,6 +97,16 @@ const formatTime = (timeStr: string) => {
     return timeStr.split('T')[1].substring(0, 5);
   } catch (e) {
     return '--:--';
+  }
+};
+
+const formatDate = (timeStr: string) => {
+  if (!timeStr || !timeStr.includes('T')) return '--/--/--';
+  try {
+    const date = new Date(timeStr);
+    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+  } catch (e) {
+    return '--/--';
   }
 };
 
@@ -236,12 +307,15 @@ function NetworkWidget() {
 }
 
 // --- 📊 통계 위젯 ---
-function StatWidget({ label, value, color }: { label: string; value: string; color: string }) {
+function StatWidget({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
   return (
     <div className="relative bg-gradient-to-br from-white to-slate-50 p-4 rounded-xl border border-slate-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
       <div className={cn("absolute top-0 right-0 w-16 h-16 bg-gradient-to-br opacity-10 rounded-full blur-2xl", color)} />
       <div className="relative">
-        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{label}</div>
+          <div className={cn("text-slate-400", color)}>{icon}</div>
+        </div>
         <div className={cn("text-2xl font-black bg-gradient-to-r bg-clip-text text-transparent", color)}>
           {value}
         </div>
@@ -252,14 +326,30 @@ function StatWidget({ label, value, color }: { label: string; value: string; col
 
 // --- 📜 Sub-Component: 미션 기록 아이템 ---
 function MissionItem({ mission, index }: { mission: MissionHistory; index: number }) {
-  const displayDate = mission.times.complete 
-    ? mission.times.complete.split('T')[0] 
-    : mission.times.assigned.split('T')[0];
+  const displayDate = formatDate(mission.times.complete || mission.times.assigned);
 
   const statusConfig = {
-    COMPLETED: { color: 'bg-emerald-500', textColor: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
-    IN_PROGRESS: { color: 'bg-amber-500', textColor: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-    CANCELLED: { color: 'bg-red-500', textColor: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200' }
+    COMPLETED: { 
+      color: 'bg-emerald-500', 
+      textColor: 'text-emerald-700', 
+      bgColor: 'bg-emerald-50', 
+      borderColor: 'border-emerald-200',
+      icon: '✓'
+    },
+    IN_PROGRESS: { 
+      color: 'bg-amber-500', 
+      textColor: 'text-amber-700', 
+      bgColor: 'bg-amber-50', 
+      borderColor: 'border-amber-200',
+      icon: '⟳'
+    },
+    CANCELLED: { 
+      color: 'bg-red-500', 
+      textColor: 'text-red-700', 
+      bgColor: 'bg-red-50', 
+      borderColor: 'border-red-200',
+      icon: '✕'
+    }
   };
 
   const config = statusConfig[mission.status];
@@ -268,22 +358,22 @@ function MissionItem({ mission, index }: { mission: MissionHistory; index: numbe
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.05 }}
       className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-xl p-4 shadow-md hover:shadow-xl transition-all duration-300 hover:border-cyan-300"
     >
       {/* 헤더 */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2">
           <div className={cn(
-            "w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs shadow-lg",
+            "w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm shadow-lg",
             mission.status === 'COMPLETED' ? 'from-emerald-500 to-green-600' :
             mission.status === 'IN_PROGRESS' ? 'from-amber-500 to-orange-600' :
             'from-red-500 to-rose-600'
           )}>
-            #{mission.missionId.split('-')[1]}
+            {config.icon}
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-800">Mission {mission.missionId}</div>
+            <div className="text-xs font-bold text-slate-800 font-mono">{mission.missionId}</div>
             <span className={cn(
               "inline-block text-[9px] px-2 py-0.5 rounded-full font-bold mt-0.5",
               config.bgColor,
@@ -291,7 +381,7 @@ function MissionItem({ mission, index }: { mission: MissionHistory; index: numbe
               config.borderColor,
               "border"
             )}>
-              {mission.status}
+              {mission.status.replace('_', ' ')}
             </span>
           </div>
         </div>
@@ -304,12 +394,12 @@ function MissionItem({ mission, index }: { mission: MissionHistory; index: numbe
       {/* 정보 그리드 */}
       <div className="grid grid-cols-2 gap-2">
         <InfoItem icon={<User size={12} />} label="User" value={mission.userId} />
-        <InfoItem icon={<MapPin size={12} />} label="Location" value={mission.locationId} />
-        <InfoItem icon={<FileText size={12} />} label="Weight" value={`${mission.weight}kg`} />
+        <InfoItem icon={<MapPin size={12} />} label="Destination" value={mission.locationId} />
+        <InfoItem icon={<Package size={12} />} label="Payload" value={`${mission.weight}kg`} />
         <InfoItem 
           icon={<Clock size={12} />} 
-          label="Time" 
-          value={`${formatTime(mission.times.assigned)} ~ ${formatTime(mission.times.complete)}`} 
+          label="Duration" 
+          value={mission.times.complete ? `${Math.round((new Date(mission.times.complete).getTime() - new Date(mission.times.assigned).getTime()) / 60000)}min` : 'In Progress'} 
         />
       </div>
     </motion.div>
@@ -333,26 +423,25 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
 export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/carryporter.glb" }: RobotDetailProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'history'>('info');
 
-  // 더미 데이터
-  const history: MissionHistory[] = [
-    {
-      missionId: "M-9923", userId: "U-120", adminId: null, locationId: "LOC-A1", weight: 12.5, status: 'IN_PROGRESS',
-      times: { assigned: "2024-01-31T10:00:00", start: "2024-01-31T10:05:00", arrival: "", complete: "" }
-    },
-    {
-      missionId: "M-9811", userId: "U-055", adminId: "ADM-01", locationId: "LOC-B3", weight: 5.2, status: 'COMPLETED',
-      times: { assigned: "2024-01-30T14:00:00", start: "2024-01-30T14:02:00", arrival: "2024-01-30T14:15:00", complete: "2024-01-30T14:20:00" }
-    },
-  ];
+  // 실제 데이터처럼 보이는 가라 데이터 생성
+  const robotIdentifier = robot.id || robot.robotCode || 'RB-001';
+  const history = generateRealisticMissionData(robotIdentifier);
+  const stats = generateRobotStats(robotIdentifier);
+
+  // 로봇 배터리 레벨 (없으면 랜덤 생성)
+  const batteryLevel = robot.battery || (70 + Math.floor(Math.random() * 25));
+
+  // 로봇 MAC 주소 생성
+  const macAddress = `00:1B:${Math.floor(Math.random() * 100).toString(16).toUpperCase().padStart(2, '0')}:${Math.floor(Math.random() * 100).toString(16).toUpperCase().padStart(2, '0')}:${Math.floor(Math.random() * 100).toString(16).toUpperCase().padStart(2, '0')}:${Math.floor(Math.random() * 100).toString(16).toUpperCase().padStart(2, '0')}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
       {/* 배경 오버레이 */}
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+        className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" 
         onClick={onClose} 
       />
       
@@ -362,7 +451,7 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
         animate={{ opacity: 1, scale: 1, y: 0 }} 
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-        className="relative bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden"
+        className="relative bg-white w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* 🎨 헤더 */}
         <div className="relative p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50">
@@ -379,11 +468,17 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
                   <Cpu size={28} />
                 </div>
                 {/* 상태 인디케이터 */}
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-lg">
+                <div className={cn(
+                  "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-lg",
+                  robot.status === 'WORKING' || robot.status === 'working' ? 'bg-emerald-500' : 'bg-slate-400'
+                )}>
                   <motion.div
                     animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 rounded-full bg-emerald-500"
+                    className={cn(
+                      "absolute inset-0 rounded-full",
+                      robot.status === 'WORKING' || robot.status === 'working' ? 'bg-emerald-500' : 'bg-slate-400'
+                    )}
                   />
                 </div>
               </div>
@@ -391,18 +486,18 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
               {/* 텍스트 정보 */}
               <div>
                 <h2 className="text-2xl font-black bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  {robot.name}
+                  {robot.name || robot.robotCode || robot.id}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-mono text-slate-400">ID: {robot.id}</span>
+                  <span className="text-xs font-mono text-slate-400">ID: {robot.id || robot.robotCode}</span>
                   <span className="w-1 h-1 bg-slate-300 rounded-full" />
                   <span className={cn(
                     "text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md",
-                    robot.status === 'WORKING' 
+                    (robot.status === 'WORKING' || robot.status === 'working')
                       ? 'bg-emerald-100 text-emerald-700' 
                       : 'bg-slate-100 text-slate-600'
                   )}>
-                    {robot.status}
+                    {robot.status || 'STANDBY'}
                   </span>
                 </div>
               </div>
@@ -447,8 +542,8 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
           ))}
         </div>
 
-        {/* 📋 콘텐츠 영역 */}
-        <div className="bg-gradient-to-br from-slate-50/50 to-white p-6">
+        {/* 📋 콘텐츠 영역 (스크롤 가능) */}
+        <div className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50/50 to-white p-6">
           <AnimatePresence mode="wait">
             {activeTab === 'info' ? (
               <motion.div 
@@ -466,30 +561,75 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
                   {/* 상세 정보 */}
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
                     <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                        <AlertCircle size={14} className="text-cyan-600" />
                         System Information
                       </h3>
                     </div>
                     <div className="p-4 grid grid-cols-2 gap-3">
-                      <DetailRow label="Robot Code" value="RB-2024-X99" icon={<Cpu size={14}/>} />
-                      <DetailRow label="MAC Address" value="00:1B:44:11:3A:B7" icon={<Wifi size={14}/>} />
-                      <DetailRow label="Created At" value="2023-11-15 09:30" icon={<Calendar size={14}/>} />
-                      <DetailRow label="Last Update" value="2024-01-31 14:45" icon={<Clock size={14}/>} />
+                      <DetailRow label="Robot Code" value={robot.robotCode || robot.id || 'RB-2024-X99'} icon={<Cpu size={14}/>} />
+                      <DetailRow label="MAC Address" value={macAddress} icon={<Wifi size={14}/>} />
+                      <DetailRow label="First Deployed" value={stats.lastMaintenance} icon={<Calendar size={14}/>} />
+                      <DetailRow label="Last Sync" value={`${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`} icon={<Clock size={14}/>} />
+                      <DetailRow label="Total Distance" value={`${stats.totalDistance}km`} icon={<TrendingUp size={14}/>} />
+                      <DetailRow label="Active Hours" value={`${stats.activeHours}h`} icon={<Activity size={14}/>} />
                     </div>
                   </div>
                 </div>
 
                 {/* 오른쪽: 상태 위젯들 */}
                 <div className="space-y-4">
-                  <BatteryWidget level={robot.battery} />
+                  <BatteryWidget level={batteryLevel} />
                   <NetworkWidget />
                   
                   {/* 추가 통계 위젯 */}
                   <div className="grid grid-cols-2 gap-4">
-                    <StatWidget label="Total Missions" value="1,247" color="from-cyan-500 to-blue-500" />
-                    <StatWidget label="Success Rate" value="98.5%" color="from-emerald-500 to-green-500" />
-                    <StatWidget label="Uptime" value="99.2%" color="from-purple-500 to-pink-500" />
-                    <StatWidget label="Avg Speed" value="1.2m/s" color="from-amber-500 to-orange-500" />
+                    <StatWidget 
+                      label="Total Missions" 
+                      value={stats.totalMissions.toString()} 
+                      icon={<Package size={16} />}
+                      color="from-cyan-500 to-blue-500" 
+                    />
+                    <StatWidget 
+                      label="Success Rate" 
+                      value={`${stats.successRate}%`} 
+                      icon={<TrendingUp size={16} />}
+                      color="from-emerald-500 to-green-500" 
+                    />
+                    <StatWidget 
+                      label="Uptime" 
+                      value={`${stats.uptime}%`} 
+                      icon={<Activity size={16} />}
+                      color="from-purple-500 to-pink-500" 
+                    />
+                    <StatWidget 
+                      label="Avg Speed" 
+                      value={`${stats.avgSpeed}m/s`} 
+                      icon={<Zap size={16} />}
+                      color="from-amber-500 to-orange-500" 
+                    />
+                  </div>
+                  
+                  {/* 정비 알림 */}
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                        <Calendar size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-slate-800 mb-1">Maintenance Schedule</h4>
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Last Service:</span>
+                            <span className="font-mono font-semibold">{stats.lastMaintenance}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Next Service:</span>
+                            <span className="font-mono font-semibold text-blue-600">{stats.nextMaintenance}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -500,18 +640,40 @@ export default function RobotDetailModal({ robot, onClose, modelUrl = "./models/
                 animate={{ opacity: 1, x: 0 }} 
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="grid grid-cols-2 gap-4"
               >
-                {history.length > 0 ? (
-                  history.map((mission, idx) => (
-                    <MissionItem key={mission.missionId} mission={mission} index={idx} />
-                  ))
-                ) : (
-                  <div className="col-span-2 flex flex-col items-center justify-center py-16 text-slate-400">
-                    <Activity size={48} className="mb-4 opacity-30" />
-                    <p className="text-sm font-semibold">No mission history available</p>
+                {/* 미션 통계 헤더 */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
+                    <div className="text-xs text-emerald-600 font-semibold mb-1">COMPLETED</div>
+                    <div className="text-2xl font-black text-emerald-700">{history.filter(m => m.status === 'COMPLETED').length}</div>
                   </div>
-                )}
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+                    <div className="text-xs text-amber-600 font-semibold mb-1">IN PROGRESS</div>
+                    <div className="text-2xl font-black text-amber-700">{history.filter(m => m.status === 'IN_PROGRESS').length}</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200 rounded-xl p-4">
+                    <div className="text-xs text-red-600 font-semibold mb-1">CANCELLED</div>
+                    <div className="text-2xl font-black text-red-700">{history.filter(m => m.status === 'CANCELLED').length}</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 rounded-xl p-4">
+                    <div className="text-xs text-cyan-600 font-semibold mb-1">SUCCESS RATE</div>
+                    <div className="text-2xl font-black text-cyan-700">{stats.successRate}%</div>
+                  </div>
+                </div>
+
+                {/* 미션 목록 */}
+                <div className="grid grid-cols-2 gap-4">
+                  {history.length > 0 ? (
+                    history.map((mission, idx) => (
+                      <MissionItem key={mission.missionId} mission={mission} index={idx} />
+                    ))
+                  ) : (
+                    <div className="col-span-2 flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Activity size={48} className="mb-4 opacity-30" />
+                      <p className="text-sm font-semibold">No mission history available</p>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
