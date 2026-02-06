@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useSSEStore } from "../store/sseStore";
 import { useMissionStore } from "../store/missionStore";
 import { subscribeMissionUpdates } from "../api/mission.api";
 import type { SSEEventData } from "../types/mission.types";
@@ -9,20 +10,12 @@ import type { SSEEventData } from "../types/mission.types";
  *
  * 로그인 후 SSE 연결을 시작하고, 로그아웃할 때까지 연결을 유지합니다.
  * 미션 생성/종료와 무관하게 연결을 지속하여 이벤트 손실을 방지합니다.
- *
- * 주요 기능:
- * - 컴포넌트 마운트 시 자동 구독 시작
- * - 컴포넌트 언마운트 시 자동 구독 해제
- * - fetchEventSource의 자동 재연결 기능 사용
- * - 탭 비활성화 시에도 연결 유지 (openWhenHidden: true)
  */
 export const useGlobalSSE = () => {
-    const {
-        setConnected,
-        setConnectionError,
-        resetReconnectAttempts,
-        updateMissionStatus,
-    } = useMissionStore();
+    const { setConnected, setConnectionError, resetReconnectAttempts } =
+        useSSEStore();
+
+    const { updateMissionStatus } = useMissionStore();
 
     const eventSourceRef = useRef<(() => void) | null>(null);
 
@@ -127,7 +120,7 @@ export const useGlobalSSE = () => {
     }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
 
     return {
-        isConnected: useMissionStore((state) => state.isConnected),
-        reconnectAttempts: useMissionStore((state) => state.reconnectAttempts),
+        isConnected: useSSEStore((state) => state.isConnected),
+        reconnectAttempts: useSSEStore((state) => state.reconnectAttempts),
     };
 };

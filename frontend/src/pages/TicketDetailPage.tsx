@@ -29,6 +29,7 @@ const TicketDetailPage = () => {
           <p className="text-body-small">
             등록된 항공권 정보를 확인하세요
           </p>
+          
         </div>
 
         {/* 티켓 카드 */}
@@ -39,8 +40,7 @@ const TicketDetailPage = () => {
         {/* 확인 버튼 */}
         <div className="mt-6 animate-fade-in-up">
           <Button
-            size="lg"
-            className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
+            className="w-full h-12 text-base font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white rounded-xl"
             onClick={() => navigate('/home')}
           >
             확인

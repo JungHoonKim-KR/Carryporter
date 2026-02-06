@@ -71,15 +71,14 @@ class MqttCommandHandlerTest {
         @DisplayName("MissionStartedEvent 발생 시 로봇에게 이동 명령 전송")
         void handleMissionStarted() {
             // given
-            Double destX = 10.5;
-            Double destY = 20.3;
-            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destX, destY);
+            String destination = "Gate A12";
+            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destination);
 
             // when
             mqttCommandHandler.handleMissionStarted(event);
 
             // then
-            verify(mqttPublisherService).sendDispatchCommand(TEST_MAC, destX, destY);
+            verify(mqttPublisherService).sendDispatchCommand(TEST_MAC, destination);
         }
 
         @Test
