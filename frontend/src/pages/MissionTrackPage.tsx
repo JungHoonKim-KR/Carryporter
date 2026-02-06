@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMissionStore } from "../store/missionStore";
+import { useSSEStore } from "../store/sseStore";
 import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/layouts/AppHeader";
 import { useMissionFlow } from "@/hooks/useMissionFlow";
@@ -8,27 +9,19 @@ import { ConnectionStatusBadge } from "@/components/features/mission/ConnectionS
 import { MissionTimeline } from "@/components/features/mission/MissionTimeline";
 import { RobotInfoCard } from "@/components/features/mission/RobotInfoCard";
 import { MissionModals } from "@/components/features/mission/MissionModals";
-import { calculateProgressStep, getStatusMessage } from "@/domain/mission/stateMachine";
+import {
+    calculateProgressStep,
+    getStatusMessage,
+} from "@/domain/mission/stateMachine";
 
-/**
- * 미션 추적 페이지
- * 상태별 모달 표시 (배경은 항상 타임라인이 흐릿하게 보임):
- * - ARRIVED: 인증 모달
- * - UNLOCKED: 체크리스트 모달
- * - UNLOCKED: 체크리스트 모달
- * - 복귀 완료: 완료 모달
- */
 const MissionTrackPage = () => {
     const navigate = useNavigate();
-    const {
-        currentMission,
-        clearMission,
-        isConnected,
-        connectionQuality,
-        reconnectAttempts,
-    } = useMissionStore();
+    const { currentMission, clearMission } = useMissionStore();
 
-    const { flowStep, handleVerificationSuccess, handleReturnSuccess } = useMissionFlow(currentMission);
+    const { isConnected, connectionQuality, reconnectAttempts } = useSSEStore();
+
+    const { flowStep, handleVerificationSuccess, handleReturnSuccess } =
+        useMissionFlow(currentMission);
 
     // 미션 완료
     const handleComplete = () => {
@@ -40,7 +33,7 @@ const MissionTrackPage = () => {
     const progressStep = useMemo(() => {
         if (!currentMission) return 0;
         return calculateProgressStep(currentMission.status);
-    }, [currentMission?.status]);
+    }, [currentMission]);
 
     // 미션 정보가 없으면 홈으로
     if (!currentMission) {
@@ -93,9 +86,7 @@ const MissionTrackPage = () => {
             <main className="max-w-md mx-auto px-6 py-6">
                 {/* 상태 메시지 */}
                 <div className="mb-6 animate-fade-in-up">
-                    <h2 className="text-heading-1 mb-1">
-                        미션 진행중 🚀
-                    </h2>
+                    <h2 className="text-heading-1 mb-1">미션 진행중 🚀</h2>
                     <p className="text-body-small">
                         {getStatusMessage(status)}
                     </p>
