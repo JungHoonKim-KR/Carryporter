@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { formatCityName, formatTime } from "../../utils/imageUtils";
 import type { TicketInfo, TicketCardVariant } from "../../types/ticket.types";
 import { cn } from "@/lib/utils";
+import { useTiltEffect } from "@/hooks/useTiltEffect";
 
 interface TicketCardProps {
     ticket: TicketInfo;
@@ -15,32 +15,7 @@ const TicketCard = ({
     onClick,
 }: TicketCardProps) => {
     const isCompact = variant === "compact";
-
-    // 3D 틸트 효과를 위한 state
-    const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({});
-
-    // 마우스 움직임에 따른 3D 틸트
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const card = e.currentTarget;
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
-        const centerX = x - 0.5;
-        const centerY = y - 0.5;
-        const rotateX = centerY * -16;
-        const rotateY = centerX * 16;
-
-        setTiltStyle({
-            transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-        });
-    };
-
-    const handleMouseLeave = () => {
-        setTiltStyle({
-            transform:
-                "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
-        });
-    };
+    const { tiltStyle, handleMouseMove, handleMouseLeave } = useTiltEffect();
 
     return (
         <div
@@ -103,15 +78,15 @@ const TicketCard = ({
             <div className="absolute inset-0 border-2 border-white/40 rounded-2xl pointer-events-none" />
 
             {/* 카드 컨텐츠 */}
-            <div className="relative px-4 py-5 sm:p-6 text-gray-800">
+            <div className="relative px-4 py-3 sm:p-6 text-gray-800">
                 {/* 상단: 항공사 로고 + 편명/게이트 */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         {/* 항공사 로고 */}
                         <img
                             src="/images/korean_air.svg"
                             alt="Korean Air"
-                            className="h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow-lg scale-150 sm:scale-[175] md:scale-200 origin-left"
+                            className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-lg scale-125 sm:scale-150 md:scale-[175] origin-left"
                         />
                     </div>
 
@@ -136,9 +111,9 @@ const TicketCard = ({
                 </div>
 
                 {/* 중앙: 출발지 → 도착지 */}
-                <div className="flex items-center justify-between mb-6 gap-1">
+                <div className="flex items-center justify-between mb-3 gap-1">
                     <div className="text-center flex-1 min-w-0">
-                        <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter mb-1">
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold tracking-tighter mb-0">
                             {formatCityName(ticket.origin)}
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600">
@@ -168,7 +143,7 @@ const TicketCard = ({
                     </div>
 
                     <div className="text-center flex-1 min-w-0">
-                        <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter mb-1">
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold tracking-tighter mb-0">
                             {formatCityName(ticket.destination)}
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600">
@@ -178,7 +153,7 @@ const TicketCard = ({
                 </div>
 
                 {/* 구분선 */}
-                <div className="border-t border-gray-300 my-4" />
+                <div className="border-t border-gray-300 my-2" />
 
                 {/* 하단: 시간 정보 */}
                 <div className="flex justify-between items-start">
@@ -186,7 +161,7 @@ const TicketCard = ({
                         <div className="text-xs text-gray-500 mb-1">
                             Boarding
                         </div>
-                        <div className="text-lg font-semibold">
+                        <div className="text-base font-semibold">
                             {formatTime(ticket.boardingTime)}
                         </div>
                     </div>
@@ -195,7 +170,7 @@ const TicketCard = ({
                         <div className="text-xs text-gray-500 mb-1">
                             Departs
                         </div>
-                        <div className="text-lg font-semibold">
+                        <div className="text-base font-semibold">
                             {formatTime(ticket.departureTime)}
                         </div>
                     </div>
@@ -205,40 +180,12 @@ const TicketCard = ({
                             <div className="text-xs text-gray-500 mb-1">
                                 Seat
                             </div>
-                            <div className="text-lg font-semibold">
+                            <div className="text-base font-semibold">
                                 {ticket.seat || "-"}
                             </div>
                         </div>
                     )}
                 </div>
-
-                {/* compact일 때 탭 힌트 */}
-                {isCompact && onClick && (
-                    <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-                        <span className="text-sm text-gray-500 flex items-center justify-center gap-1">
-                            <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                            </svg>
-                            탭하여 자세히 보기
-                        </span>
-                    </div>
-                )}
             </div>
         </div>
     );

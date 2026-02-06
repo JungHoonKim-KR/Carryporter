@@ -84,15 +84,14 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("MissionStartedEvent 발행 시 MQTT move 명령 전송")
         void publishMissionStarted() {
             // given
-            Double destX = 10.5;
-            Double destY = 20.3;
-            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destX, destY);
+            String destination = "Gate A12";
+            MissionStartedEvent event = new MissionStartedEvent(TEST_USER_ID, TEST_MISSION_ID, TEST_ROBOT_CODE, TEST_MAC, destination);
 
             // when
             eventPublisher.publishEvent(event);
 
             // then
-            verifyMqttMoveCommand(TEST_MAC, destX, destY);
+            verifyMqttMoveCommand(TEST_MAC, destination);
         }
 
         @Test
@@ -170,7 +169,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         printResult(action, actualTopic, capturedMessage.getPayload());
     }
 
-    private void verifyMqttMoveCommand(String mac, Double destX, Double destY) {
+    private void verifyMqttMoveCommand(String mac, String destination) {
         ArgumentCaptor<Message<String>> messageCaptor = ArgumentCaptor.forClass(Message.class);
         verify(mqttOutbound, timeout(ASYNC_TIMEOUT_MS)).handleMessage(messageCaptor.capture());
 
@@ -179,7 +178,7 @@ class MqttCommandHandlerIntegrationTest extends IntegrationTestSupport {
         String actualPayload = capturedMessage.getPayload();
 
         String expectedTopic = String.format("robot/%s/command/dispatch", mac);
-        String expectedPayload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
+        String expectedPayload = String.format("{\"destination\":\"%s\"}", destination);
 
         assertThat(actualTopic).isEqualTo(expectedTopic);
         assertThat(actualPayload).isEqualTo(expectedPayload);

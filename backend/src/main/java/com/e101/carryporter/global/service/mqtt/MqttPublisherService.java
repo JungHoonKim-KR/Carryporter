@@ -31,24 +31,24 @@ public class MqttPublisherService {
      * 사용법: sendCommand("AA:BB:CC...", "deliver", "{\"destX\":10, \"destY\":20}");
      */
     public void sendCommand(String mac, String action, String jsonPayload) {
-        String topic = String.format("robot/%s/command/%s","D4:F3:2D:32:3C:AB" , action);
+        String topic = String.format("robot/%s/command/%s", mac, action);
         publish(topic, jsonPayload);
     }
 
     /**
      * 디스패치 명령 전송 (관리자가 로봇에게 이동 명령)
+     *
      * @param mac 로봇 MAC 주소
-     * @param destX 목적지 X 좌표
-     * @param destY 목적지 Y 좌표
      */
-    public void sendDispatchCommand(String mac, double destX, double destY) {
-        String payload = String.format("{\"destX\":%.2f,\"destY\":%.2f}", destX, destY);
+    public void sendDispatchCommand(String mac, String destination) {
+        String payload = String.format("{\"destination\":\"%s\"}", destination);
         sendCommand(mac, "dispatch", payload);
-        log.info("디스패치 명령 전송 - MAC: {}, 목적지: ({}, {})", mac, destX, destY);
+        log.info("디스패치 명령 전송 - MAC: {}, 목적지: {}", mac, destination);
     }
 
     /**
      * 복귀 명령 전송
+     *
      * @param mac 로봇 MAC 주소
      */
     public void sendReturnCommand(String mac) {
@@ -58,6 +58,7 @@ public class MqttPublisherService {
 
     /**
      * 긴급 정지 명령 전송
+     *
      * @param mac 로봇 MAC 주소
      */
     public void sendStopCommand(String mac) {

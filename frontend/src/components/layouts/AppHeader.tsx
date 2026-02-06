@@ -1,30 +1,25 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Logo } from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
 
-interface PageHeaderProps {
-  title?: string;
-  subtitle?: string;
+interface AppHeaderProps {
+  rightElement?: React.ReactNode;
   showBackButton?: boolean;
   showCloseButton?: boolean;
   onBack?: () => void;
   onClose?: () => void;
+  className?: string;
 }
 
-/**
- * 공통 페이지 헤더 컴포넌트
- * 로고, 타이틀, 뒤로가기/닫기 버튼을 포함
- */
-export const PageHeader = ({
-  title = 'CARRY PORTER',
-  subtitle,
+export const AppHeader = ({
+  rightElement,
   showBackButton = false,
   showCloseButton = false,
   onBack,
   onClose,
-}: PageHeaderProps) => {
+  className,
+}: AppHeaderProps) => {
   const navigate = useNavigate();
-  const [logoError, setLogoError] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -43,14 +38,14 @@ export const PageHeader = ({
   };
 
   return (
-    <header className="bg-gray-50 pt-safe">
+    <header className={cn('bg-gray-50 pt-safe', className)}>
       <div className="max-w-md mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* 뒤로가기 버튼 */}
           {showBackButton && (
             <button
               onClick={handleBack}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
               aria-label="뒤로가기"
             >
               <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,25 +56,18 @@ export const PageHeader = ({
 
           {/* 로고 + 타이틀 */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-              <img
-                src="/images/logo.png"
-                alt="CARRY PORTER Logo"
-                className={cn("w-6 h-6", logoError && "hidden")}
-                onError={() => setLogoError(true)}
-              />
-            </div>
-            <div>
-              <h1 className="text-gray-900 text-lg font-bold">{title}</h1>
-              {subtitle && <p className="text-gray-500 text-xs">{subtitle}</p>}
-            </div>
+            <Logo size="md" variant="default" />
+            <h1 className="text-heading-3 font-beckman">CARRY PORTER</h1>
           </div>
+
+          {/* 우측 요소 (커스텀) */}
+          {rightElement && <div>{rightElement}</div>}
 
           {/* 닫기 버튼 */}
           {showCloseButton && (
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
               aria-label="닫기"
             >
               <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,8 +76,8 @@ export const PageHeader = ({
             </button>
           )}
 
-          {/* 버튼이 없을 때 빈 공간 유지 */}
-          {!showBackButton && !showCloseButton && <div className="w-10" />}
+          {/* 버튼이 없고 rightElement도 없으면 빈 공간 */}
+          {!showBackButton && !showCloseButton && !rightElement && <div className="w-10" />}
         </div>
       </div>
     </header>

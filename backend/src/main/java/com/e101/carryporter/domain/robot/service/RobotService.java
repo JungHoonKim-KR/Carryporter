@@ -188,8 +188,7 @@ public class RobotService {
                 mission.getId(),
                 robot.getRobotCode(),
                 robot.getMacAddress(),
-                50.0,
-                50.0
+                mission.getCallLocation().getLocationName()
         ));
     }
 
