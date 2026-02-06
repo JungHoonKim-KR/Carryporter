@@ -22,7 +22,6 @@ type WorkflowStep = 'IDLE' | 'SELECT_LOCKER' | 'CONFIRM_LOCKER' | 'MISSION_START
 
 const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
 
-// SSE MOVE 이벤트를 로그로 변환
 const convertMoveEventToLog = (moveData: any) => {
   const now = new Date()
   return {
@@ -82,6 +81,9 @@ export default function RobotsPage() {
     fetchLockers();
   }, []);
 
+  // 🔥 SSE 이동 데이터를 저장할 state 추가
+  const [sseMovements, setSseMovements] = useState<Array<{ robotCode: string; x: number; y: number }>>([]);
+
   // 데이터 병합
   const mergedRobots: RobotItem[] = useMemo(() => {
     const sseMap = new Map(sseRobots.map((r: any) => [r.robotCode, r]));
@@ -106,16 +108,16 @@ export default function RobotsPage() {
   const [assignedEvent, setAssignedEvent] = useState<RobotAssignedEvent | null>(null);
   const [returnData, setReturnData] = useState<RobotReturnedAdminEvent | null>(null);
 
-  // SSE 이벤트 리스너
+  // 🔥 SSE 이벤트 리스너 수정
   useEffect(() => {
     if (!lastMessage) return;
     
     try {
-      // 🔥 1차 시도: JSON 파싱 (이미 JSON 객체인 경우)
+      // 1차 시도: JSON 파싱
       const parsed = JSON.parse(lastMessage);
       handleParsedEvent(parsed);
     } catch (e) {
-      // 🔥 2차 시도: SSE 형식 파싱 (event:\ndata:\n 형식)
+      // 2차 시도: SSE 형식 파싱
       try {
         const lines = lastMessage.split('\n');
         let eventName = '';
@@ -129,10 +131,8 @@ export default function RobotsPage() {
           }
         });
 
-        // data 부분을 JSON 파싱
         if (dataStr) {
           const parsed = JSON.parse(dataStr);
-          // eventName을 parsed 객체에 추가
           parsed.eventName = parsed.eventName || eventName;
           handleParsedEvent(parsed);
         }
@@ -142,12 +142,72 @@ export default function RobotsPage() {
     }
   }, [lastMessage]);
 
-  // 🔥 파싱된 이벤트 처리 함수
+
+  // 🔥 파싱된 이벤트 처리 함수 수정
   const handleParsedEvent = (parsed: any) => {
     console.log('📨 파싱된 이벤트:', parsed);
 
-    // MOVE 이벤트 처리 → 터미널 로그 추가
+    // 🔥 MissionStartedEvent 처리 → 로봇 이동
+    if (parsed.eventName === 'MissionStartedEvent' || parsed.event === 'MissionStartedEvent') {
+      const robotCode = parsed.robotCode;
+      const destX = parsed.destX;
+      const destY = parsed.destY;
+      
+      if (robotCode && destX !== undefined && destY !== undefined) {
+        console.log(`🚀 미션 시작! ${robotCode} → (${destX}, ${destY})`);
+        
+        // sseMovements 업데이트
+        setSseMovements(prev => {
+          const existing = prev.find(m => m.robotCode === robotCode);
+          if (existing) {
+            return prev.map(m => 
+              m.robotCode === robotCode 
+                ? { robotCode, x: destX, y: destY }
+                : m
+            );
+          } else {
+            return [...prev, { robotCode, x: destX, y: destY }];
+          }
+        });
+
+        // 터미널 로그 추가
+        const now = new Date();
+        const newLog = {
+          id: `log-${Date.now()}`,
+          timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+          robotId: robotCode,
+          action: `Mission started → (${destX}, ${destY})`,
+          type: 'info' as const
+        };
+        setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
+      }
+      return;
+    }
+
+    // 🔥 MOVE 이벤트 처리 → RobotStage로 전달
     if (parsed.eventName === 'MOVE' || parsed.event === 'MOVE') {
+      const robotCode = parsed.robotCode || parsed.robotId;
+      const x = parsed.x;
+      const y = parsed.y;
+      
+      if (robotCode && x !== undefined && y !== undefined) {
+        // 🔥 sseMovements 업데이트
+        setSseMovements(prev => {
+          // 기존에 같은 로봇이 있으면 업데이트, 없으면 추가
+          const existing = prev.find(m => m.robotCode === robotCode);
+          if (existing) {
+            return prev.map(m => 
+              m.robotCode === robotCode 
+                ? { robotCode, x, y }
+                : m
+            );
+          } else {
+            return [...prev, { robotCode, x, y }];
+          }
+        });
+      }
+
+      // 터미널 로그에도 추가
       const newLog = convertMoveEventToLog(parsed);
       setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
       return;
@@ -275,7 +335,7 @@ export default function RobotsPage() {
             </div>
             
             <div className="w-full h-full relative">
-               <RobotStage robots={mergedRobots} showDummyIfEmpty={true} />
+               <RobotStage robots={mergedRobots} showDummyIfEmpty={true} sseMovements={sseMovements} />
             </div>
 
             <div className="absolute bottom-3 right-3 z-20">
