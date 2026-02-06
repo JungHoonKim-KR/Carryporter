@@ -7,14 +7,15 @@ import { useTicketStore } from '../store/ticketStore';
 
 const TicketScanPage = () => {
   const navigate = useNavigate();
-  const { setTicket, setScanning, isScanning } = useTicketStore();
+  const { setTicket } = useTicketStore();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   // 이미지 캡처 핸들러
   const handleCapture = async (imageFile: File) => {
     try {
       // 스캔 시작
-      setScanning(true);
+      setIsScanning(true);
 
       // 백엔드로 이미지 전송 및 OCR 수행
       const ticketData = await scanTicket(imageFile);
@@ -26,7 +27,7 @@ const TicketScanPage = () => {
       setShowSuccess(true);
     } catch (error) {
       if (import.meta.env.DEV) console.error('티켓 스캔 실패:', error);
-      setScanning(false);
+      setIsScanning(false);
 
       // 에러 알림 (향후 Toast 컴포넌트로 대체 가능)
       alert('티켓 스캔에 실패했습니다. 다시 시도해주세요.');
