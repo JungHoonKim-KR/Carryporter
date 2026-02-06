@@ -1,23 +1,15 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { cn } from "@/lib/utils";
-import { sendCodeSchema, type SendCodeFormData } from "../utils/validation";
-import { sendCode } from "../api/auth.api";
-import { setMockPassword } from "../api/mission.api.mock";
+import { useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useLoginForm } from "@/hooks/useLoginForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInputField } from "@/components/auth/PasswordInputField";
 import { TermsCheckbox } from "@/components/auth/TermsCheckbox";
+import { AppHeader } from "@/components/layouts/AppHeader";
 
 const LoginPage = () => {
-    const navigate = useNavigate();
     const { isAuthenticated, clearAuth } = useAuthStore();
-    const [isLoading, setIsLoading] = useState(false);
-    const [apiError, setApiError] = useState("");
-    const [logoError, setLogoError] = useState(false);
+    const { form, onSubmit, isLoading, apiError } = useLoginForm();
 
     // 로그인 페이지 진입 시 기존 인증 정보 클리어
     useEffect(() => {
@@ -27,16 +19,7 @@ const LoginPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const {
-        register,
-        handleSubmit,
-        control,
-        watch,
-        formState: { errors, isValid },
-    } = useForm<SendCodeFormData>({
-        resolver: zodResolver(sendCodeSchema),
-        mode: "onChange",
-    });
+    const { register, handleSubmit, control, watch, formState: { errors, isValid } } = form;
 
     // 폼 값 감시 (비밀번호 일치 확인용)
     const password = watch("password");
@@ -47,71 +30,19 @@ const LoginPage = () => {
     // 폼 전체 유효성 검사
     const isFormValid = isValid && agreeTerms && agreePrivacy;
 
-    const onSubmit = async (data: SendCodeFormData) => {
-        try {
-            setIsLoading(true);
-            setApiError("");
-
-            // 인증번호 발송 API 호출
-            const response = await sendCode({
-                email: data.email,
-                password: parseInt(data.password, 10),
-            });
-
-            // Mock API용: 비밀번호 저장
-            setMockPassword(parseInt(data.password, 10));
-
-            if (import.meta.env.DEV)
-                console.log("=== 1단계 인증번호 발송 성공 ===");
-            if (import.meta.env.DEV) console.log("응답 데이터:", response);
-
-            // CODE 선택 페이지로 이동
-            navigate("/login/verify", {
-                state: {
-                    email: data.email,
-                    code: response.code,
-                },
-            });
-        } catch (error: any) {
-            console.error("Send code error:", error);
-            setApiError(
-                error.response?.data?.message ||
-                    "인증번호 발송에 실패했습니다. 다시 시도해주세요."
-            );
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             {/* 헤더 */}
-            <header className="bg-gray-50 pt-safe">
-                <div className="max-w-md mx-auto px-6 py-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                            <img
-                                src="/images/logo.png"
-                                alt="CARRY PORTER Logo"
-                                className={cn("w-6 h-6", logoError && "hidden")}
-                                onError={() => setLogoError(true)}
-                            />
-                        </div>
-                        <h1 className="text-gray-900 text-lg font-bold">
-                            CARRY PORTER
-                        </h1>
-                    </div>
-                </div>
-            </header>
+            <AppHeader />
 
             {/* 메인 컨텐츠 */}
             <main className="max-w-md mx-auto px-6 py-6">
                 {/* 환영 메시지 */}
-                <div className="mb-8 animate-fade-in-up">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="mb-5 animate-fade-in-up">
+                    <h2 className="text-heading-2 mb-1">
                         환영합니다! 👋
                     </h2>
-                    <p className="text-gray-500">
+                    <p className="text-body-small">
                         편리한 짐 운반 서비스를 시작하세요
                     </p>
                 </div>
@@ -120,11 +51,11 @@ const LoginPage = () => {
                 <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
                     <form
                         onSubmit={handleSubmit(onSubmit)}
-                        className="space-y-6"
+                        className="space-y-4"
                     >
                         {/* 폼 제목 */}
                         <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-gray-900">
+                            <h2 className="text-xl font-bold text-gray-900">
                                 로그인
                             </h2>
                             <p className="text-sm text-gray-600">
@@ -133,7 +64,7 @@ const LoginPage = () => {
                         </div>
 
                         {/* 모든 입력 필드 */}
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                             {/* 1. 이메일 필드 */}
                             <div className="space-y-2">
                                 <label
@@ -195,7 +126,7 @@ const LoginPage = () => {
                             </div>
 
                             {/* 4. 약관 동의 */}
-                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
                                 <TermsCheckbox
                                     control={control}
                                     name="agreeTerms"
@@ -211,14 +142,12 @@ const LoginPage = () => {
                             </div>
 
                             {/* 약관 설명 */}
-                            <div className="text-xs text-gray-500 space-y-1">
+                            <div className="text-[10px] text-gray-500 space-y-0.5">
                                 <p>
-                                    · 보관 정책: 짐 보관 시 안전 및 책임 범위에
-                                    대한 내용입니다.
+                                    · 보관 정책: 짐 보관 안전 및 책임 범위
                                 </p>
                                 <p>
-                                    · 서비스 이용약관: 로봇 호출 서비스 이용 시
-                                    준수사항입니다.
+                                    · 이용약관: 로봇 호출 서비스 준수사항
                                 </p>
                             </div>
                         </div>

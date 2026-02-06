@@ -15,7 +15,10 @@
 
 /* Custom theme configuration */
 @theme {
-    /* ===== Toss 블루 계열 (메인 브랜드 컬러) ===== */
+    /* ===== Main Color (Primary) ===== */
+    --color-primary-blue: #0064ff;
+
+    /* ===== Toss 블루 계열 (메인 브랜드 컬러) - 유지 ===== */
     --color-toss-blue: #0064ff;
     --color-toss-blue-light: #4da3ff;
     --color-toss-blue-dark: #0052cc;
@@ -30,7 +33,17 @@
     --color-toss-blue-800: #002966;
     --color-toss-blue-900: #001433;
 
-    /* ===== 세컨더리 컬러 (다양한 상태 표현) ===== */
+    /* ===== Sub Colors (새 팔레트) ===== */
+    --color-sub-orange: #FFB03A;
+    --color-sub-orange-light: #FFC76A;
+    --color-sub-yellow: #FFCD5A;
+    --color-sub-yellow-light: #FFE08A;
+    --color-sub-red: #ED4F5C;
+    --color-sub-red-light: #FF7F8C;
+    --color-sub-cyan: #00FFA3;
+    --color-sub-cyan-light: #5AFFC3;
+
+    /* ===== 세컨더리 컬러 (다양한 상태 표현) - 기존 유지 ===== */
     --color-toss-green: #00c853;
     --color-toss-green-light: #69f0ae;
     --color-toss-orange: #ff6d00;
@@ -42,17 +55,17 @@
     --color-toss-yellow: #ffd600;
     --color-toss-yellow-light: #ffff00;
 
-    /* ===== 그레이 스케일 (Toss 스타일) ===== */
-    --color-gray-50: #fafafa;
-    --color-gray-100: #f5f5f5;
-    --color-gray-200: #eeeeee;
-    --color-gray-300: #e0e0e0;
-    --color-gray-400: #bdbdbd;
-    --color-gray-500: #9e9e9e;
-    --color-gray-600: #757575;
-    --color-gray-700: #616161;
-    --color-gray-800: #424242;
-    --color-gray-900: #212121;
+    /* ===== Gray Scale (새 팔레트 적용) ===== */
+    --color-gray-900: #18171C;
+    --color-gray-800: #2C2C34;
+    --color-gray-700: #3B3A3F;
+    --color-gray-600: #62626C;
+    --color-gray-500: #86858A;
+    --color-gray-400: #C0BEBF;
+    --color-gray-300: #E3E3E5;
+    --color-gray-200: #EEEEEE;
+    --color-gray-100: #F5F5F5;
+    --color-gray-50: #FAFAFA;
 
     /* ===== shadcn/ui 색상 변수 (Toss Blue 통합) ===== */
     --color-background: 0 0% 100%;
@@ -99,6 +112,48 @@
 }
 
 /* ===== 커스텀 유틸리티 클래스 ===== */
+
+/* ===== 타이포그래피 시스템 ===== */
+
+/* BECKMAN 폰트 유틸리티 */
+.font-beckman {
+    font-family: "Beckman", sans-serif;
+}
+
+/* 타이포그래피 토큰 */
+.text-heading-1 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 700;
+    font-family: "Beckman", sans-serif;
+    color: #18171C;
+}
+
+.text-heading-2 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 700;
+    color: #18171C;
+}
+
+.text-heading-3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+    color: #18171C;
+}
+
+.text-body {
+    font-size: 1rem; /* 16px */
+    color: #3B3A3F;
+}
+
+.text-body-small {
+    font-size: 0.875rem; /* 14px */
+    color: #62626C;
+}
+
+.text-caption {
+    font-size: 0.75rem; /* 12px */
+    color: #86858A;
+}
 
 /* Toss 스타일 그라데이션 배경 */
 .bg-toss-gradient {
