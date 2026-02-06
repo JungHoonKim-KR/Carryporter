@@ -4,8 +4,8 @@ import { createMission } from "../api/mission.api";
 import { useAuthStore } from "../store/authStore";
 import { useMissionStore } from "../store/missionStore";
 import { Button } from "@/components/ui/button";
-// import { PageHeader } from '@/components/common/PageHeader'; // TODO: Phase 2.2에서 적용
 import { LocationSelector } from "@/components/mission/LocationSelector";
+import { AppHeader } from "@/components/layouts/AppHeader";
 import {
     STATIONS,
     BOARDING_GATES,
@@ -18,10 +18,11 @@ import {
 const MissionCreatePage = () => {
     const navigate = useNavigate();
     const { user } = useAuthStore();
-    const { setCurrentMission, setCreating } = useMissionStore();
+    const { setCurrentMission } = useMissionStore();
 
     const [locationId, setLocationId] = useState<number | null>(null);
     const [error, setError] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
 
     // ✅ selectedLocation을 handleSubmit 위로 이동
     const selectedLocation = ALL_LOCATIONS.find((l) => l.id === locationId);
@@ -46,7 +47,7 @@ const MissionCreatePage = () => {
         }
 
         try {
-            setCreating(true);
+            setIsCreating(true);
             setError("");
 
             // 백엔드는 callLocationId만 필요 (userId는 JWT에서 자동 추출)
@@ -90,7 +91,7 @@ const MissionCreatePage = () => {
             }
             setError("미션 생성에 실패했습니다. 다시 시도해주세요.");
         } finally {
-            setCreating(false);
+            setIsCreating(false);
         }
     };
 
@@ -102,53 +103,16 @@ const MissionCreatePage = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* 헤더 */}
-            <header className="bg-gray-50 pt-safe">
-                <div className="max-w-md mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                                <img
-                                    src="/images/logo.png"
-                                    alt="CARRY PORTER Logo"
-                                    className="w-6 h-6 object-contain brightness-0 invert"
-                                />
-                            </div>
-                            <div>
-                                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">
-                                    CARRY PORTER
-                                </h1>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => navigate("/home")}
-                            className="text-gray-600 hover:text-gray-900 transition-colors"
-                        >
-                            <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <AppHeader showCloseButton onClose={() => navigate("/home")} />
 
             {/* 메인 컨텐츠 */}
             <main className="max-w-md mx-auto px-6 py-6">
                 {/* 제목 */}
                 <div className="mb-6 animate-fade-in-up">
-                    <h2 className="text-gray-900 text-2xl font-bold mb-1">
+                    <h2 className="text-heading-1 mb-1">
                         로봇 호출 🤖
                     </h2>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-body-small">
                         가까운 정류장이나 탑승구를 선택하세요
                     </p>
                 </div>
@@ -241,10 +205,15 @@ const MissionCreatePage = () => {
                     {/* 호출 버튼 */}
                     <Button
                         type="submit"
-                        disabled={!locationId}
+                        disabled={!locationId || isCreating}
                         className="w-full h-14 text-lg font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:opacity-40"
                     >
-                        {!locationId ? (
+                        {isCreating ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                호출 중...
+                            </span>
+                        ) : !locationId ? (
                             <span className="flex items-center gap-2">
                                 <svg
                                     className="w-5 h-5"

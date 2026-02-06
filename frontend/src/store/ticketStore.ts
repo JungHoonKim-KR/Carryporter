@@ -1,47 +1,35 @@
 import { create } from 'zustand';
 import type { TicketInfo } from '../types/ticket.types';
+import { ticketStorage } from '@/services/storage/ticketStorage';
 
 interface TicketState {
   // 상태
   currentTicket: TicketInfo | null; // 현재 등록된 티켓 정보
-  isScanning: boolean; // 스캔 진행 중 여부
 
   // 액션
   setTicket: (ticket: TicketInfo) => void; // 티켓 정보 설정
   clearTicket: () => void; // 티켓 정보 초기화
-  setScanning: (isScanning: boolean) => void; // 스캔 상태 설정
 }
 
 export const useTicketStore = create<TicketState>((set) => ({
   // 초기 상태
   currentTicket: null,
-  isScanning: false,
 
   // 티켓 정보 설정 + ticketId localStorage 저장
   setTicket: (ticket: TicketInfo) => {
-    // ticketId를 localStorage에 영구 저장
+    // ticketId를 localStorage에 영구 저장 (서비스 레이어 사용)
     if (ticket.ticketId) {
-      localStorage.setItem('ticketId', String(ticket.ticketId));
+      ticketStorage.saveTicketId(ticket.ticketId);
     }
 
-    set({
-      currentTicket: ticket,
-      isScanning: false,
-    });
+    set({ currentTicket: ticket });
   },
 
   // 티켓 정보 초기화 + ticketId localStorage 제거
   clearTicket: () => {
-    // localStorage에서 ticketId 제거
-    localStorage.removeItem('ticketId');
+    // localStorage에서 ticketId 제거 (서비스 레이어 사용)
+    ticketStorage.clearTicketId();
 
-    set({
-      currentTicket: null,
-    });
-  },
-
-  // 스캔 상태 설정
-  setScanning: (isScanning: boolean) => {
-    set({ isScanning });
+    set({ currentTicket: null });
   },
 }));
