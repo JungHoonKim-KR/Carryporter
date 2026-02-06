@@ -53,15 +53,15 @@ export const LocationSelector = ({
               onClick={() => onSelect(station.id)}
               disabled={disabled}
               className={cn(
-                'p-4 rounded-xl transition-all',
+                'p-4 rounded-xl transition-all duration-200',
                 selectedLocationId === station.id
-                  ? 'bg-toss-blue-500 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-900 hover:bg-gray-100',
+                  ? 'bg-white ring-2 ring-slate-800 shadow-lg scale-[1.02]'
+                  : 'bg-gray-50 text-gray-900 hover:bg-white hover:shadow-md',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               <div className="text-3xl mb-2">{station.icon}</div>
-              <p className="text-sm font-semibold">{station.name}</p>
+              <p className={cn('text-sm font-semibold', selectedLocationId === station.id ? 'text-slate-900' : 'text-gray-700')}>{station.name}</p>
             </button>
           ))}
         </div>
@@ -77,15 +77,15 @@ export const LocationSelector = ({
               onClick={() => onSelect(gate.id)}
               disabled={disabled}
               className={cn(
-                'p-4 rounded-xl transition-all',
+                'p-4 rounded-xl transition-all duration-200',
                 selectedLocationId === gate.id
-                  ? 'bg-toss-blue-500 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-900 hover:bg-gray-100',
+                  ? 'bg-white ring-2 ring-slate-800 shadow-lg scale-[1.02]'
+                  : 'bg-gray-50 text-gray-900 hover:bg-white hover:shadow-md',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               <div className="text-3xl mb-2">{gate.icon}</div>
-              <p className="text-sm font-semibold">{gate.name}</p>
+              <p className={cn('text-sm font-semibold', selectedLocationId === gate.id ? 'text-slate-900' : 'text-gray-700')}>{gate.name}</p>
             </button>
           ))}
         </div>
