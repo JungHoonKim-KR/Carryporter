@@ -52,9 +52,9 @@ export const STATIONS: Location[] = [
  * 탑승구 목록 (6개)
  */
 export const BOARDING_GATES: Location[] = [
-    { id: 7, name: "GATE 1", code: "GATE_1", type: "gate", icon: "🚪" },
-    { id: 8, name: "GATE 2", code: "GATE_2", type: "gate", icon: "🚪" },
-    { id: 9, name: "GATE 3", code: "GATE_3", type: "gate", icon: "🚪" },
+    { id: 2, name: "GATE 1", code: "2", type: "gate", icon: "🚪" },
+    { id: 3, name: "GATE 2", code: "3", type: "gate", icon: "🚪" },
+    { id: 4, name: "GATE 3", code: "4", type: "gate", icon: "🚪" },
     { id: 10, name: "GATE 4", code: "GATE_4", type: "gate", icon: "🚪" },
     { id: 11, name: "GATE 5", code: "GATE_5", type: "gate", icon: "🚪" },
     { id: 12, name: "GATE 6", code: "GATE_6", type: "gate", icon: "🚪" },
