@@ -53,9 +53,9 @@ public class MqttCommandHandler {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void handleMissionStarted(MissionStartedEvent event) {
-        log.info("[MQTT] 미션 시작 - missionId: {}, robotMacAddress: {}, dest: ({}, {})",
-                event.missionId(), event.robotMacAddress(), event.destX(), event.destY());
-        mqttPublisherService.sendDispatchCommand(event.robotMacAddress(), event.destX(), event.destY());
+        log.info("[MQTT] 미션 시작 - missionId: {}, robotMacAddress: {}, destination: {})",
+                event.missionId(), event.robotMacAddress(), event.destination());
+        mqttPublisherService.sendDispatchCommand(event.robotMacAddress(), event.destination());
     }
 
     /**

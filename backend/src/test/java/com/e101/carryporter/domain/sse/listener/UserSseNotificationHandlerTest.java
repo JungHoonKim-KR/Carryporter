@@ -80,8 +80,9 @@ class UserSseNotificationHandlerTest {
     @DisplayName("미션 시작 이벤트를 받으면 SSE로 'MissionStartedEvent'와 메시지 맵을 전송해야 한다")
     void handleMissionStarted() {
         // given
-        // Record 구조에 맞춰 생성 (userId, missionId, robotCode, mac, x, y)
-        MissionStartedEvent event = new MissionStartedEvent(USER_ID, MISSION_ID, ROBOT_CODE, MAC_ADDRESS, 0.0, 0.0);
+        // Record 구조에 맞춰 생성 (userId, missionId, robotCode, mac, destination)
+        String destination = "Gate A12";
+        MissionStartedEvent event = new MissionStartedEvent(USER_ID, MISSION_ID, ROBOT_CODE, MAC_ADDRESS, destination);
 
         // when
         sseNotificationHandler.handleMissionStartedEvent(event);
