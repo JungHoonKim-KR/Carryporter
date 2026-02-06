@@ -33,7 +33,7 @@ const getZonePosition = (zoneId: string): { x: number, y: number } => {
 }
 
 // ------------------------------------------------------------------
-// 🧊 [Component] GLB Robot 3D (밝기 최대 강화 버전 + 이동 애니메이션 + 경로 표시)
+// 🧊 [Component] GLB Robot 3D (부드러운 이동 + 경로 그리기)
 // ------------------------------------------------------------------
 function GlbRobot3D({ 
   position, 
@@ -55,76 +55,56 @@ function GlbRobot3D({
   showPath?: boolean
 }) {
   const { scene } = useGLTF(ROBOT_GLB_URL)
-  const mainGroupRef = useRef<THREE.Group>(null) // 전체를 감싸는 메인 그룹
+  const mainGroupRef = useRef<THREE.Group>(null)
   const robotGroupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
+  const [pathHistory, setPathHistory] = useState<[number, number, number][]>([])
 
-  // ✨ 로봇 재질을 매우 밝게 만들기 + 금속성 강화
-
+  // 이동 경로 기록
   useEffect(() => {
+    if (mainGroupRef.current && showPath) {
+      const currentPos: [number, number, number] = [
+        mainGroupRef.current.position.x,
+        0.1,
+        mainGroupRef.current.position.z
+      ]
+      
+      setPathHistory(prev => {
+        const newPath = [...prev, currentPos]
+        // 최대 50개 포인트만 유지
+        return newPath.slice(-50)
+      })
+    } else if (!showPath) {
+      // 이동이 끝나면 경로 초기화
+      setPathHistory([])
+    }
+  }, [showPath, mainGroupRef.current?.position.x, mainGroupRef.current?.position.z])
 
-    scene.traverse((child) => {
-
-      if ((child as THREE.Mesh).isMesh) {
-
-        const mesh = child as THREE.Mesh;
-
-        const material = mesh.material as THREE.MeshStandardMaterial;
-
-        // 주변광에 더 잘 반응하도록 설정
-
-        material.envMapIntensity = 1.5;
-
-        // 자체 발광 약간 추가 (너무 어두운 텍스처일 경우 대비)
-
-        material.emissive = new THREE.Color(0x202020);
-
-        material.emissiveIntensity = 0.2;
-
-        material.needsUpdate = true;
-
-      }
-
-    });
-
-  }, [scene]);
-  // useEffect(() => {
-  //   scene.traverse((child) => {
-  //     if ((child as THREE.Mesh).isMesh) {
-  //       const mesh = child as THREE.Mesh;
-  //       const material = mesh.material as THREE.MeshStandardMaterial;
-        
-  //       // 금속성과 환경맵 강도 증가
-  //       material.metalness = 0.9;
-  //       material.roughness = 0.3;
-  //       material.envMapIntensity = 2.5;
-        
-  //       // 자체 발광 강화 (로봇이 스스로 빛을 내는 효과)
-  //       material.emissive = new THREE.Color(0x444444);
-  //       material.emissiveIntensity = 0.5;
-        
-  //       // 그림자 활성화
-  //       mesh.castShadow = true;
-  //       mesh.receiveShadow = true;
-        
-  //       material.needsUpdate = true;
-  //     }
-  //   });
-  // }, [scene]);
-
-  // 타겟 위치로 부드럽게 이동 (메인 그룹 전체 이동)
+  // 타겟 위치로 부드럽게 이동 - 더 부드럽게
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     
     if (mainGroupRef.current && targetPosition) {
-      // 메인 그룹 전체를 목표 위치로 부드럽게 이동 (lerp)
-      mainGroupRef.current.position.x += (targetPosition[0] - mainGroupRef.current.position.x) * 0.05;
-      mainGroupRef.current.position.z += (targetPosition[2] - mainGroupRef.current.position.z) * 0.05;
+      // 부드러운 이동 (lerp)
+      const lerpFactor = 0.02; // 느린 이동으로 부드럽게
+      const currentX = mainGroupRef.current.position.x
+      const currentZ = mainGroupRef.current.position.z
+      
+      mainGroupRef.current.position.x += (targetPosition[0] - currentX) * lerpFactor
+      mainGroupRef.current.position.z += (targetPosition[2] - currentZ) * lerpFactor
+      
+      // 이동 방향으로 로봇 회전
+      const dx = targetPosition[0] - currentX
+      const dz = targetPosition[2] - currentZ
+      if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
+        const targetRotation = Math.atan2(dx, dz)
+        mainGroupRef.current.rotation.y += (targetRotation - mainGroupRef.current.rotation.y) * 0.1
+      }
     }
     
     // 로봇만 위아래 떠다니는 애니메이션
     if (robotGroupRef.current) {
-      robotGroupRef.current.position.y = Math.sin(t * 2) * 0.1 + (hovered ? 0.3 : 0);
+      robotGroupRef.current.position.y = Math.sin(t * 2) * 0.1 + (hovered ? 0.3 : 0)
     }
     
     if (state.gl.domElement) {
@@ -137,29 +117,44 @@ function GlbRobot3D({
 
   return (
     <>
-      {/* 이동 경로 표시 (고정 위치) */}
-      {showPath && targetPosition && (
+      {/* 이동한 경로 표시 (Trail) */}
+      {showPath && pathHistory.length > 1 && (
+        <Line
+          points={pathHistory}
+          color={statusColor}
+          lineWidth={2}
+          transparent
+          opacity={0.4}
+          dashed={false}
+        />
+      )}
+
+      {/* 목표 지점까지의 직선 경로 */}
+      {showPath && targetPosition && mainGroupRef.current && (
         <group>
-          {/* 경로 라인 */}
           <Line
             points={[
-              [position[0], 0.1, position[2]],
+              [mainGroupRef.current.position.x, 0.1, mainGroupRef.current.position.z],
               [targetPosition[0], 0.1, targetPosition[2]]
             ]}
             color={statusColor}
             lineWidth={3}
             transparent
-            opacity={0.6}
+            opacity={0.7}
+            dashed
+            dashScale={2}
+            dashSize={0.3}
+            gapSize={0.2}
           />
           
           {/* 목표 지점 마커 */}
           <mesh position={[targetPosition[0], 0.05, targetPosition[2]]} rotation-x={-Math.PI / 2}>
             <ringGeometry args={[0.3, 0.5, 32]} />
-            <meshBasicMaterial color={statusColor} transparent opacity={0.5} side={THREE.DoubleSide} />
+            <meshBasicMaterial color={statusColor} transparent opacity={0.6} side={THREE.DoubleSide} />
           </mesh>
           <mesh position={[targetPosition[0], 0.06, targetPosition[2]]} rotation-x={-Math.PI / 2}>
             <circleGeometry args={[0.3, 32]} />
-            <meshBasicMaterial color={statusColor} transparent opacity={0.3} />
+            <meshBasicMaterial color={statusColor} transparent opacity={0.4} />
           </mesh>
         </group>
       )}
@@ -170,17 +165,17 @@ function GlbRobot3D({
         {/* ✨ 로봇 전용 강력한 조명 (로봇을 매우 밝게) */}
         <spotLight 
           position={[0, 5, 0]} 
-          intensity={8}
+          intensity={10}
           distance={10} 
           angle={0.7} 
           penumbra={0.4} 
           color="#ffffff" 
           castShadow
-          shadow-mapSize={[512, 512]}
+          shadow-mapSize={[1024, 1024]}
         />
-        <pointLight position={[0, 2, 0]} intensity={4} distance={5} color="#ffffff" />
-        <pointLight position={[1, 1, 1]} intensity={3} distance={4} color="#aaddff" />
-        <pointLight position={[-1, 1, -1]} intensity={3} distance={4} color="#ffddaa" />
+        <pointLight position={[0, 2, 0]} intensity={5} distance={5} color="#ffffff" />
+        <pointLight position={[1, 1, 1]} intensity={4} distance={4} color="#aaddff" />
+        <pointLight position={[-1, 1, -1]} intensity={4} distance={4} color="#ffddaa" />
 
         {/* 로봇 그룹 (위아래 떠다님) */}
         <group 
@@ -192,7 +187,7 @@ function GlbRobot3D({
           {/* 메인 로봇 */}
           <Clone object={scene} scale={hovered ? 1.65 : 1.5} position={[0, 1.8, 0]} rotation={[0, 0, 0]} castShadow receiveShadow />
           
-          {/* 그룹일 경우 추가 로봇들 표시 (살짝 뒤에, 작게) */}
+          {/* 그룹일 경우 추가 로봇들 표시 */}
           {isGroup && (
             <>
               <group position={[-0.3, 1.6, -0.3]} rotation={[0, Math.PI / 6, 0]}>
@@ -205,25 +200,24 @@ function GlbRobot3D({
           )}
         </group>
 
-        {/* 바닥 그림자 (원형) - 고정 위치 */}
+        {/* 바닥 그림자 (원형) */}
         <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
           <circleGeometry args={[hovered ? 1.0 : 0.8, 32]} />
           <meshBasicMaterial color="#000000" opacity={0.3} transparent />
         </mesh>
 
-        {/* 바닥 링 - 더 밝고 눈에 띄게 - 고정 위치 */}
+        {/* 바닥 링 - 더 밝고 눈에 띄게 */}
         <mesh rotation-x={-Math.PI / 2} position={[0, 0.05, 0]}>
           <ringGeometry args={[0.5, hovered ? 1.2 : (isGroup ? 1.0 : 0.8), 32]} />
           <meshBasicMaterial color={statusColor} opacity={hovered ? 0.9 : 0.7} transparent />
         </mesh>
         
-        {/* 로봇 아래 강력한 글로우 효과 - 고정 위치 */}
-        <pointLight position={[0, 1, 0]} color={statusColor} intensity={hovered ? 6 : 4} distance={4} decay={2} />
+        {/* 로봇 아래 강력한 글로우 효과 */}
+        <pointLight position={[0, 1, 0]} color={statusColor} intensity={hovered ? 8 : 6} distance={4} decay={2} />
 
-        {/* 3D 이름표 (항상 표시) - 고정 위치 */}
+        {/* 3D 이름표 (항상 표시) */}
         <Html position={[0, 4.2, 0]} center distanceFactor={12} zIndexRange={[0, 0]}>
           <div className="flex flex-col items-center transform transition-all hover:scale-110">
-            {/* 이름표 상단 */}
             <div className={`
               flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 backdrop-blur-md shadow-2xl transition-all
               ${isAvailable 
@@ -235,8 +229,6 @@ function GlbRobot3D({
                 {isGroup ? `${groupCount}대` : robotCode}
               </span>
             </div>
-            
-            {/* 연결선 */}
             <div className={`w-0.5 h-5 ${isAvailable ? 'bg-emerald-400/60' : 'bg-blue-400/60'}`} />
           </div>
         </Html>
@@ -248,13 +240,11 @@ function GlbRobot3D({
 useGLTF.preload(ROBOT_GLB_URL)
 
 // ------------------------------------------------------------------
-// 🧊 [Component] Zone 3D (벽 높이 통일 버전)
+// 🧊 [Component] Zone 3D (선명도 개선)
 // ------------------------------------------------------------------
 function Zone3D({ data }: { data: typeof MAP_ZONES[0] }) {
   const isObstacle = data.type === 'obstacle';
   const isStation = data.type === 'station';
-
-  // 모든 존의 벽 높이를 0.5로 통일 (낮고 깔끔하게)
   const wallHeight = 0.5;
 
   return (
@@ -263,15 +253,28 @@ function Zone3D({ data }: { data: typeof MAP_ZONES[0] }) {
         <group>
           <mesh position={[0, wallHeight / 2, 0]}>
             <boxGeometry args={[data.w, wallHeight, data.h]} />
-            <meshStandardMaterial color={data.color} transparent opacity={0.3} wireframe />
+            <meshStandardMaterial 
+              color={data.color} 
+              transparent 
+              opacity={0.4} 
+              wireframe 
+              emissive={data.color}
+              emissiveIntensity={0.3}
+            />
           </mesh>
           <mesh position={[0, wallHeight / 2, 0]}>
              <boxGeometry args={[data.w * 0.95, wallHeight * 0.9, data.h * 0.95]} />
-             <meshStandardMaterial color="#500000" transparent opacity={0.5} />
+             <meshStandardMaterial 
+               color="#500000" 
+               transparent 
+               opacity={0.6}
+               emissive="#ff0000"
+               emissiveIntensity={0.2}
+             />
           </mesh>
           <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
             <planeGeometry args={[Math.min(data.w, data.h), Math.min(data.w, data.h)]} />
-            <meshBasicMaterial color={data.color} transparent opacity={0.2} />
+            <meshBasicMaterial color={data.color} transparent opacity={0.3} />
           </mesh>
           <Text position={[0, wallHeight + 0.5, 0]} fontSize={1.5} color={data.color} rotation={[-Math.PI/2, 0, 0]}>X</Text>
         </group>
@@ -280,32 +283,45 @@ function Zone3D({ data }: { data: typeof MAP_ZONES[0] }) {
           {/* 바닥 평면 */}
           <mesh rotation-x={-Math.PI / 2} receiveShadow position={[0, 0.01, 0]}>
             <planeGeometry args={[data.w, data.h]} />
-            <meshStandardMaterial color={data.color} transparent opacity={0.15} side={THREE.DoubleSide} />
+            <meshStandardMaterial 
+              color={data.color} 
+              transparent 
+              opacity={0.2} 
+              side={THREE.DoubleSide}
+              emissive={data.color}
+              emissiveIntensity={0.1}
+            />
           </mesh>
           
-          {/* 낮은 테두리 벽 */}
+          {/* 테두리 벽 */}
           <mesh position={[0, wallHeight / 2, 0]}>
             <boxGeometry args={[data.w, wallHeight, data.h]} />
             <meshStandardMaterial 
               color={data.color} 
-              opacity={0.3} 
+              opacity={0.4} 
               transparent 
               emissive={data.color} 
-              emissiveIntensity={0.4}
+              emissiveIntensity={0.5}
               wireframe={!isStation}
             />
           </mesh>
           
-          {/* 모서리 기둥 (낮게) */}
+          {/* 모서리 기둥 (선명하게) */}
           {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map((dir, i) => (
             <mesh key={i} position={[dir[0] * data.w / 2, wallHeight / 2, dir[1] * data.h / 2]}>
-              <cylinderGeometry args={[0.05, 0.05, wallHeight, 8]} />
-              <meshStandardMaterial color={data.color} emissive={data.color} emissiveIntensity={2} />
+              <cylinderGeometry args={[0.06, 0.06, wallHeight, 8]} />
+              <meshStandardMaterial 
+                color={data.color} 
+                emissive={data.color} 
+                emissiveIntensity={2.5}
+                metalness={0.8}
+                roughness={0.2}
+              />
             </mesh>
           ))}
           
           {isStation && (
-             <Text position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} fontSize={2} color={data.color} fillOpacity={0.3}>⚡</Text>
+             <Text position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} fontSize={2} color={data.color} fillOpacity={0.4}>⚡</Text>
           )}
         </group>
       )}
@@ -319,24 +335,6 @@ function Zone3D({ data }: { data: typeof MAP_ZONES[0] }) {
       </Html>
     </group>
   )
-}
-
-// ------------------------------------------------------------------
-// 🎮 [Component] Camera Reset Button (원점 복귀)
-// ------------------------------------------------------------------
-function CameraResetButton() {
-  const { camera, controls } = useThree();
-  
-  const resetCamera = () => {
-    if (controls) {
-      // MAIN STATION을 바라보도록 설정
-      camera.position.set(-8, 18, 12);
-      (controls as any).target.set(-8, 0, 0);
-      (controls as any).update();
-    }
-  };
-
-  return null; // HTML 버튼은 외부에서 처리
 }
 
 // ------------------------------------------------------------------
@@ -379,7 +377,6 @@ function MapView2D({ robots, imageUrl, onRobotClick }: { robots: any[], imageUrl
       })}
 
       {robots.map((robot) => {
-        // 로봇 위치가 없으면 MAIN STATION (-80, 0)을 기본값으로
         const xPos = robot.x ?? -80;
         const yPos = robot.y ?? 0;
         const isAvailable = robot.status === 'available';
@@ -448,7 +445,6 @@ function FullScreenModal({
           className="absolute inset-4 bg-slate-950 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 닫기 버튼 */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 p-3 bg-slate-800/90 backdrop-blur text-slate-300 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-xl border border-slate-700 hover:border-red-400"
@@ -456,24 +452,27 @@ function FullScreenModal({
             <X className="w-6 h-6" />
           </button>
 
-          {/* 타이틀 */}
           <div className="absolute top-4 left-4 z-50 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-lg border border-slate-700">
             <h3 className="text-lg font-black text-white tracking-tight">전체 맵 뷰</h3>
           </div>
 
-          {/* 맵 컨텐츠 */}
           <div className="w-full h-full">
             {viewMode === '2d' ? (
               <MapView2D robots={robots} imageUrl={imageUrl} onRobotClick={onRobotClick} />
             ) : (
-              <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 22, 18], fov: 40 }}>
+              <Canvas 
+                shadows 
+                dpr={[1.5, 2]} 
+                camera={{ position: [0, 22, 18], fov: 40 }}
+                gl={{ antialias: true, alpha: false }}
+              >
                 <color attach="background" args={['#0b1121']} />
                 <fog attach="fog" args={['#0b1121', 20, 55]} />
                 <Environment preset="city" />
-                <ambientLight intensity={0.5} />
-                <pointLight position={[-10, 10, -10]} intensity={1} color="#fbbf24" distance={20} />
-                <pointLight position={[10, 10, 10]} intensity={1} color="#3b82f6" distance={20} />
-                <directionalLight position={[5, 20, 5]} intensity={2} castShadow shadow-mapSize={[1024, 1024]} />
+                <ambientLight intensity={0.6} />
+                <pointLight position={[-10, 10, -10]} intensity={1.5} color="#fbbf24" distance={20} />
+                <pointLight position={[10, 10, 10]} intensity={1.5} color="#3b82f6" distance={20} />
+                <directionalLight position={[5, 20, 5]} intensity={2.5} castShadow shadow-mapSize={[2048, 2048]} />
                 
                 <gridHelper args={[60, 60, 0x1e293b, 0x111827]} position={[0, -0.01, 0]} />
                 
@@ -528,8 +527,8 @@ function FullScreenModal({
 export default function RobotStage({
   robots = [],
   showDummyIfEmpty = false,
-  moveCommands = [], // 새로운 prop: { robotId: string, from: string, to: string }[]
-  sseMovements = [] // SSE로부터 받은 실시간 이동 데이터: { robotCode: string, x: number, y: number }[]
+  moveCommands = [],
+  sseMovements = []
 }: {
   robots: any[];
   showDummyIfEmpty?: boolean;
@@ -542,10 +541,8 @@ export default function RobotStage({
   const activeCount = useMemo(() => robots.length, [robots]);
   const canvasRef = useRef<any>(null);
 
-  // 로봇 위치 상태 관리 (이동 명령에 따라 업데이트)
   const [robotPositions, setRobotPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
-  // moveCommands가 변경되면 로봇 위치 업데이트
   useEffect(() => {
     if (moveCommands.length > 0) {
       const newPositions = new Map(robotPositions);
@@ -559,7 +556,6 @@ export default function RobotStage({
     }
   }, [moveCommands]);
 
-  // SSE 이동 데이터가 들어오면 실시간 위치 업데이트
   useEffect(() => {
     if (sseMovements.length > 0) {
       const newPositions = new Map(robotPositions);
@@ -572,7 +568,6 @@ export default function RobotStage({
     }
   }, [sseMovements]);
 
-  // 로봇의 현재 위치 또는 목표 위치 가져오기
   const getRobotPosition = (robot: any) => {
     const robotId = robot.robotCode || robot.id;
     const customPos = robotPositions.get(robotId);
@@ -581,14 +576,12 @@ export default function RobotStage({
       return { x: customPos.x, y: customPos.y };
     }
     
-    // 기본값: robot.x, robot.y가 있으면 사용, 없으면 MAIN STATION
     return { 
       x: robot.x ?? -80, 
       y: robot.y ?? 0 
     };
   };
 
-  // 같은 위치에 있는 로봇들을 그룹화
   const groupedRobots = useMemo(() => {
     const groups = new Map<string, any[]>();
     
@@ -602,14 +595,12 @@ export default function RobotStage({
       groups.get(key)!.push({ ...robot, x: pos.x, y: pos.y });
     });
 
-    // 그룹을 배열로 변환
     return Array.from(groups.values()).map(group => ({
       robots: group,
       x: group[0].x,
       y: group[0].y,
       count: group.length,
       isGroup: group.length >= 3,
-      // 그룹일 경우 대표 로봇 정보
       representativeRobot: group[0]
     }));
   }, [robots, robotPositions]);
@@ -633,7 +624,6 @@ export default function RobotStage({
     <>
       <div className="relative w-full h-full bg-slate-950 overflow-hidden font-sans rounded-xl border border-slate-800 shadow-2xl group">
         
-        {/* UI Layers (HUD) */}
         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-10">
            <div className="absolute inset-0 rounded-xl border border-cyan-500/20 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]" />
         </div>
@@ -682,24 +672,24 @@ export default function RobotStage({
             </div>
         </div>
 
-        {/* 3D Scene Area */}
         <div className="absolute inset-0 w-full h-full bg-[#0b1121]">
           {viewMode === '2d' ? (
             <MapView2D robots={robots} imageUrl={CHARACTER_IMAGE_URL} onRobotClick={handleRobotClick} />
           ) : (
             <Canvas 
               shadows 
-              dpr={[1, 2]} 
+              dpr={[1.5, 2]} 
               camera={{ position: [0, 22, 18], fov: 40 }}
               onCreated={(state) => { canvasRef.current = state; }}
+              gl={{ antialias: true, alpha: false }}
             >
               <color attach="background" args={['#0b1121']} />
               <fog attach="fog" args={['#0b1121', 20, 55]} />
               <Environment preset="city" />
-              <ambientLight intensity={0.5} />
-              <pointLight position={[-10, 10, -10]} intensity={1} color="#fbbf24" distance={20} />
-              <pointLight position={[10, 10, 10]} intensity={1} color="#3b82f6" distance={20} />
-              <directionalLight position={[5, 20, 5]} intensity={2} castShadow shadow-mapSize={[1024, 1024]} />
+              <ambientLight intensity={0.6} />
+              <pointLight position={[-10, 10, -10]} intensity={1.5} color="#fbbf24" distance={20} />
+              <pointLight position={[10, 10, 10]} intensity={1.5} color="#3b82f6" distance={20} />
+              <directionalLight position={[5, 20, 5]} intensity={2.5} castShadow shadow-mapSize={[2048, 2048]} />
               
               <gridHelper args={[60, 60, 0x1e293b, 0x111827]} position={[0, -0.01, 0]} />
               
@@ -714,7 +704,7 @@ export default function RobotStage({
                 {groupedRobots.map((group, idx) => {
                   const robotId = group.representativeRobot.robotCode || group.representativeRobot.id;
                   const targetPos = robotPositions.get(robotId);
-                  const isMoving = !!targetPos; // 목표 위치가 있으면 이동 중
+                  const isMoving = !!targetPos;
                   
                   return (
                     <GlbRobot3D
@@ -746,7 +736,6 @@ export default function RobotStage({
         {selectedRobot && <RobotDetailModal robot={selectedRobot} onClose={() => setSelectedRobot(null)} />}
       </div>
 
-      {/* 전체화면 모달 */}
       {isFullScreen && (
         <FullScreenModal
           viewMode={viewMode}
