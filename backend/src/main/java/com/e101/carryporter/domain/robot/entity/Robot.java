@@ -21,7 +21,7 @@ public class Robot extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String robotCode;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String macAddress;
 
     @Enumerated(EnumType.STRING)
