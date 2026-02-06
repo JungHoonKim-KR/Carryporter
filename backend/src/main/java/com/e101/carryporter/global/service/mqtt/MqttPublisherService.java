@@ -41,7 +41,7 @@ public class MqttPublisherService {
      * @param mac 로봇 MAC 주소
      */
     public void sendDispatchCommand(String mac, String destination) {
-        String payload = String.format("{\"destination\":%s}", destination);
+        String payload = String.format("{\"destination\":\"%s\"}", destination);
         sendCommand(mac, "dispatch", payload);
         log.info("디스패치 명령 전송 - MAC: {}, 목적지: {}", mac, destination);
     }
