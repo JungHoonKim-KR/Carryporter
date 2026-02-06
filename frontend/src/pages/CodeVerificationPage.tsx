@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { login } from '../api/auth.api';
 import { useAuthStore } from '../store/authStore';
+import { AppHeader } from '@/components/layouts/AppHeader';
 
 interface LocationState {
   email: string;
@@ -141,54 +142,37 @@ const CodeVerificationPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <header className="bg-gray-50 pt-safe">
-        <div className="max-w-md mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-toss-blue-500 rounded-xl flex items-center justify-center">
-                <img
-                  src="/images/logo.png"
-                  alt="CARRY PORTER Logo"
-                  className="w-6 h-6 object-contain brightness-0 invert"
-                />
-              </div>
-              <div>
-                <h1 className="text-gray-900 text-lg font-bold font-['Beckman',sans-serif]">CARRY PORTER</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-md mx-auto px-6 py-6">
         {/* 제목 */}
-        <div className="mb-6 animate-fade-in-up">
-          <h2 className="text-gray-900 text-2xl font-bold mb-1">
+        <div className="mb-5 animate-fade-in-up">
+          <h2 className="text-heading-2 mb-1">
             같은 번호 선택 🔢
           </h2>
-          <p className="text-gray-600 text-sm">
-            Mattermost에서 받은 숫자와 같은 번호를 선택해주세요
+          <p className="text-body-small">
+            편리한 인증을 위해 번호를 선택해주세요
           </p>
         </div>
 
         {/* CODE 선택 카드 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm animate-fade-in-up">
-          <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-toss-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-            </svg>
-            인증 코드
-          </h3>
+        <div className="bg-white rounded-2xl shadow-sm p-6 animate-fade-in-up">
+          <div className="text-center space-y-2 mb-4">
+            <h3 className="text-xl font-bold text-gray-900">인증 코드</h3>
+            <p className="text-sm text-gray-600">
+              Mattermost에서 받은 번호를 선택해주세요
+            </p>
+          </div>
 
           {/* CODE 버튼들 */}
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3 mb-5">
             {codeOptions.map((code) => (
               <button
                 key={code}
                 onClick={() => handleCodeSelect(code)}
                 className={`
-                  w-full h-24 text-5xl font-extrabold rounded-xl border-2 transition-all
+                  w-full h-14 text-2xl font-bold rounded-xl border-2 transition-all
                   ${selectedCode === code
                     ? 'bg-toss-blue-500 border-toss-blue-500 text-white shadow-md'
                     : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
