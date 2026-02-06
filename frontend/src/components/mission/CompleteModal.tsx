@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMissionStore } from '../../store/missionStore';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,18 @@ import { Button } from '@/components/ui/button';
 export const CompleteModal = () => {
   const navigate = useNavigate();
   const { currentMission, clearMission } = useMissionStore();
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleGoHome = () => {
+  const handleGoHome = async () => {
+    setIsNavigating(true);
+
+    // 미션 정보 먼저 초기화 (사물함 정보는 HomePage에서 조회)
     clearMission();
+
+    // 약간의 딜레이 후 이동 (상태 업데이트 완료 대기)
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 홈으로 이동 (HomePage에서 사물함 정보 자동 조회됨)
     navigate('/home');
   };
 
@@ -40,9 +50,17 @@ export const CompleteModal = () => {
 
         <Button
           onClick={handleGoHome}
-          className="w-full h-12 font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white"
+          disabled={isNavigating}
+          className="w-full h-12 font-semibold bg-toss-blue-500 hover:bg-toss-blue-600 text-white disabled:bg-gray-400"
         >
-          홈으로 돌아가기
+          {isNavigating ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              이동 중...
+            </div>
+          ) : (
+            '홈으로 돌아가기'
+          )}
         </Button>
       </div>
     </div>

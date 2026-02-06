@@ -10,17 +10,6 @@ export interface Location {
 // 미션 타입 (보관 또는 반납)
 export type MissionType = "STORAGE" | "RETURN";
 
-// 보관된 짐 정보
-export interface StoredLuggage {
-    id: string;
-    missionId: string;
-    lockerId: string;
-    lockerName: string;
-    storedAt: string; // ISO 날짜
-    robotCode?: string;
-    destination?: string; // 정류장/게이트 이름 (예: "1번 정류장", "탑승구 1")
-}
-
 // 미션 상태
 export type MissionStatus =
     | "REQUESTED" // 요청됨
