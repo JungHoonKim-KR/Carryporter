@@ -1,10 +1,10 @@
 export interface Location {
     id: number;
-    name: string; // "MAIN", "STOP 1", "STOP 2", "GATE 1"
-    code: string; // "1", "2", "3", "4"
+    name: string; // "STOP 1", "STOP 2", "GATE 1"
+    code: string; // "2", "3", "4"
     type?: "pickup"; // 픽업 장소 (단일 타입으로 통일)
     description?: string;
-    icon?: string; // SVG 파일 경로 (예: "/images/MAIN.svg")
+    icon?: string; // SVG 파일 경로 (예: "/images/STOP1.svg")
 }
 
 // 미션 타입 (보관 또는 반납)
