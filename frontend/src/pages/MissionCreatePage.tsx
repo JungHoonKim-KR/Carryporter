@@ -4,7 +4,7 @@ import { LocationSelector } from "@/components/mission/LocationSelector";
 import MissionSummaryCard from "@/components/mission/MissionSummaryCard";
 import { AppHeader } from "@/components/layouts/AppHeader";
 import { useMissionCreate } from "@/hooks/useMissionCreate";
-import { STATIONS, BOARDING_GATES } from "../constants/locations";
+import { PICKUP_LOCATIONS } from "../constants/locations";
 
 const MissionCreatePage = () => {
     const navigate = useNavigate();
@@ -25,7 +25,7 @@ const MissionCreatePage = () => {
                 <div className="mb-6 animate-fade-in-up">
                     <h2 className="text-heading-1 mb-1">로봇 호출 🤖</h2>
                     <p className="text-body-small">
-                        가까운 정류장이나 탑승구를 선택하세요
+                        픽업 장소를 선택하세요
                     </p>
                 </div>
 
@@ -55,10 +55,7 @@ const MissionCreatePage = () => {
                         </h3>
 
                         <LocationSelector
-                            locations={{
-                                stations: STATIONS,
-                                gates: BOARDING_GATES,
-                            }}
+                            locations={PICKUP_LOCATIONS}
                             selectedLocationId={locationId}
                             onSelect={handleLocationSelect}
                         />

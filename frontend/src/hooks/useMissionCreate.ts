@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { createMission } from "@/api/mission.api";
 import { useAuthStore } from "@/store/authStore";
 import { useMissionStore } from "@/store/missionStore";
-import { ALL_LOCATIONS } from "@/constants/locations";
+import { PICKUP_LOCATIONS } from "@/constants/locations";
 
 export const useMissionCreate = () => {
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ export const useMissionCreate = () => {
     const [error, setError] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
-    const selectedLocation = ALL_LOCATIONS.find((l) => l.id === locationId);
+    const selectedLocation = PICKUP_LOCATIONS.find((l) => l.id === locationId);
 
     const handleLocationSelect = (id: number) => {
         setLocationId(id);
@@ -30,7 +30,7 @@ export const useMissionCreate = () => {
         }
 
         if (!locationId) {
-            setError("정류장 또는 탑승구를 선택해주세요.");
+            setError("픽업 장소를 선택해주세요.");
             return;
         }
 
