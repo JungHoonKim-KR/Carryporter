@@ -13,9 +13,6 @@ spring:
     active: local
   application:
     name: carryporter
-  mvc:
-    async:
-      request-timeout: 3600000  # SSE 연결 유지: 60분
 
 # JWT 설정
 jwt:
