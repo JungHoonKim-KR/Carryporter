@@ -95,7 +95,7 @@ public class SseService {
         allEmitters.putAll(emitterRepository.findAllAdmins());
 
         if (!allEmitters.isEmpty()) {
-            log.debug("[SSE-HEARTBEAT] 하트비트 전송 | 연결 수: {}", allEmitters.size());
+            log.info("[SSE-HEARTBEAT] 하트비트 전송 | 연결 수: {}", allEmitters.size());
         }
 
         allEmitters.forEach((id, emitter) -> {
@@ -103,7 +103,7 @@ public class SseService {
                 emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
             } catch (IOException e) {
                 // 연결이 끊긴 것이 확인되면 Repository에서 제거
-                log.debug("[SSE-HEARTBEAT] 하트비트 전송 실패, 연결 정리 | ID: {}", id);
+                log.info("[SSE-HEARTBEAT] 하트비트 전송 실패, 연결 정리 | ID: {}", id);
                 emitter.completeWithError(e);
                 // 양쪽 다 시도 (role 정보를 알 수 없으므로)
                 emitterRepository.deleteUser(id);
