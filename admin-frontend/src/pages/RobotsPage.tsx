@@ -17,12 +17,8 @@ import MissionProcessModal from '@/components/mission/MissionProcessModal'
 import MissionReturnModal from '@/components/mission/MissionReturnModal'
 import RealtimeActivityFeed from '@/components/monitoring/RealtimeActivityFeed'
 import { RobotAssignedEvent, RobotReturnedAdminEvent } from '@/types/robotEvents'
-import { 
-  getPathFromCurrentPosition, 
-  getReturnPath, 
-  getDestinationCoords,
-  NavigationPath 
-} from '@/utils/navigationPaths'
+
+// ⚠️ 네비게이션 관련 함수 Import 제거 (RobotStage가 처리함)
 
 type WorkflowStep = 'IDLE' | 'SELECT_LOCKER' | 'CONFIRM_LOCKER' | 'MISSION_START';
 
@@ -36,16 +32,6 @@ interface MissionInfo {
   destinationName: string;
   destinationX: number;
   destinationY: number;
-}
-
-// 🗺️ 로봇 네비게이션 상태
-interface RobotNavigation {
-  robotCode: string;
-  currentPath: NavigationPath;
-  currentWaypointIndex: number;
-  isNavigating: boolean;
-  targetX: number;
-  targetY: number;
 }
 
 // SSE MOVE 이벤트를 로그로 변환
@@ -70,12 +56,9 @@ export default function RobotsPage() {
   const [lockers, setLockers] = useState<any[]>([]);
   const [realTimeLogs, setRealTimeLogs] = useState<any[]>([]);
 
-  // 🗺️ 미션 정보 저장 (MissionAssigned 이벤트에서 저장)
+  // 🗺️ 미션 정보 저장
   const [activeMissions, setActiveMissions] = useState<Map<number, MissionInfo>>(new Map());
   
-  // 🗺️ 로봇별 네비게이션 상태
-  const [robotNavigations, setRobotNavigations] = useState<Map<string, RobotNavigation>>(new Map());
-
   // 사용자 수 조회
   useEffect(() => {
     const fetchUserCount = async () => {
@@ -138,92 +121,25 @@ export default function RobotsPage() {
   const [assignedEvent, setAssignedEvent] = useState<RobotAssignedEvent | null>(null);
   const [returnData, setReturnData] = useState<RobotReturnedAdminEvent | null>(null);
 
-  // 🔥 SSE 이동 데이터를 저장할 state
-  const [sseMovements, setSseMovements] = useState<Array<{ robotCode: string; x: number; y: number }>>([]);
+  // 🔥 SSE 이벤트를 저장하여 RobotStage로 전달 (x, y 뿐만 아니라 이벤트 정보도 포함)
+  const [sseMovements, setSseMovements] = useState<Array<{ 
+    robotCode: string; 
+    x?: number; 
+    y?: number;
+    callLocationName?: string;
+    eventName?: string;
+  }>>([]);
 
-  // 🗺️ 네비게이션 업데이트 (주기적으로 waypoint 따라 이동)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRobotNavigations(prev => {
-        const updated = new Map(prev);
-        let hasChanges = false;
-
-        updated.forEach((nav, robotCode) => {
-          if (!nav.isNavigating || !nav.currentPath) return;
-
-          // 현재 waypoint 확인
-          const currentWaypoint = nav.currentPath.waypoints[nav.currentWaypointIndex];
-          if (!currentWaypoint) {
-            // 경로 완료
-            console.log(`✅ ${robotCode} 네비게이션 완료!`);
-            nav.isNavigating = false;
-            hasChanges = true;
-            return;
-          }
-
-          console.log(`🚶 ${robotCode} waypoint ${nav.currentWaypointIndex}/${nav.currentPath.waypoints.length - 1} → (${currentWaypoint.x}, ${currentWaypoint.y})`);
-
-          // 목표 위치 업데이트
-          nav.targetX = currentWaypoint.x;
-          nav.targetY = currentWaypoint.y;
-
-          // SSE Movement 업데이트 (RobotStage로 전달)
-          setSseMovements(prevMov => {
-            const existing = prevMov.find(m => m.robotCode === robotCode);
-            const newMovement = { robotCode, x: currentWaypoint.x, y: currentWaypoint.y };
-            
-            console.log(`📡 SSE Movement 업데이트:`, newMovement);
-            
-            if (existing) {
-              return prevMov.map(m =>
-                m.robotCode === robotCode ? newMovement : m
-              );
-            } else {
-              return [...prevMov, newMovement];
-            }
-          });
-
-          // 다음 waypoint로 이동
-          nav.currentWaypointIndex++;
-          hasChanges = true;
-        });
-
-        return hasChanges ? new Map(updated) : prev;
-      });
-    }, 3000); // 3초마다 다음 waypoint로 이동
-
-    return () => clearInterval(interval);
-  }, []);
+  // ⚠️ 기존 useEffect(setInterval) 네비게이션 로직 삭제됨 (RobotStage가 담당)
 
   // 🔥 SSE 이벤트 리스너
   useEffect(() => {
     if (!lastMessage) return;
-    
     try {
       const parsed = JSON.parse(lastMessage);
       handleParsedEvent(parsed);
     } catch (e) {
-      try {
-        const lines = lastMessage.split('\n');
-        let eventName = '';
-        let dataStr = '';
-
-        lines.forEach(line => {
-          if (line.startsWith('event:')) {
-            eventName = line.replace('event:', '').trim();
-          } else if (line.startsWith('data:')) {
-            dataStr = line.replace('data:', '').trim();
-          }
-        });
-
-        if (dataStr) {
-          const parsed = JSON.parse(dataStr);
-          parsed.eventName = parsed.eventName || eventName;
-          handleParsedEvent(parsed);
-        }
-      } catch (innerErr) {
-        // 무시
-      }
+      // JSON 파싱 실패 시 retry 로직 생략 (필요 시 복구)
     }
   }, [lastMessage]);
 
@@ -231,10 +147,8 @@ export default function RobotsPage() {
   const handleParsedEvent = (parsed: any) => {
     console.log('📨 파싱된 이벤트:', parsed);
 
-    // 🗺️ MissionAssignedEvent - 로봇과 목적지 기억
+    // 1. RobotAssignedEvent
     if (parsed.eventName === 'RobotAssignedEvent' || (parsed.userId && parsed.requestType)) {
-      console.log('🚀 RobotAssignedEvent 감지!');
-      
       const missionInfo: MissionInfo = {
         missionId: parsed.missionId,
         robotCode: parsed.robotCode,
@@ -260,143 +174,56 @@ export default function RobotsPage() {
       });
 
       // 로그 추가
-      const now = new Date();
-      const newLog = {
-        id: `log-${Date.now()}-${Math.random()}`,
-        timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-        robotId: parsed.robotCode || 'RB-XXX',
-        action: `🎯 Mission Assigned - ${parsed.callLocationName || 'Unknown'}`,
-        type: 'mission' as const,
-      };
-      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
-      
+      addLog(parsed.robotCode, `🎯 Mission Assigned - ${parsed.callLocationName || 'Unknown'}`, 'mission');
       toast.success(`🤖 로봇 ${parsed.robotCode}에게 미션이 배정되었습니다!`, { position: 'top-right' });
       return;
     }
 
-    // 🗺️ MissionStartedEvent - 목적지로 이동 시작
+    // 2. MissionStartedEvent (RobotStage로 명령 전달)
     if (parsed.eventName === 'MissionStartedEvent' || parsed.event === 'MissionStartedEvent') {
-      console.log('🚁 MissionStartedEvent 감지!', parsed);
-
       const missionId = parsed.missionId;
       const robotCode = parsed.robotCode;
       const missionInfo = activeMissions.get(missionId);
 
-      if (!missionInfo) {
-        console.warn('⚠️ 저장된 미션 정보가 없습니다:', missionId);
-        return;
-      }
+      if (missionInfo) {
+        // 🚀 핵심: 직접 이동시키지 않고, RobotStage에 "가라!"고 명령만 전달
+        setSseMovements(prev => [
+          ...prev, 
+          { 
+            robotCode, 
+            eventName: 'MissionStartedEvent',
+            callLocationName: missionInfo.destinationName 
+          }
+        ]);
 
-      console.log('📋 미션 정보:', missionInfo);
-
-      // 로봇의 현재 위치 찾기
-      const robot = mergedRobots.find(r => r.robotCode === robotCode);
-      const currentX = robot?.x ?? -80;
-      const currentY = robot?.y ?? 0;
-
-      console.log(`🤖 ${robotCode} 현재 위치: (${currentX}, ${currentY})`);
-      console.log(`🎯 목적지: ${missionInfo.destinationName}`);
-
-      // 경로 찾기
-      const path = getPathFromCurrentPosition(
-        currentX,
-        currentY,
-        missionInfo.destinationName
-      );
-
-      if (path) {
-        console.log('🗺️ 경로 찾음:', path);
-        console.log('📍 Waypoints:', path.waypoints);
-        
-        setRobotNavigations(prev => {
-          const updated = new Map(prev);
-          updated.set(robotCode, {
-            robotCode,
-            currentPath: path,
-            currentWaypointIndex: 0,
-            isNavigating: true,
-            targetX: path.waypoints[0].x,
-            targetY: path.waypoints[0].y,
-          });
-          console.log('✅ 네비게이션 상태 설정 완료:', robotCode);
-          return updated;
-        });
-
-        // 로그 추가
-        const now = new Date();
-        const newLog = {
-          id: `log-${Date.now()}-${Math.random()}`,
-          timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-          robotId: robotCode,
-          action: `🚀 Mission Started → ${missionInfo.destinationName}`,
-          type: 'mission' as const,
-        };
-        setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
-        
+        addLog(robotCode, `🚀 Mission Started → ${missionInfo.destinationName}`, 'mission');
         toast.info(`🚀 ${robotCode}가 ${missionInfo.destinationName}로 출발합니다!`, { position: 'top-right' });
-      } else {
-        console.warn('⚠️ 경로를 찾을 수 없습니다');
-        console.log(`시도한 경로: (${currentX}, ${currentY}) → ${missionInfo.destinationName}`);
-        toast.error('경로를 찾을 수 없습니다', { position: 'top-right' });
       }
       return;
     }
 
-    // 🗺️ ReturnStartedEvent - Main Station으로 복귀
+    // 3. ReturnStartedEvent (RobotStage로 명령 전달)
     if (parsed.eventName === 'ReturnStartedEvent' || parsed.event === 'ReturnStartedEvent') {
-      console.log('🏠 ReturnStartedEvent 감지!', parsed);
-
       const robotMacAddress = parsed.robotMacAddress;
-      const homeX = parsed.homeX ?? -80;
-      const homeY = parsed.homeY ?? 0;
-      
-      // MAC 주소로 로봇 찾기
       const robot = mergedRobots.find(r => r.macAddress === robotMacAddress);
-      if (!robot) {
-        console.warn('⚠️ 로봇을 찾을 수 없습니다:', robotMacAddress);
-        return;
-      }
+      
+      if (robot) {
+        // 🚀 핵심: 복귀 명령 전달
+        setSseMovements(prev => [
+          ...prev, 
+          { 
+            robotCode: robot.robotCode, 
+            eventName: 'ReturnStartedEvent' 
+          }
+        ]);
 
-      const robotCode = robot.robotCode;
-      const currentX = robot.x ?? -80;
-      const currentY = robot.y ?? 0;
-
-      // 복귀 경로 찾기
-      const returnPath = getReturnPath(currentX, currentY);
-
-      if (returnPath) {
-        console.log('🗺️ 복귀 경로 찾음:', returnPath);
-        
-        setRobotNavigations(prev => {
-          const updated = new Map(prev);
-          updated.set(robotCode, {
-            robotCode,
-            currentPath: returnPath,
-            currentWaypointIndex: 0,
-            isNavigating: true,
-            targetX: returnPath.waypoints[0].x,
-            targetY: returnPath.waypoints[0].y,
-          });
-          return updated;
-        });
-
-        // 로그 추가
-        const now = new Date();
-        const newLog = {
-          id: `log-${Date.now()}-${Math.random()}`,
-          timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-          robotId: robotCode,
-          action: `🏠 Returning to Main Station`,
-          type: 'return' as const,
-        };
-        setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
-        
-        toast.info(`🏠 ${robotCode}가 Main Station으로 복귀합니다!`, { position: 'top-right' });
+        addLog(robot.robotCode, `🏠 Returning to Main Station`, 'return');
+        toast.info(`🏠 ${robot.robotCode}가 Main Station으로 복귀합니다!`, { position: 'top-right' });
       }
       return;
     }
 
-    // 🔥 MOVE 이벤트 처리 (기존 코드 유지)
+    // 4. MOVE 이벤트 (실시간 위치 갱신용, 필요하다면 유지)
     if (parsed.eventName === 'MOVE' || parsed.event === 'MOVE') {
       const robotCode = parsed.robotCode || parsed.robotId;
       const x = parsed.x;
@@ -405,26 +232,21 @@ export default function RobotsPage() {
       if (robotCode && x !== undefined && y !== undefined) {
         setSseMovements(prev => {
           const existing = prev.find(m => m.robotCode === robotCode);
+          // MOVE 이벤트는 기존 위치만 업데이트
           if (existing) {
-            return prev.map(m => 
-              m.robotCode === robotCode 
-                ? { robotCode, x, y }
-                : m
-            );
+            return prev.map(m => m.robotCode === robotCode ? { ...m, x, y } : m);
           } else {
             return [...prev, { robotCode, x, y }];
           }
         });
+        const newLog = convertMoveEventToLog(parsed);
+        setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
       }
-
-      const newLog = convertMoveEventToLog(parsed);
-      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
       return;
     }
 
-    // RobotReturnedAdminEvent 처리
+    // 5. RobotReturnedAdminEvent
     if (parsed.eventName === 'RobotReturnedAdminEvent') {
-      console.log('🔄 RobotReturnedAdminEvent 감지!');
       setReturnData({
         userId: parsed.userId,
         missionId: parsed.missionId,
@@ -434,32 +256,28 @@ export default function RobotsPage() {
         message: parsed.message || '로봇이 복귀했습니다.',
       });
 
-      // 미션 완료 시 저장된 정보 제거
       setActiveMissions(prev => {
         const updated = new Map(prev);
         updated.delete(parsed.missionId);
         return updated;
       });
 
-      // 네비게이션 상태 초기화
-      setRobotNavigations(prev => {
-        const updated = new Map(prev);
-        updated.delete(parsed.robotCode);
-        return updated;
-      });
-
-      const now = new Date();
-      const newLog = {
-        id: `log-${Date.now()}-${Math.random()}`,
-        timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-        robotId: parsed.robotCode || 'RB-XXX',
-        action: `✅ Mission Completed - Returned`,
-        type: 'complete' as const,
-      };
-      setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
-      
+      addLog(parsed.robotCode, `✅ Mission Completed - Returned`, 'complete');
       toast.success(`✅ 로봇 ${parsed.robotCode}가 미션을 완료했습니다!`, { position: 'top-right' });
     }
+  };
+
+  // 로그 추가 헬퍼 함수
+  const addLog = (robotId: string, action: string, type: 'mission' | 'return' | 'complete' | 'move') => {
+    const now = new Date();
+    const newLog = {
+      id: `log-${Date.now()}-${Math.random()}`,
+      timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+      robotId: robotId || 'RB-XXX',
+      action,
+      type,
+    };
+    setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
   };
 
   const handleLockerSelect = (lockerId: number) => {
@@ -477,7 +295,6 @@ export default function RobotsPage() {
   };
 
   const handleMissionStartComplete = (missionId: number) => {
-    console.log('✅ 미션 시작 완료:', missionId);
     setAssignedEvent(null);
     toast.success('미션이 시작되었습니다!', { position: 'top-right' });
   };
@@ -494,20 +311,16 @@ export default function RobotsPage() {
     return { available, total, busy: total - available };
   }, [mergedRobots]);
 
-  const activeCount = mergedRobots.length;
-
   return (
     <div className="w-full h-screen flex flex-col bg-gradient-to-br from-slate-100 via-white to-blue-50 p-2 overflow-hidden">
       <ToastContainer />
 
-      {/* 상단 헤더 */}
       {/* 헤더 */}
       <motion.header 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="flex-none h-12 px-6 flex items-center justify-between bg-white/80 backdrop-blur-xl z-20 border-b border-slate-200 shadow-sm"
       >
-        {/* 좌측: 로고 및 타이틀 */}
         <div className="flex items-center gap-3">
             <div className="relative">
                 <div className="absolute inset-0 bg-cyan-400/30 blur-lg rounded-full animate-pulse" />
@@ -519,47 +332,32 @@ export default function RobotsPage() {
             </div>
         </div>
         
-        {/* 우측: 상태 표시 및 액션 버튼 */}
         <div className="flex items-center gap-4">
-            {/* 🧪 테스트 버튼 (여기에 추가됨) */}
-            <motion.button 
+             {/* 🧪 테스트 버튼 (RobotStage 테스트용 가짜 데이터 주입) */}
+             <motion.button 
                 whileHover={{ scale: 1.05 }} 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                     const testRobot = mergedRobots[0];
                     if (testRobot) {
-                        console.log('🧪 테스트: 로봇을 STOP-1로 이동 시작');
-                        // getPathFromCurrentPosition 함수가 현재 컴포넌트 스코프에 있다고 가정
-                        const path = getPathFromCurrentPosition(-80, 0, 'STOP-1'); 
-                        if (path) {
-                            setRobotNavigations(prev => {
-                                const updated = new Map(prev);
-                                updated.set(testRobot.robotCode, {
-                                    robotCode: testRobot.robotCode,
-                                    currentPath: path,
-                                    currentWaypointIndex: 0,
-                                    isNavigating: true,
-                                    targetX: path.waypoints[0].x,
-                                    targetY: path.waypoints[0].y,
-                                });
-                                return updated;
-                            });
-                            toast.info('🧪 테스트 네비게이션 시작!', { position: 'top-right' });
-                        }
+                        setSseMovements(prev => [...prev, {
+                            robotCode: testRobot.robotCode,
+                            callLocationName: 'STOP1',
+                            eventName: 'MissionStartedEvent' // 이벤트를 발생시킨 것처럼 위장
+                        }]);
+                        toast.info('🧪 테스트: STOP1으로 이동 명령', { position: 'top-right' });
                     }
                 }}
                 className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1"
             >
-                🧪 TEST NAV
+                🧪 TEST CALL
             </motion.button>
 
-            {/* 기존: 스트리밍 상태 */}
             <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 border border-cyan-300">
                 <Radio className="w-3 h-3 text-cyan-600" />
                 <span className="text-[10px] font-bold text-cyan-700 tracking-wider">STREAMING</span>
             </motion.div>
 
-            {/* 기존: 연결 상태 */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${isConnected ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-rose-100 border-rose-300 text-rose-700'}`}>
                 <Wifi className="w-3 h-3" />
                 <span className="text-[10px] font-black tracking-widest">{isConnected ? 'LIVE' : 'OFFLINE'}</span>
@@ -567,13 +365,11 @@ export default function RobotsPage() {
         </div>
       </motion.header>
 
-      {/* 메인 레이아웃 (왼쪽: RobotStage + 하단 통계 / 오른쪽: 터미널 로그 + 실시간 활동) */}
+      {/* 메인 레이아웃 */}
       <div className="flex-1 min-h-0 flex gap-2">
         
-        {/* 🔥 왼쪽: RobotStage 영역 + 하단 통계 */}
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           
-          {/* RobotStage 영역 */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -584,8 +380,8 @@ export default function RobotsPage() {
             </div>
             
             <div className="w-full h-full relative">
-               <RobotStage robots={mergedRobots} showDummyIfEmpty={true} 
-               sseMovements={sseMovements}/>
+               {/* 🚀 RobotStage에 이벤트 데이터만 전달 */}
+               <RobotStage robots={mergedRobots} sseMovements={sseMovements}/>
             </div>
 
             <div className="absolute bottom-3 right-3 z-20">
@@ -595,7 +391,6 @@ export default function RobotsPage() {
             </div>
           </motion.div>
 
-          {/* 하단: 사물함 + 통계 3개 */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -613,17 +408,14 @@ export default function RobotsPage() {
           </motion.div>
         </div>
 
-        {/* 🔥 오른쪽: 터미널 로그 (작게) + 실시간 활동 (크게) */}
         <aside className="w-80 flex-none flex flex-col gap-2">
           
-          {/* 🔥 터미널 로그 - 작게 */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
             className="h-64 flex-none relative"
           >
-             {/* 🔥 상단 프로그레스 바 */}
              <div className="absolute top-0 left-0 right-0 h-1 bg-slate-800 overflow-hidden z-30 rounded-t-xl">
               <motion.div
                 className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400"
@@ -641,14 +433,12 @@ export default function RobotsPage() {
              <RobotActivityTerminal realLogs={realTimeLogs} />
           </motion.div>
 
-          {/* 🔥 실시간 활동 로그 - 크게 */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="flex-1 min-h-0 relative"
           >
-             {/* 🔥 상단 프로그레스 바 */}
              <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-100 overflow-hidden z-30 rounded-t-xl">
               <motion.div
                 className="h-full bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400"
@@ -669,7 +459,6 @@ export default function RobotsPage() {
         </aside>
       </div>
 
-      {/* 모달들 */}
       <AnimatePresence>
         {step === 'SELECT_LOCKER' && <LockerSelectionModal onSelect={handleLockerSelect} onClose={resetWorkflow} />}
         {step === 'CONFIRM_LOCKER' && (
@@ -706,7 +495,7 @@ export default function RobotsPage() {
   );
 }
 
-// StatCard 컴포넌트 - 밝은 테마
+// StatCard 컴포넌트 유지
 function StatCard({ icon, color, value, label, delay }: any) {
     const colors: any = {
         indigo: { 
@@ -734,7 +523,6 @@ function StatCard({ icon, color, value, label, delay }: any) {
             whileHover={{ scale: 1.05, y: -2 }}
             className={`relative ${colors[color].bgLight} backdrop-blur-sm border ${colors[color].border} rounded-lg p-2 shadow-lg flex flex-col justify-between overflow-hidden`}
         >
-            {/* 배경 애니메이션 */}
             <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity">
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
