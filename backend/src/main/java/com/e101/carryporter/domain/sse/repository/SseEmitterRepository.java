@@ -27,6 +27,14 @@ public class SseEmitterRepository {
         userEmitters.remove(userId);
     }
 
+    /**
+     * 특정 emitter 인스턴스와 일치할 때만 제거 (race condition 방지)
+     * 재구독 시 OLD emitter의 콜백이 NEW emitter를 삭제하는 것을 방지
+     */
+    public boolean deleteUserIfMatch(Long userId, SseEmitter emitter) {
+        return userEmitters.remove(userId, emitter);
+    }
+
     public SseEmitter findUser(Long userId) {
         return userEmitters.get(userId);
     }
@@ -38,6 +46,14 @@ public class SseEmitterRepository {
 
     public void deleteAdmin(Long adminId) {
         adminEmitters.remove(adminId);
+    }
+
+    public boolean deleteAdminIfMatch(Long adminId, SseEmitter emitter) {
+        return adminEmitters.remove(adminId, emitter);
+    }
+
+    public SseEmitter findAdmin(Long adminId) {
+        return adminEmitters.get(adminId);
     }
 
     // 모든 관리자에게 알림을 보낼 때 사용

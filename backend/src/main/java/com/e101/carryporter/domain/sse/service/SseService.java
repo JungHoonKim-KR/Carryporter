@@ -28,10 +28,11 @@ public class SseService {
 
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        // 콜백 설정
-        emitter.onCompletion(() -> removeEmitter(id, role, "Completion"));
-        emitter.onTimeout(() -> removeEmitter(id, role, "Timeout"));
-        emitter.onError((e) -> removeEmitter(id, role, "Error"));
+        // 콜백 설정 - emitter 인스턴스 비교로 race condition 방지
+        // OLD emitter의 콜백이 뒤늦게 실행되어도 NEW emitter를 삭제하지 않음
+        emitter.onCompletion(() -> removeEmitterIfMatch(id, role, emitter, "Completion"));
+        emitter.onTimeout(() -> removeEmitterIfMatch(id, role, emitter, "Timeout"));
+        emitter.onError((e) -> removeEmitterIfMatch(id, role, emitter, "Error"));
 
         // Repository 저장
         if (Role.ADMIN.name().equals(role)) {
@@ -50,29 +51,37 @@ public class SseService {
      * 기존 연결을 찾아 명시적으로 종료시키는 메서드
      */
     private void stopExistingEmitter(Long id, String role) {
-        SseEmitter existing = emitterRepository.findUser(id);
+        SseEmitter existing;
+        if (Role.ADMIN.name().equals(role)) {
+            existing = emitterRepository.findAdmin(id);
+        } else {
+            existing = emitterRepository.findUser(id);
+        }
 
         if (existing != null) {
             log.info("[SSE] 기존 연결 종료 시도 | ID: {}", id);
             try {
-                existing.complete(); // 기존 연결을 우아하게 닫음
+                existing.complete();
             } catch (Exception e) {
                 log.warn("[SSE] 기존 연결 종료 중 에러 발생 | ID: {}", id);
-            } finally {
-                removeEmitter(id, role, "Re-subscription");
             }
         }
     }
 
     /**
-     * Repository에서 안전하게 제거하는 공통 메서드
+     * 맵에 저장된 emitter가 자신과 동일한 인스턴스일 때만 제거 (race condition 방지)
      */
-    private void removeEmitter(Long id, String role, String reason) {
-        log.debug("[SSE] 연결 제거 요청 | ID: {} | 사유: {}", id, reason);
+    private void removeEmitterIfMatch(Long id, String role, SseEmitter emitter, String reason) {
+        boolean removed;
         if (Role.ADMIN.name().equals(role)) {
-            emitterRepository.deleteAdmin(id);
+            removed = emitterRepository.deleteAdminIfMatch(id, emitter);
         } else {
-            emitterRepository.deleteUser(id);
+            removed = emitterRepository.deleteUserIfMatch(id, emitter);
+        }
+        if (removed) {
+            log.debug("[SSE] 연결 제거 완료 | ID: {} | 사유: {}", id, reason);
+        } else {
+            log.debug("[SSE] 연결 제거 스킵 (이미 새 연결로 교체됨) | ID: {} | 사유: {}", id, reason);
         }
     }
 

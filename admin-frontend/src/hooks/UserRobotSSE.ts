@@ -117,13 +117,12 @@ export function useRobotSSE() {
           console.error('❌ SSE Error:', err);
           setIsConnected(false);
 
-          // AbortError는 정상 종료이므로 throw하지 않음
+          // AbortError는 정상 종료 → 재연결하지 않음
           if (err instanceof Error && err.name === 'AbortError') {
-            return;
+            throw err;
           }
 
-          // 다른 치명적인 에러는 재연결 중단
-          throw err;
+          // throw하지 않으면 fetch-event-source가 자동 재연결함
         },
 
         // 4. 닫힘 처리
