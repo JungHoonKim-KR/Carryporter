@@ -113,13 +113,13 @@ export const subscribeMissionUpdates = (
     onerror(err: any) {
       if (import.meta.env.DEV) console.error('[SSE] Error:', err);
 
-      // AbortError는 정상 종료
+      // AbortError는 정상 종료 → 재연결하지 않음
       if (err instanceof Error && err.name === 'AbortError') {
-        return;
+        throw err;
       }
 
       callbacks.onError?.(new Error('SSE connection error'));
-      throw err; // 재연결 시도
+      // throw하지 않으면 fetch-event-source가 자동 재연결함
     },
 
     // 연결 종료
