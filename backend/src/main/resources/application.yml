@@ -22,7 +22,7 @@ jwt:
 
 logging:
   level:
-    com.e101.carryporter: debug
+    com.e101.carryporter: ${LOGGING_LEVEL_ROOT:debug}
     org.springframework.integration: info
     org.eclipse.paho.client: info
 
