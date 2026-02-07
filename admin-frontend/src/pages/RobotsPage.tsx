@@ -132,18 +132,13 @@ export default function RobotsPage() {
   useEffect(() => {
     if (!lastMessage) return;
     
-    // 🔇 ping 메시지 필터링 (연결 유지용)
-    if (lastMessage === 'ping' || lastMessage.trim() === 'ping' ||lastMessage === 'data: Connected! [Role: ADMIN]') {
-      return;
-    }
-    
     console.log('📩 RAW SSE Message:', lastMessage);
     
     try {
       const parsed = JSON.parse(lastMessage);
       handleParsedEvent(parsed);
     } catch (e) {
-      // JSON 파싱 실패 시 다시 시도
+      // JSON 파싱 실패 시 event:/data: 형식 파싱 시도
       try {
         const lines = lastMessage.split('\n');
         let eventName = '';
@@ -158,22 +153,13 @@ export default function RobotsPage() {
         });
 
         if (dataStr) {
-          // ping 체크
-          if (dataStr === 'ping' || dataStr.trim() === 'ping') {
-            return;
-          }
-          
           const parsed = JSON.parse(dataStr);
           parsed.eventName = parsed.eventName || eventName;
           console.log('📩 Parsed SSE (retry):', parsed);
           handleParsedEvent(parsed);
         }
       } catch (innerErr) {
-        // ping이나 다른 non-JSON 메시지는 무시
-        if (lastMessage.includes('ping')) {
-          return;
-        }
-        console.error('❌ SSE 파싱 완전 실패:', innerErr);
+        console.error('❌ SSE 파싱 실패:', innerErr);
       }
     }
   }, [lastMessage]);
