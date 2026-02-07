@@ -380,3 +380,18 @@ Light Mode 사이드바
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
 }
+
+@keyframes scroll-left {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.neon-text {
+  font-size: 20vh;
+  color: #39FF14;
+  font-weight: 900;
+  text-shadow: 0 0 20px #39FF14, 0 0 40px #39FF14;
+  white-space: nowrap;
+  position: absolute;
+  will-change: transform;
+}
