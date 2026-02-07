@@ -11,6 +11,7 @@ const EVENT_THEMES: Record<string, { text: string; color: string; sound: string 
   ReturnStartedEvent: { text: '🏠 복귀 시작', color: '#FFFF00', sound: 'return.mp3' },
   MissionFailedEvent: { text: '⚠️ 미션 실패!', color: '#FF3131', sound: 'error.mp3' },
   RobotReturnedEvent: { text: '💤 복귀 완료', color: '#FFFF00', sound: 'done.mp3' },
+
   
   // 하트비트 대응
   heartbeat: { text: 'ping!', color: '#39FF14', sound: 'ping.mp3' }
