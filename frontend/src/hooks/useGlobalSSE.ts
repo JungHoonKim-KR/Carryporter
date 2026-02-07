@@ -19,7 +19,7 @@ export const useGlobalSSE = () => {
 
     const eventSourceRef = useRef<(() => void) | null>(null);
 
-    // 컴포넌트 마운트 시 한 번만 실행
+    // 컴포넌트 마운트 시 한 번만 실행.
     useEffect(() => {
         const token = useAuthStore.getState().accessToken;
 
@@ -117,7 +117,7 @@ export const useGlobalSSE = () => {
             }
             setConnected(false);
         };
-    }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+    }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행.
 
     return {
         isConnected: useSSEStore((state) => state.isConnected),
