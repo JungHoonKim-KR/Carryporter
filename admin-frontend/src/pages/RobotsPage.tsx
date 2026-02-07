@@ -18,8 +18,6 @@ import MissionReturnModal from '@/components/mission/MissionReturnModal'
 import RealtimeActivityFeed from '@/components/monitoring/RealtimeActivityFeed'
 import { RobotAssignedEvent, RobotReturnedAdminEvent } from '@/types/robotEvents'
 
-// ⚠️ 네비게이션 관련 함수 Import 제거 (RobotStage가 처리함)
-
 type WorkflowStep = 'IDLE' | 'SELECT_LOCKER' | 'CONFIRM_LOCKER' | 'MISSION_START';
 
 const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || '');
@@ -121,7 +119,7 @@ export default function RobotsPage() {
   const [assignedEvent, setAssignedEvent] = useState<RobotAssignedEvent | null>(null);
   const [returnData, setReturnData] = useState<RobotReturnedAdminEvent | null>(null);
 
-  // 🔥 SSE 이벤트를 저장하여 RobotStage로 전달 (x, y 뿐만 아니라 이벤트 정보도 포함)
+  // 🔥 SSE 이벤트를 저장하여 RobotStage로 전달
   const [sseMovements, setSseMovements] = useState<Array<{ 
     robotCode: string; 
     x?: number; 
@@ -130,33 +128,73 @@ export default function RobotsPage() {
     eventName?: string;
   }>>([]);
 
-  // ⚠️ 기존 useEffect(setInterval) 네비게이션 로직 삭제됨 (RobotStage가 담당)
-
   // 🔥 SSE 이벤트 리스너
   useEffect(() => {
     if (!lastMessage) return;
+    
+    console.log('📩 RAW SSE Message:', lastMessage);
+    
     try {
       const parsed = JSON.parse(lastMessage);
       handleParsedEvent(parsed);
     } catch (e) {
-      // JSON 파싱 실패 시 retry 로직 생략 (필요 시 복구)
+      // JSON 파싱 실패 시 event:/data: 형식 파싱 시도
+      try {
+        const lines = lastMessage.split('\n');
+        let eventName = '';
+        let dataStr = '';
+
+        lines.forEach(line => {
+          if (line.startsWith('event:')) {
+            eventName = line.replace('event:', '').trim();
+          } else if (line.startsWith('data:')) {
+            dataStr = line.replace('data:', '').trim();
+          }
+        });
+
+        if (dataStr) {
+          const parsed = JSON.parse(dataStr);
+          parsed.eventName = parsed.eventName || eventName;
+          console.log('📩 Parsed SSE (retry):', parsed);
+          handleParsedEvent(parsed);
+        }
+      } catch (innerErr) {
+        console.error('❌ SSE 파싱 실패:', innerErr);
+      }
     }
   }, [lastMessage]);
 
   // 🔥 파싱된 이벤트 처리 함수
   const handleParsedEvent = (parsed: any) => {
     console.log('📨 파싱된 이벤트:', parsed);
+    console.log('📨 이벤트 타입 체크:', {
+      eventName: parsed.eventName,
+      hasUserId: !!parsed.userId,
+      hasRequestType: !!parsed.requestType,
+      hasMissionId: !!parsed.missionId,
+      hasRobotCode: !!parsed.robotCode,
+      hasCallLocationName: !!parsed.callLocationName
+    });
 
-    // 1. RobotAssignedEvent
-    if (parsed.eventName === 'RobotAssignedEvent' || (parsed.userId && parsed.requestType)) {
+    // 1. RobotAssignedEvent - 더 넓은 조건
+    const isRobotAssignedEvent = 
+      parsed.eventName === 'RobotAssignedEvent' || 
+      (parsed.userId && parsed.requestType) ||
+      (parsed.userId && parsed.missionId && parsed.robotCode && parsed.callLocationName);
+
+    if (isRobotAssignedEvent) {
+      console.log('🚀🚀🚀 RobotAssignedEvent 감지!');
+      
       const missionInfo: MissionInfo = {
-        missionId: parsed.missionId,
-        robotCode: parsed.robotCode,
-        robotMacAddress: parsed.robotMacAddress || '',
-        destinationName: parsed.callLocationName || '',
-        destinationX: parsed.destX || 0,
-        destinationY: parsed.destY || 0,
+        missionId: parsed.missionId || parsed.data?.missionId,
+        robotCode: parsed.robotCode || parsed.data?.robotCode,
+        robotMacAddress: parsed.robotMacAddress || parsed.data?.robotMacAddress || '',
+        destinationName: parsed.callLocationName || parsed.data?.callLocationName || '',
+        destinationX: parsed.destX || parsed.data?.destX || 0,
+        destinationY: parsed.destY || parsed.data?.destY || 0,
       };
+
+      console.log('📋 저장할 미션 정보:', missionInfo);
 
       setActiveMissions(prev => {
         const updated = new Map(prev);
@@ -164,29 +202,31 @@ export default function RobotsPage() {
         return updated;
       });
 
-      setAssignedEvent({
+      const eventData = {
         userId: parsed.userId || parsed.data?.userId,
         missionId: parsed.missionId || parsed.data?.missionId,
         robotCode: parsed.robotCode || parsed.data?.robotCode,
         callLocationName: parsed.callLocationName || parsed.data?.callLocationName,
         locker_code: parsed.locker_code || parsed.data?.locker_code,
         requestType: parsed.requestType || parsed.data?.requestType || 'FIRST',
-      });
+      };
 
-      // 로그 추가
-      addLog(parsed.robotCode, `🎯 Mission Assigned - ${parsed.callLocationName || 'Unknown'}`, 'mission');
+      console.log('🎯 setAssignedEvent 호출!', eventData);
+      setAssignedEvent(eventData);
+
+      addLog(parsed.robotCode || parsed.data?.robotCode, `🎯 Mission Assigned - ${parsed.callLocationName || 'Unknown'}`, 'mission');
       toast.success(`🤖 로봇 ${parsed.robotCode}에게 미션이 배정되었습니다!`, { position: 'top-right' });
-      return;
     }
 
-    // 2. MissionStartedEvent (RobotStage로 명령 전달)
+    // 2. MissionStartedEvent
     if (parsed.eventName === 'MissionStartedEvent' || parsed.event === 'MissionStartedEvent') {
+      console.log('🚁 MissionStartedEvent 감지!', parsed);
+      
       const missionId = parsed.missionId;
       const robotCode = parsed.robotCode;
       const missionInfo = activeMissions.get(missionId);
 
       if (missionInfo) {
-        // 🚀 핵심: 직접 이동시키지 않고, RobotStage에 "가라!"고 명령만 전달
         setSseMovements(prev => [
           ...prev, 
           { 
@@ -199,16 +239,16 @@ export default function RobotsPage() {
         addLog(robotCode, `🚀 Mission Started → ${missionInfo.destinationName}`, 'mission');
         toast.info(`🚀 ${robotCode}가 ${missionInfo.destinationName}로 출발합니다!`, { position: 'top-right' });
       }
-      return;
     }
 
-    // 3. ReturnStartedEvent (RobotStage로 명령 전달)
+    // 3. ReturnStartedEvent
     if (parsed.eventName === 'ReturnStartedEvent' || parsed.event === 'ReturnStartedEvent') {
+      console.log('🏠 ReturnStartedEvent 감지!', parsed);
+      
       const robotMacAddress = parsed.robotMacAddress;
       const robot = mergedRobots.find(r => r.macAddress === robotMacAddress);
       
       if (robot) {
-        // 🚀 핵심: 복귀 명령 전달
         setSseMovements(prev => [
           ...prev, 
           { 
@@ -220,10 +260,9 @@ export default function RobotsPage() {
         addLog(robot.robotCode, `🏠 Returning to Main Station`, 'return');
         toast.info(`🏠 ${robot.robotCode}가 Main Station으로 복귀합니다!`, { position: 'top-right' });
       }
-      return;
     }
 
-    // 4. MOVE 이벤트 (실시간 위치 갱신용, 필요하다면 유지)
+    // 4. MOVE 이벤트
     if (parsed.eventName === 'MOVE' || parsed.event === 'MOVE') {
       const robotCode = parsed.robotCode || parsed.robotId;
       const x = parsed.x;
@@ -232,7 +271,6 @@ export default function RobotsPage() {
       if (robotCode && x !== undefined && y !== undefined) {
         setSseMovements(prev => {
           const existing = prev.find(m => m.robotCode === robotCode);
-          // MOVE 이벤트는 기존 위치만 업데이트
           if (existing) {
             return prev.map(m => m.robotCode === robotCode ? { ...m, x, y } : m);
           } else {
@@ -242,11 +280,12 @@ export default function RobotsPage() {
         const newLog = convertMoveEventToLog(parsed);
         setRealTimeLogs(prev => [newLog, ...prev].slice(0, 50));
       }
-      return;
     }
 
     // 5. RobotReturnedAdminEvent
     if (parsed.eventName === 'RobotReturnedAdminEvent') {
+      console.log('🔄 RobotReturnedAdminEvent 감지!');
+      
       setReturnData({
         userId: parsed.userId,
         missionId: parsed.missionId,
@@ -333,7 +372,7 @@ export default function RobotsPage() {
         </div>
         
         <div className="flex items-center gap-4">
-             {/* 🧪 테스트 버튼 (RobotStage 테스트용 가짜 데이터 주입) */}
+             {/* 🧪 테스트 버튼 */}
              <motion.button 
                 whileHover={{ scale: 1.05 }} 
                 whileTap={{ scale: 0.95 }}
@@ -343,7 +382,7 @@ export default function RobotsPage() {
                         setSseMovements(prev => [...prev, {
                             robotCode: testRobot.robotCode,
                             callLocationName: 'STOP1',
-                            eventName: 'MissionStartedEvent' // 이벤트를 발생시킨 것처럼 위장
+                            eventName: 'MissionStartedEvent'
                         }]);
                         toast.info('🧪 테스트: STOP1으로 이동 명령', { position: 'top-right' });
                     }
@@ -380,7 +419,6 @@ export default function RobotsPage() {
             </div>
             
             <div className="w-full h-full relative">
-               {/* 🚀 RobotStage에 이벤트 데이터만 전달 */}
                <RobotStage robots={mergedRobots} sseMovements={sseMovements}/>
             </div>
 
@@ -495,7 +533,7 @@ export default function RobotsPage() {
   );
 }
 
-// StatCard 컴포넌트 유지
+// StatCard 컴포넌트
 function StatCard({ icon, color, value, label, delay }: any) {
     const colors: any = {
         indigo: { 
