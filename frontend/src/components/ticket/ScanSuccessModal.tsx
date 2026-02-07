@@ -11,7 +11,8 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
 
     // 모달이 열릴 때 애니메이션 시작
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) {
+            setAnimate(false);
             return;
         }
         const timer = setTimeout(() => {
@@ -19,7 +20,6 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
         }, 100);
         return () => {
             clearTimeout(timer);
-            setAnimate(false); // cleanup에서 처리
         };
     }, [isOpen]);
 
@@ -30,7 +30,6 @@ const ScanSuccessModal = ({ isOpen, onConfirm }: ScanSuccessModalProps) => {
             {/* 배경 오버레이 (블러 효과) */}
             <div
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
-                onClick={onConfirm}
             />
 
             {/* 모달 컨텐츠 */}
