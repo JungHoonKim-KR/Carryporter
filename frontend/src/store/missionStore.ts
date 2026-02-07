@@ -5,6 +5,7 @@ import type {
     MissionType,
 } from "../types/mission.types";
 import type { CurrentLocker } from "../types/locker.types";
+import { missionStorage } from "../services/storage/missionStorage";
 
 interface MissionState {
     // 미션 정보
@@ -32,35 +33,50 @@ export const useMissionStore = create<MissionState>((set) => ({
     currentMission: null,
     currentLocker: null,
 
-    setCurrentMission: (mission) => set({ currentMission: mission }),
+    setCurrentMission: (mission) => {
+        missionStorage.saveMission(mission); // localStorage 저장
+        set({ currentMission: mission });
+    },
 
     updateMissionStatus: (status) =>
-        set((state) => ({
-            currentMission: state.currentMission
-                ? {
-                      ...state.currentMission,
-                      status: status.status,
-                      robotCode:
-                          status.robotCode || state.currentMission.robotCode,
-                  }
-                : null,
-        })),
+        set((state) => {
+            if (!state.currentMission) return {};
 
-    clearMission: () =>
+            const updated = {
+                ...state.currentMission,
+                status: status.status,
+                robotCode: status.robotCode || state.currentMission.robotCode,
+                updatedAt: new Date().toISOString(), // 타임스탬프 갱신
+            };
+
+            missionStorage.saveMission(updated); // localStorage 저장
+            return { currentMission: updated };
+        }),
+
+    clearMission: () => {
+        missionStorage.clearMission(); // localStorage 삭제
         set({
             currentMission: null,
             currentLocker: null,
-        }),
+        });
+    },
 
     /**
      * 미션 타입 설정 (보관/반납)
      */
     setMissionType: (missionType) =>
-        set((state) => ({
-            currentMission: state.currentMission
-                ? { ...state.currentMission, missionType }
-                : null,
-        })),
+        set((state) => {
+            if (!state.currentMission) return {};
+
+            const updated = {
+                ...state.currentMission,
+                missionType,
+                updatedAt: new Date().toISOString(), // 타임스탬프 갱신
+            };
+
+            missionStorage.saveMission(updated); // localStorage 저장
+            return { currentMission: updated };
+        }),
 
     /**
      * 현재 사물함 설정 (API에서 조회한 값)

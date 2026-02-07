@@ -81,7 +81,7 @@ export const useGlobalSSE = () => {
             onAborted: (data: SSEEventData) => {
                 console.log("[SSE] 미션 중단:", data);
                 updateMissionStatus({
-                    status: "ABORTED",
+                    status: "FAILED",
                 });
             },
 

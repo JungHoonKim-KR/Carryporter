@@ -8,16 +8,17 @@ export const canTransitionTo = (
     nextStatus: MissionStatus,
 ): boolean => {
     const transitions: Record<MissionStatus, MissionStatus[]> = {
-        REQUESTED: ["ASSIGNED", "ABORTED"],
-        ASSIGNED: ["MOVING", "ABORTED"],
-        MOVING: ["ARRIVED", "ABORTED"],
-        ARRIVED: ["UNLOCKED", "ABORTED"],
-        UNLOCKED: ["LOCKED", "ABORTED"],
-        LOCKED: ["RETURNING", "ABORTED"],
-        RETURNING: ["RETURNED", "ABORTED"],
-        RETURNED: ["FINISHED"],
+        REQUESTED: ["ASSIGNED", "FAILED"],
+        ASSIGNED: ["MOVING", "FAILED"],
+        MOVING: ["ARRIVED", "FAILED"],
+        ARRIVED: ["UNLOCKED", "FAILED"],
+        UNLOCKED: ["LOCKED", "FAILED"],
+        LOCKED: ["RETURNING", "FAILED"],
+        RETURNING: ["RETURNED", "FAILED"],
+        RETURNED: ["STORING", "FINISHED"],
+        STORING: ["ASSIGNED", "FINISHED"], // 보관 후 재호출 또는 반납 완료
         FINISHED: [],
-        ABORTED: [],
+        FAILED: [],
     };
 
     return transitions[currentStatus]?.includes(nextStatus) ?? false;
@@ -36,8 +37,9 @@ export const calculateProgress = (status: MissionStatus): number => {
         LOCKED: 80,
         RETURNING: 90,
         RETURNED: 95,
+        STORING: 98, // 보관 완료
         FINISHED: 100,
-        ABORTED: 0,
+        FAILED: 0,
     };
 
     return progressMap[status] ?? 0;
@@ -51,7 +53,7 @@ export const calculateProgressStep = (status: MissionStatus): number => {
     if (["ASSIGNED"].includes(status)) return 2;
     if (["MOVING"].includes(status)) return 3;
     if (["ARRIVED", "UNLOCKED", "LOCKED"].includes(status)) return 4;
-    if (["RETURNING", "RETURNED", "FINISHED"].includes(status)) return 5;
+    if (["RETURNING", "RETURNED", "STORING", "FINISHED"].includes(status)) return 5;
     return 0;
 };
 
@@ -67,9 +69,10 @@ export const getStatusMessage = (status: MissionStatus): string => {
         UNLOCKED: "짐 확인 중",
         LOCKED: "수령 완료",
         RETURNING: "로봇이 복귀 중입니다",
-        RETURNED: "보관 완료",
+        RETURNED: "복귀 완료",
+        STORING: "보관 완료",
         FINISHED: "미션 완료!",
-        ABORTED: "미션이 중단되었습니다",
+        FAILED: "미션이 중단되었습니다",
     };
 
     return messages[status] ?? "작업 중입니다";
@@ -88,6 +91,7 @@ const STATUS_ORDER: MissionStatus[] = [
     "LOCKED",
     "RETURNING",
     "RETURNED",
+    "STORING",
     "FINISHED",
 ];
 

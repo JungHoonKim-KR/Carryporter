@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMissionStore } from "../store/missionStore";
 import { useSSEStore } from "../store/sseStore";
+import { useMissionData } from "@/hooks/useMissionData";
 import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/layouts/AppHeader";
 import { useMissionFlow } from "@/hooks/useMissionFlow";
@@ -16,7 +17,10 @@ import {
 
 const MissionTrackPage = () => {
     const navigate = useNavigate();
-    const { currentMission, clearMission } = useMissionStore();
+
+    // ✅ 미션 자동 복원 (localStorage에서)
+    const { currentMission } = useMissionData();
+    const { clearMission } = useMissionStore();
 
     const { isConnected, connectionQuality, reconnectAttempts } = useSSEStore();
 
