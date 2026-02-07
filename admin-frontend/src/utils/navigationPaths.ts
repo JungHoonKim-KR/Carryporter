@@ -58,8 +58,7 @@ const createRectangularPath = (
   stepsPerEdge: number = 60 // 부드러운 이동을 위한 스텝 수
 ): PathPoint[] => {
   let waypoints: PathPoint[] = [];
-  const startPos = DESTINATIONS[fromName];
-  waypoints.push(startPos); // 시작점
+  // 시작점은 제거 - interpolatePoints에 이미 포함됨
 
   // 현재 출발지의 인덱스 찾기
   let currentIndex = CCW_ORDER.indexOf(fromName);

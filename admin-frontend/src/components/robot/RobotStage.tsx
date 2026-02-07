@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutGrid, Box, Maximize2, AlertTriangle, Compass, X } from 'lucide-react'
 import RobotDetailModal from './RobotDetailModal'
+import { getNavigationPath, findNearestDestination, PathPoint, DESTINATIONS } from '@/utils/navigationPaths';
 
 // ==============================================================================
 // 🛠️ 설정 (맵 레이아웃 재구성)
@@ -476,18 +477,20 @@ function FullScreenModal({
   viewMode, 
   robots, 
   groupedRobots,
-  robotPositions,
+  robotPaths,
   imageUrl, 
   onClose, 
-  onRobotClick 
+  onRobotClick,
+  onMoveEnd
 }: { 
   viewMode: '2d' | '3d', 
   robots: any[],
   groupedRobots: any[],
-  robotPositions: Map<string, { x: number; y: number }>,
+  robotPaths: Map<string, PathPoint[]>,
   imageUrl: string, 
   onClose: () => void,
-  onRobotClick: (robot: any) => void 
+  onRobotClick: (robot: any) => void,
+  onMoveEnd: (robotId: string) => void
 }) {
   return (
     <AnimatePresence>
@@ -547,20 +550,20 @@ function FullScreenModal({
                 <Suspense fallback={null}>
                   {groupedRobots.map((group, idx) => {
                     const robotId = group.representativeRobot.robotCode || group.representativeRobot.id;
-                    const targetPos = robotPositions.get(robotId);
-                    const isMoving = !!targetPos;
+                    const path = robotPaths.get(robotId);
                     
                     return (
                       <GlbRobot3D
                         key={`robot-group-modal-${idx}`}
                         robotCode={group.isGroup ? `${group.count}대` : (group.representativeRobot.robotCode || group.representativeRobot.id)}
                         position={[group.x / 10, 0, group.y / 10]}
-                        targetPosition={targetPos ? [targetPos.x / 10, 0, targetPos.y / 10] : undefined}
+                        activePath={path}
                         status={group.representativeRobot.status}
                         onClick={() => onRobotClick(group.representativeRobot)}
+                        onMoveEnd={() => onMoveEnd(robotId)}
                         isGroup={group.isGroup}
                         groupCount={group.count}
-                        showPath={isMoving}
+                        showPath={!!path}
                       />
                     );
                   })}
@@ -596,9 +599,10 @@ export default function RobotStage({
   moveCommands?: Array<{ robotId: string; from: string; to: string }>;
   sseMovements?: Array<{ 
     robotCode: string; 
+    eventName?: string;  // 'MissionStartedEvent' | 'ReturnStartedEvent'
+    callLocationName?: string;  // 'a' | 'b' | 'c'
     x?: number; 
     y?: number;
-    callLocationName?: string;
   }>;
 }) {
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('3d')
@@ -608,71 +612,153 @@ export default function RobotStage({
   const canvasRef = useRef<any>(null);
 
   const [robotPositions, setRobotPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
-
-  // callLocationName을 목적지로 매핑하는 함수
-  const getDestinationFromCallLocation = (callLocationName: string): { x: number; y: number } | null => {
-    const mapping: Record<string, string> = {
-      'a': 'stop1',
-      'b': 'stop2', 
-      'c': 'gate'
-    };
-    
-    const zoneId = mapping[callLocationName.toLowerCase()];
-    if (zoneId) {
-      return getZonePosition(zoneId);
+  
+  // 🔧 경로 시스템 추가
+  const [robotPaths, setRobotPaths] = useState<Map<string, PathPoint[]>>(new Map());
+  const [robotCurrentCoords, setRobotCurrentCoords] = useState<Map<string, {x: number, y: number}>>(() => {
+    // localStorage에서 저장된 위치 복원
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('robotCurrentCoords');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          console.log('💾 저장된 로봇 위치 복원:', parsed);
+          return new Map(Object.entries(parsed));
+        }
+      } catch (error) {
+        console.error('로봇 위치 복원 실패:', error);
+      }
     }
-    
-    return null;
-  };
+    return new Map();
+  });
 
+  // robotCurrentCoords가 변경될 때마다 localStorage에 저장
   useEffect(() => {
-    if (moveCommands.length > 0) {
-      const newPositions = new Map(robotPositions);
-      
-      moveCommands.forEach(cmd => {
-        const targetPos = getZonePosition(cmd.to);
-        newPositions.set(cmd.robotId, targetPos);
-      });
-      
-      setRobotPositions(newPositions);
+    if (robotCurrentCoords.size > 0) {
+      const coordsObj = Object.fromEntries(robotCurrentCoords);
+      localStorage.setItem('robotCurrentCoords', JSON.stringify(coordsObj));
+      console.log('💾 로봇 위치 저장됨:', coordsObj);
     }
-  }, [moveCommands]);
+  }, [robotCurrentCoords]);
 
+  // 🔧 로봇 초기화: 모든 로봇을 MAIN STATION에 배치 (저장된 위치가 없을 때만)
+  useEffect(() => {
+    const mainStationPos = DESTINATIONS['MAIN STATION'];
+    console.log(`🏭 MAIN STATION 좌표: (${mainStationPos.x}, ${mainStationPos.y})`);
+    
+    const initialCoords = new Map(robotCurrentCoords); // 기존 좌표 유지
+    let hasNewRobots = false;
+    
+    robots.forEach(robot => {
+      const robotId = robot.robotCode || robot.id;
+      // 저장된 위치가 없는 로봇만 MAIN STATION으로 초기화
+      if (!initialCoords.has(robotId)) {
+        initialCoords.set(robotId, { x: mainStationPos.x, y: mainStationPos.y });
+        console.log(`🔧 [${robotId}] 초기화: MAIN STATION (${mainStationPos.x}, ${mainStationPos.y})`);
+        hasNewRobots = true;
+      } else {
+        const pos = initialCoords.get(robotId)!;
+        console.log(`✅ [${robotId}] 저장된 위치 유지: (${pos.x}, ${pos.y})`);
+      }
+    });
+
+    if (hasNewRobots) {
+      setRobotCurrentCoords(initialCoords);
+    }
+  }, [robots]);
+
+  // SSE 이벤트 처리 - 경로 시스템 사용
   useEffect(() => {
     if (sseMovements.length > 0) {
-      const newPositions = new Map(robotPositions);
-      
+      const newPaths = new Map(robotPaths);
+
       sseMovements.forEach(movement => {
-        // callLocationName이 있으면 해당 위치로 매핑
-        if (movement.callLocationName) {
-          const destination = getDestinationFromCallLocation(movement.callLocationName);
-          if (destination) {
-            newPositions.set(movement.robotCode, destination);
-            return;
-          }
-        }
+        const robotId = movement.robotCode;
         
-        // callLocationName이 없거나 매핑 실패시 x, y 좌표 사용
-        if (movement.x !== undefined && movement.y !== undefined) {
-          newPositions.set(movement.robotCode, { x: movement.x, y: movement.y });
+        let startNode = '';
+        let targetNode = '';
+
+        // 1. 이벤트 타입에 따라 출발지와 목적지 결정
+        if (movement.eventName === 'MissionStartedEvent' || movement.callLocationName) {
+          // 🚀 미션 시작: 무조건 MAIN STATION에서 출발
+          startNode = 'MAIN STATION';
+          
+          if (movement.callLocationName) {
+            const map: Record<string, string> = { 
+              'a': 'STOP1', 
+              'b': 'STOP2', 
+              'c': 'GATE' 
+            };
+            targetNode = map[movement.callLocationName.toLowerCase()] || movement.callLocationName.toUpperCase();
+          }
+          console.log(`🚀 미션 시작: [${robotId}] MAIN STATION -> ${targetNode}`);
+          
+        } else if (movement.eventName === 'ReturnStartedEvent') {
+          // 🔙 복귀: 현재 위치에서 MAIN STATION으로
+          const mainStationPos = DESTINATIONS['MAIN STATION'];
+          const currentPos = robotCurrentCoords.get(robotId) || { x: mainStationPos.x, y: mainStationPos.y };
+          startNode = findNearestDestination(currentPos.x, currentPos.y);
+          targetNode = 'MAIN STATION';
+          console.log(`🔙 복귀 시작: [${robotId}] ${startNode} -> MAIN STATION`);
+        }
+
+        // 2. 경로 생성
+        if (targetNode && startNode) {
+          const startUpper = startNode.toUpperCase();
+          const targetUpper = targetNode.toUpperCase();
+          
+          if (startUpper !== targetUpper) {
+            const pathData = getNavigationPath(startUpper, targetUpper);
+            
+            if (pathData) {
+              console.log(`✅ 경로 생성: [${robotId}] ${startUpper} -> ${targetUpper}, 웨이포인트: ${pathData.waypoints.length}개`);
+              newPaths.set(robotId, pathData.waypoints);
+            } else {
+              console.error(`❌ 경로 생성 실패: ${startUpper} -> ${targetUpper}`);
+            }
+          } else {
+            console.log(`⚠️ 이미 목적지에 있음: [${robotId}] ${startUpper}`);
+          }
         }
       });
       
-      setRobotPositions(newPositions);
+      setRobotPaths(newPaths);
     }
   }, [sseMovements]);
 
+  // 이동 완료 핸들러
+  const handleMoveEnd = (robotId: string) => {
+    setRobotPaths(prev => {
+      const path = prev.get(robotId);
+      if (path && path.length > 0) {
+        // 경로의 마지막 지점을 현재 좌표로 저장
+        const lastPoint = path[path.length - 1];
+        setRobotCurrentCoords(coords => {
+          const updated = new Map(coords);
+          updated.set(robotId, { x: lastPoint.x, y: lastPoint.y });
+          console.log(`✅ [${robotId}] 이동 완료: (${lastPoint.x}, ${lastPoint.y})`);
+          return updated;
+        });
+      }
+      
+      const next = new Map(prev);
+      next.delete(robotId);
+      return next;
+    });
+  };
+
   const getRobotPosition = (robot: any) => {
     const robotId = robot.robotCode || robot.id;
-    const customPos = robotPositions.get(robotId);
     
-    // 이동 중인 경우 목표 위치 반환
-    if (customPos) {
-      return { x: customPos.x, y: customPos.y };
+    // robotCurrentCoords에서 현재 위치 가져오기
+    const currentPos = robotCurrentCoords.get(robotId);
+    if (currentPos) {
+      console.log(`🤖 [${robotId}] getRobotPosition: (${currentPos.x}, ${currentPos.y}) from robotCurrentCoords`);
+      return { x: currentPos.x, y: currentPos.y };
     }
     
     // 기본 대기 위치: Main Station (오른쪽 위)
-    // 모든 로봇은 Main Station에서 대기
+    console.log(`🤖 [${robotId}] getRobotPosition: (80, -50) DEFAULT MAIN STATION`);
     return { 
       x: 80, 
       y: -50 
@@ -700,7 +786,7 @@ export default function RobotStage({
       isGroup: group.length >= 3,
       representativeRobot: group[0]
     }));
-  }, [robots, robotPositions]);
+  }, [robots, robotCurrentCoords]);
 
   const handleRobotClick = (robot: any) => {
     setSelectedRobot(robot)
@@ -741,21 +827,19 @@ export default function RobotStage({
             onClick={() => {
               if (robots.length > 0) {
                 const testRobot = robots[0];
-                console.log('🧪 테스트: 로봇을 STOP1(a)로 이동 시작');
+                const robotId = testRobot.robotCode || testRobot.id;
+                console.log('🧪 테스트: MAIN STATION에서 STOP1(a)로 이동');
                 
-                // 현재 위치에서 STOP1로 가는 경로 가져오기
-                const currentPos = getRobotPosition(testRobot);
-                const destination = getDestinationFromCallLocation('a');
+                // 무조건 MAIN STATION에서 출발
+                const startNode = 'MAIN STATION';
+                const targetNode = 'STOP1';
                 
-                if (destination) {
-                  console.log('목적지:', destination);
-                  setRobotPositions(prev => {
-                    const updated = new Map(prev);
-                    updated.set(testRobot.robotCode || testRobot.id, destination);
-                    return updated;
-                  });
+                const pathData = getNavigationPath(startNode, targetNode);
+                if (pathData) {
+                  console.log(`✅ 테스트 경로: ${startNode} -> ${targetNode}`);
+                  setRobotPaths(prev => new Map(prev).set(robotId, pathData.waypoints));
                 } else {
-                  console.error('목적지를 찾을 수 없습니다');
+                  console.error('경로 생성 실패');
                 }
               } else {
                 console.warn('로봇이 없습니다');
@@ -764,6 +848,69 @@ export default function RobotStage({
             className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
           >
             🧪 TEST → A
+          </motion.button>
+
+          {/* 🔙 복귀 테스트 버튼 */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (robots.length > 0) {
+                const testRobot = robots[0];
+                const robotId = testRobot.robotCode || testRobot.id;
+                console.log('🔙 테스트: 복귀 - 현재 위치에서 MAIN STATION으로');
+                
+                // 현재 위치 확인
+                const mainStationPos = DESTINATIONS['MAIN STATION'];
+                const currentPos = robotCurrentCoords.get(robotId) || { x: mainStationPos.x, y: mainStationPos.y };
+                const startNode = findNearestDestination(currentPos.x, currentPos.y);
+                const targetNode = 'MAIN STATION';
+                
+                console.log(`📍 현재 위치: ${startNode} (${currentPos.x}, ${currentPos.y})`);
+                
+                if (startNode !== targetNode) {
+                  const pathData = getNavigationPath(startNode, targetNode);
+                  if (pathData) {
+                    console.log(`✅ 복귀 경로: ${startNode} -> ${targetNode}`);
+                    setRobotPaths(prev => new Map(prev).set(robotId, pathData.waypoints));
+                  } else {
+                    console.error('복귀 경로 생성 실패');
+                  }
+                } else {
+                  console.log('⚠️ 이미 MAIN STATION에 있습니다');
+                }
+              } else {
+                console.warn('로봇이 없습니다');
+              }
+            }}
+            className="px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
+          >
+            🔙 복귀
+          </motion.button>
+
+          {/* 🔄 위치 초기화 버튼 */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (confirm('모든 로봇을 MAIN STATION으로 초기화하시겠습니까?')) {
+                const mainStationPos = DESTINATIONS['MAIN STATION'];
+                const resetCoords = new Map<string, {x: number, y: number}>();
+                
+                robots.forEach(robot => {
+                  const robotId = robot.robotCode || robot.id;
+                  resetCoords.set(robotId, { x: mainStationPos.x, y: mainStationPos.y });
+                });
+                
+                setRobotCurrentCoords(resetCoords);
+                setRobotPaths(new Map()); // 모든 경로 삭제
+                localStorage.removeItem('robotCurrentCoords');
+                console.log('🔄 모든 로봇 위치 초기화 완료');
+              }
+            }}
+            className="px-3 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
+          >
+            🔄 초기화
           </motion.button>
 
           <div className="bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl flex">
@@ -832,20 +979,20 @@ export default function RobotStage({
               <Suspense fallback={null}>
                 {groupedRobots.map((group, idx) => {
                   const robotId = group.representativeRobot.robotCode || group.representativeRobot.id;
-                  const targetPos = robotPositions.get(robotId);
-                  const isMoving = !!targetPos;
+                  const path = robotPaths.get(robotId);
                   
                   return (
                     <GlbRobot3D
                       key={`robot-group-${idx}`}
                       robotCode={group.isGroup ? `${group.count}대` : (group.representativeRobot.robotCode || group.representativeRobot.id)}
                       position={[group.x / 10, 0, group.y / 10]}
-                      targetPosition={targetPos ? [targetPos.x / 10, 0, targetPos.y / 10] : undefined}
+                      activePath={path}
                       status={group.representativeRobot.status}
                       onClick={() => handleRobotClick(group.representativeRobot)}
+                      onMoveEnd={() => handleMoveEnd(robotId)}
                       isGroup={group.isGroup}
                       groupCount={group.count}
-                      showPath={isMoving}
+                      showPath={!!path}
                     />
                   );
                 })}
@@ -870,10 +1017,11 @@ export default function RobotStage({
           viewMode={viewMode}
           robots={robots}
           groupedRobots={groupedRobots}
-          robotPositions={robotPositions}
+          robotPaths={robotPaths}
           imageUrl={CHARACTER_IMAGE_URL}
           onClose={() => setIsFullScreen(false)}
           onRobotClick={handleRobotClick}
+          onMoveEnd={handleMoveEnd}
         />
       )}
     </>
