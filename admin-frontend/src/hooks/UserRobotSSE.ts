@@ -68,11 +68,6 @@ export function useRobotSSE() {
           if (response.ok) {
             console.log('✅ SSE Connected!');
             setIsConnected(true);
-            
-            // 🔥 연결 성공 메시지를 화면에 표시
-            const connectMessage = `event:CONNECT\ndata:Connected! [Role: ADMIN]`;
-            setLastMessage(connectMessage);
-            
             return; // OK
           } else {
             console.error('❌ SSE Connection Failed', response.status);
@@ -84,19 +79,24 @@ export function useRobotSSE() {
         onmessage(msg) {
           console.log(`📩 Event Received: [${msg.event}]`, msg.data);
 
-          // 🔥 SSE 원본 형식으로 화면에 전달 (모든 이벤트 포함)
+          // 🔇 시스템 메시지 필터링 (ping, Connected 등)
+          const trimmedData = msg.data.trim();
+          if (trimmedData === 'ping' || 
+              trimmedData.startsWith('Connected') || 
+              trimmedData === 'keep-alive' ||
+              msg.event === 'ping' ||
+              msg.event === 'heartbeat') {
+            console.log('🔇 시스템 메시지 무시:', msg.event || trimmedData);
+            return; // 무시하고 종료
+          }
+
+          // 🔥 SSE 원본 형식으로 화면에 전달 (실제 이벤트만)
           let rawMessage = '';
           if (msg.id) rawMessage += `id:${msg.id}\n`;
           if (msg.event) rawMessage += `event:${msg.event}\n`;
           rawMessage += `data:${msg.data}`;
           
           setLastMessage(rawMessage);
-
-          // heartbeat는 로그만 표시하고 상태 변경은 하지 않음
-          if (msg.event === 'heartbeat') {
-            setAlertEvent("heartbeat");
-            return;
-          }
 
           try {
             // JSON 형식이 맞는지 확인하기 위해 파싱 시도
@@ -117,23 +117,18 @@ export function useRobotSSE() {
           console.error('❌ SSE Error:', err);
           setIsConnected(false);
 
-          // AbortError는 정상 종료이므로 throw하지 않음
+          // AbortError는 정상 종료 → 재연결하지 않음
           if (err instanceof Error && err.name === 'AbortError') {
-            return;
+            throw err;
           }
 
-          // 다른 치명적인 에러는 재연결 중단
-          throw err;
+          // throw하지 않으면 fetch-event-source가 자동 재연결함
         },
 
         // 4. 닫힘 처리
         onclose() {
           console.log('🔒 SSE Closed');
           setIsConnected(false);
-          
-          // 🔥 연결 종료 메시지 표시
-          const closeMessage = `event:DISCONNECT\ndata:Connection closed`;
-          setLastMessage(closeMessage);
         }
       });
     };

@@ -99,7 +99,7 @@ public class AdminSseNotificationHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionFinalizedEvent(MissionFinalizedEvent event) {
         log.debug("[AdminSseNotificationHandler] mission 종료: missionId = {}, message = {}", event.missionId(), event.message());
-        sseService.broadcastToAdmins("MissionFailedEvent", event);
+        sseService.broadcastToAdmins("MissionFinalizedEvent", event);
     }
 
     /**

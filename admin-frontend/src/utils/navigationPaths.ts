@@ -1,251 +1,117 @@
 // ==============================================================================
-// 🗺️ 네비게이션 경로 시스템
+// 🗺️ 사각형 네비게이션 경로 시스템 (반시계 방향 & 직각 이동)
 // ==============================================================================
 
 export interface PathPoint {
   x: number;
   y: number;
-  delay?: number; // 해당 지점에서 대기 시간(초)
+  delay?: number;
 }
 
 export interface NavigationPath {
   name: string;
   destination: string;
   waypoints: PathPoint[];
-  totalDuration: number; // 예상 소요 시간(초)
+  totalDuration: number;
 }
 
-// Main Station 좌표
-export const MAIN_STATION = { x: -80, y: 0 };
-
-// 각 목적지별 좌표 정의
+// ==============================================================================
+// 📍 사각형 배치 좌표 (Main Station = 오른쪽 위)
+// 3D 좌표계: x는 좌우, y(z)는 상하 (-가 위쪽, +가 아래쪽)
+// ==============================================================================
 export const DESTINATIONS = {
-  'MAIN STATION': { x: -80, y: 0 },
-  'STOP-1': { x: 0, y: 50 },
-  'STOP-2': { x: 0, y: -50 },
-  'GATE-1': { x: 80, y: -50 },
+  'MAIN STATION': { x: 80, y: -50 },   // 오른쪽 위 (우상)
+  'STOP2': { x: -80, y: -50 },         // 왼쪽 위 (좌상)
+  'STOP1': { x: -80, y: 50 },          // 왼쪽 아래 (좌하)
+  'GATE': { x: 80, y: 50 },            // 오른쪽 아래 (우하)
 } as const;
 
-// ==============================================================================
-// 📍 목적지별 네비게이션 경로 (부드러운 곡선 이동)
-// ==============================================================================
-
-export const NAVIGATION_PATHS: Record<string, NavigationPath> = {
-  // MAIN STATION → STOP-1
-  'MAIN STATION-STOP-1': {
-    name: 'MAIN STATION to STOP-1',
-    destination: 'STOP-1',
-    waypoints: [
-      { x: -80, y: 0 },      // 시작: Main Station
-      { x: -60, y: 10 },     // 출발 커브
-      { x: -40, y: 20 },     // 중간 경로
-      { x: -20, y: 30 },     // 접근
-      { x: 0, y: 40 },       // 거의 도착
-      { x: 0, y: 50 },       // 최종 목적지: STOP-1
-    ],
-    totalDuration: 30,
-  },
-
-  // MAIN STATION → STOP-2
-  'MAIN STATION-STOP-2': {
-    name: 'MAIN STATION to STOP-2',
-    destination: 'STOP-2',
-    waypoints: [
-      { x: -80, y: 0 },      // 시작: Main Station
-      { x: -60, y: -10 },    // 출발 커브
-      { x: -40, y: -20 },    // 중간 경로
-      { x: -20, y: -30 },    // 접근
-      { x: 0, y: -40 },      // 거의 도착
-      { x: 0, y: -50 },      // 최종 목적지: STOP-2
-    ],
-    totalDuration: 30,
-  },
-
-  // MAIN STATION → GATE-1
-  'MAIN STATION-GATE-1': {
-    name: 'MAIN STATION to GATE-1',
-    destination: 'GATE-1',
-    waypoints: [
-      { x: -80, y: 0 },      // 시작: Main Station
-      { x: -60, y: -5 },     // 출발
-      { x: -40, y: -10 },    // 
-      { x: -20, y: -15 },    // 
-      { x: 0, y: -20 },      // 중간 지점
-      { x: 20, y: -25 },     // 
-      { x: 40, y: -30 },     // 
-      { x: 60, y: -40 },     // 접근
-      { x: 80, y: -50 },     // 최종 목적지: GATE-1
-    ],
-    totalDuration: 45,
-  },
-
-  // STOP-1 → MAIN STATION
-  'STOP-1-MAIN STATION': {
-    name: 'STOP-1 to MAIN STATION',
-    destination: 'MAIN STATION',
-    waypoints: [
-      { x: 0, y: 50 },       // 시작: STOP-1
-      { x: 0, y: 40 },       // 출발
-      { x: -20, y: 30 },     // 
-      { x: -40, y: 20 },     // 
-      { x: -60, y: 10 },     // 접근
-      { x: -80, y: 0 },      // 최종: Main Station
-    ],
-    totalDuration: 30,
-  },
-
-  // STOP-2 → MAIN STATION
-  'STOP-2-MAIN STATION': {
-    name: 'STOP-2 to MAIN STATION',
-    destination: 'MAIN STATION',
-    waypoints: [
-      { x: 0, y: -50 },      // 시작: STOP-2
-      { x: 0, y: -40 },      // 출발
-      { x: -20, y: -30 },    // 
-      { x: -40, y: -20 },    // 
-      { x: -60, y: -10 },    // 접근
-      { x: -80, y: 0 },      // 최종: Main Station
-    ],
-    totalDuration: 30,
-  },
-
-  // GATE-1 → MAIN STATION
-  'GATE-1-MAIN STATION': {
-    name: 'GATE-1 to MAIN STATION',
-    destination: 'MAIN STATION',
-    waypoints: [
-      { x: 80, y: -50 },     // 시작: GATE-1
-      { x: 60, y: -40 },     // 출발
-      { x: 40, y: -30 },     // 
-      { x: 20, y: -25 },     // 
-      { x: 0, y: -20 },      // 중간
-      { x: -20, y: -15 },    // 
-      { x: -40, y: -10 },    // 
-      { x: -60, y: -5 },     // 접근
-      { x: -80, y: 0 },      // 최종: Main Station
-    ],
-    totalDuration: 45,
-  },
-
-  // STOP-1 ↔ STOP-2 경로
-  'STOP-1-STOP-2': {
-    name: 'STOP-1 to STOP-2',
-    destination: 'STOP-2',
-    waypoints: [
-      { x: 0, y: 50 },
-      { x: 0, y: 30 },
-      { x: 0, y: 10 },
-      { x: 0, y: -10 },
-      { x: 0, y: -30 },
-      { x: 0, y: -50 },
-    ],
-    totalDuration: 20,
-  },
-
-  'STOP-2-STOP-1': {
-    name: 'STOP-2 to STOP-1',
-    destination: 'STOP-1',
-    waypoints: [
-      { x: 0, y: -50 },
-      { x: 0, y: -30 },
-      { x: 0, y: -10 },
-      { x: 0, y: 10 },
-      { x: 0, y: 30 },
-      { x: 0, y: 50 },
-    ],
-    totalDuration: 20,
-  },
-
-  // STOP-1 ↔ GATE-1 경로
-  'STOP-1-GATE-1': {
-    name: 'STOP-1 to GATE-1',
-    destination: 'GATE-1',
-    waypoints: [
-      { x: 0, y: 50 },
-      { x: 20, y: 30 },
-      { x: 40, y: 10 },
-      { x: 60, y: -10 },
-      { x: 80, y: -30 },
-      { x: 80, y: -50 },
-    ],
-    totalDuration: 35,
-  },
-
-  'GATE-1-STOP-1': {
-    name: 'GATE-1 to STOP-1',
-    destination: 'STOP-1',
-    waypoints: [
-      { x: 80, y: -50 },
-      { x: 80, y: -30 },
-      { x: 60, y: -10 },
-      { x: 40, y: 10 },
-      { x: 20, y: 30 },
-      { x: 0, y: 50 },
-    ],
-    totalDuration: 35,
-  },
-
-  // STOP-2 ↔ GATE-1 경로
-  'STOP-2-GATE-1': {
-    name: 'STOP-2 to GATE-1',
-    destination: 'GATE-1',
-    waypoints: [
-      { x: 0, y: -50 },
-      { x: 20, y: -50 },
-      { x: 40, y: -50 },
-      { x: 60, y: -50 },
-      { x: 80, y: -50 },
-    ],
-    totalDuration: 25,
-  },
-
-  'GATE-1-STOP-2': {
-    name: 'GATE-1 to STOP-2',
-    destination: 'STOP-2',
-    waypoints: [
-      { x: 80, y: -50 },
-      { x: 60, y: -50 },
-      { x: 40, y: -50 },
-      { x: 20, y: -50 },
-      { x: 0, y: -50 },
-    ],
-    totalDuration: 25,
-  },
-};
-
-// ==============================================================================
-// 🧭 헬퍼 함수
-// ==============================================================================
+// 🔄 반시계 방향(CCW) 순서 정의 (무조건 이 순서로만 순환)
+const CCW_ORDER: (keyof typeof DESTINATIONS)[] = [
+  'MAIN STATION',
+  'STOP2',
+  'STOP1',
+  'GATE'
+];
 
 /**
- * 목적지 이름으로 좌표 가져오기
+ * 두 좌표 사이를 직선으로 잇는 점들을 생성 (보간)
  */
-export const getDestinationCoords = (destinationName: string): { x: number; y: number } | null => {
-  const normalized = destinationName.toUpperCase().trim();
-  
-  if (normalized in DESTINATIONS) {
-    return DESTINATIONS[normalized as keyof typeof DESTINATIONS];
+const interpolatePoints = (start: PathPoint, end: PathPoint, steps: number): PathPoint[] => {
+  const points: PathPoint[] = [];
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    points.push({
+      x: start.x + (end.x - start.x) * t,
+      y: start.y + (end.y - start.y) * t
+    });
   }
-  
-  // 유사한 이름 매칭
-  if (normalized.includes('STOP') && normalized.includes('1')) {
-    return DESTINATIONS['STOP-1'];
-  }
-  if (normalized.includes('STOP') && normalized.includes('2')) {
-    return DESTINATIONS['STOP-2'];
-  }
-  if (normalized.includes('GATE')) {
-    return DESTINATIONS['GATE-1'];
-  }
-  if (normalized.includes('MAIN')) {
-    return DESTINATIONS['MAIN STATION'];
-  }
-  
-  return null;
+  return points;
 };
 
 /**
- * 현재 위치에서 가장 가까운 목적지 찾기
+ * 반시계 방향으로 모서리를 타고 이동하는 경로 생성 (대각선 이동 절대 없음)
+ */
+const createRectangularPath = (
+  fromName: keyof typeof DESTINATIONS,
+  toName: keyof typeof DESTINATIONS,
+  stepsPerEdge: number = 60 // 부드러운 이동을 위한 스텝 수
+): PathPoint[] => {
+  let waypoints: PathPoint[] = [];
+  // 시작점은 제거 - interpolatePoints에 이미 포함됨
+
+  // 현재 출발지의 인덱스 찾기
+  let currentIndex = CCW_ORDER.indexOf(fromName);
+  
+  // 목표 지점에 도달할 때까지 반시계 방향으로 다음 정거장을 하나씩 거쳐감
+  // 예: Main -> Stop1로 가려면: Main -> Stop2 -> Stop1 순서로 점을 찍음
+  while (CCW_ORDER[currentIndex] !== toName) {
+    const fromStop = CCW_ORDER[currentIndex];
+    
+    // 다음 인덱스 (순환)
+    currentIndex = (currentIndex + 1) % CCW_ORDER.length;
+    const toStop = CCW_ORDER[currentIndex];
+
+    // 현재 정거장에서 다음 정거장까지 직선 경로 생성
+    const smoothSegment = interpolatePoints(
+      DESTINATIONS[fromStop],
+      DESTINATIONS[toStop],
+      stepsPerEdge
+    );
+    
+    waypoints = [...waypoints, ...smoothSegment];
+  }
+
+  return waypoints;
+};
+
+// ==============================================================================
+// 📍 경로 자동 생성 및 헬퍼 함수
+// ==============================================================================
+
+export const NAVIGATION_PATHS: Record<string, NavigationPath> = {};
+
+const destinationKeys = Object.keys(DESTINATIONS) as Array<keyof typeof DESTINATIONS>;
+
+// 모든 가능한 출발-도착 조합에 대해 경로 미리 계산
+destinationKeys.forEach(from => {
+  destinationKeys.forEach(to => {
+    if (from !== to) {
+      const key = `${from}-${to}`;
+      const waypoints = createRectangularPath(from, to);
+      
+      NAVIGATION_PATHS[key] = {
+        name: `${from} to ${to}`,
+        destination: to,
+        waypoints: waypoints,
+        totalDuration: (waypoints.length / 60) * 3, 
+      };
+    }
+  });
+});
+
+/**
+ * 현재 위치(좌표)에서 가장 가까운 정거장 이름 찾기
  */
 export const findNearestDestination = (x: number, y: number): string => {
   let nearest = 'MAIN STATION';
@@ -263,64 +129,12 @@ export const findNearestDestination = (x: number, y: number): string => {
 };
 
 /**
- * 두 지점 사이의 경로 가져오기
+ * 두 지점 이름으로 경로 데이터 가져오기
  */
 export const getNavigationPath = (
   fromDestination: string,
   toDestination: string
 ): NavigationPath | null => {
-  const key = `${fromDestination}-${toDestination}`;
+  const key = `${fromDestination.toUpperCase()}-${toDestination.toUpperCase()}`;
   return NAVIGATION_PATHS[key] || null;
-};
-
-/**
- * 현재 좌표에서 목적지까지의 경로 가져오기
- */
-export const getPathFromCurrentPosition = (
-  currentX: number,
-  currentY: number,
-  destinationName: string
-): NavigationPath | null => {
-  // 현재 위치에서 가장 가까운 목적지 찾기
-  const nearestFrom = findNearestDestination(currentX, currentY);
-  
-  // 경로 찾기
-  return getNavigationPath(nearestFrom, destinationName.toUpperCase());
-};
-
-/**
- * Main Station으로 복귀하는 경로 가져오기
- */
-export const getReturnPath = (currentX: number, currentY: number): NavigationPath | null => {
-  const nearestFrom = findNearestDestination(currentX, currentY);
-  
-  // 이미 Main Station에 있으면 null 반환
-  if (nearestFrom === 'MAIN STATION') {
-    return null;
-  }
-  
-  return getNavigationPath(nearestFrom, 'MAIN STATION');
-};
-
-/**
- * 직선 경로 생성 (사전 정의된 경로가 없을 때)
- */
-export const createDirectPath = (
-  fromX: number,
-  fromY: number,
-  toX: number,
-  toY: number,
-  steps: number = 5
-): PathPoint[] => {
-  const waypoints: PathPoint[] = [];
-  
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    waypoints.push({
-      x: fromX + (toX - fromX) * t,
-      y: fromY + (toY - fromY) * t,
-    });
-  }
-  
-  return waypoints;
 };
