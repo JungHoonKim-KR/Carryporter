@@ -16,11 +16,10 @@ const MAP_WIDTH = 24
 const MAP_HEIGHT = 16
 
 const MAP_ZONES = [
-  { id: 'main', type: 'station', x: -8, y: 0, w: 6, h: 12, color: '#fbbf24', label: 'MAIN STATION' },
-  { id: 'stop2', type: 'stop', x: 0, y: -5, w: 3, h: 3, color: '#34d399', label: 'STOP-2' },
-  { id: 'gate1', type: 'gate', x: 8, y: -5, w: 4, h: 4, color: '#3b82f6', label: 'GATE-1' },
-  { id: 'stop1', type: 'stop', x: 0, y: 5, w: 3, h: 3, color: '#34d399', label: 'STOP-1' },
-  { id: 'obstacle', type: 'obstacle', x: 7, y: 4, w: 6, h: 4, color: '#f43f5e', label: 'RESTRICTED' },
+  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#10b981', label: 'STOP2' },
+  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#fbbf24', label: 'Main station' },
+  { id: 'stop1', type: 'stop', x: -8, y: 5, w: 4, h: 3, color: '#ef4444', label: 'STOP1' },
+  { id: 'gate', type: 'gate', x: 8, y: 5, w: 4, h: 3, color: '#3b82f6', label: 'GATE' },
 ]
 
 // Zone ID를 좌표로 변환하는 헬퍼 함수
@@ -29,7 +28,7 @@ const getZonePosition = (zoneId: string): { x: number, y: number } => {
   if (zone) {
     return { x: zone.x * 10, y: zone.y * 10 }; // 10배 스케일
   }
-  return { x: -80, y: 0 }; // 기본값: MAIN STATION
+  return { x: 80, y: -50 }; // 기본값: Main station (오른쪽 위)
 }
 
 // ------------------------------------------------------------------
@@ -43,7 +42,9 @@ function GlbRobot3D({
   onClick,
   isGroup = false,
   groupCount = 1,
-  showPath = false
+  showPath = false,
+  activePath,
+  onMoveEnd
 }: { 
   position: [number, number, number], 
   targetPosition?: [number, number, number],
@@ -52,14 +53,21 @@ function GlbRobot3D({
   onClick: () => void,
   isGroup?: boolean,
   groupCount?: number,
-  showPath?: boolean
+  showPath?: boolean,
+  activePath?: any[],
+  onMoveEnd?: () => void
 }) {
   const { scene } = useGLTF(ROBOT_GLB_URL)
   const mainGroupRef = useRef<THREE.Group>(null)
   const robotGroupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const [pathHistory, setPathHistory] = useState<[number, number, number][]>([])
-
+  const [currentPointIndex, setCurrentPointIndex] = useState(0)
+  
+  // activePath가 변경되면 인덱스 초기화
+  useEffect(() => {
+    setCurrentPointIndex(0);
+  }, [activePath]);
   // 이동 경로 기록
   useEffect(() => {
     if (mainGroupRef.current && showPath) {
@@ -80,31 +88,65 @@ function GlbRobot3D({
     }
   }, [showPath, mainGroupRef.current?.position.x, mainGroupRef.current?.position.z])
 
-  // 타겟 위치로 부드럽게 이동 - 더 부드럽게
-  useFrame((state) => {
+  // 타겟 위치로 부드럽게 이동
+  useFrame((state, delta) => {
     const t = state.clock.getElapsedTime()
     
-    if (mainGroupRef.current && targetPosition) {
-      // 부드러운 이동 (lerp)
-      const lerpFactor = 0.02; // 느린 이동으로 부드럽게
+    // 1. 부유 애니메이션 (로봇만)
+    if (robotGroupRef.current) {
+      robotGroupRef.current.position.y = Math.sin(t * 2) * 0.1 + (hovered ? 0.3 : 0)
+    }
+
+    // 2. 웨이포인트 기반 경로 이동 (activePath 사용)
+    if (mainGroupRef.current && activePath && activePath.length > 0) {
+      if (currentPointIndex < activePath.length) {
+        // 목표 웨이포인트 (1/10 스케일)
+        const targetPoint = activePath[currentPointIndex];
+        const targetX = targetPoint.x / 10;
+        const targetZ = targetPoint.y / 10;
+
+        const currentPos = mainGroupRef.current.position;
+        const dx = targetX - currentPos.x;
+        const dz = targetZ - currentPos.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        const MOVE_SPEED = 4.0; 
+        
+        if (distance > 0.05) {
+          const moveX = (dx / distance) * MOVE_SPEED * delta;
+          const moveZ = (dz / distance) * MOVE_SPEED * delta;
+          
+          if (Math.abs(moveX) > Math.abs(dx)) currentPos.x = targetX;
+          else currentPos.x += moveX;
+          if (Math.abs(moveZ) > Math.abs(dz)) currentPos.z = targetZ;
+          else currentPos.z += moveZ;
+
+          const targetRotation = Math.atan2(dx, dz);
+          let rotDiff = targetRotation - mainGroupRef.current.rotation.y;
+          while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
+          while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+          mainGroupRef.current.rotation.y += rotDiff * 8 * delta;
+        } else {
+          setCurrentPointIndex(prev => prev + 1);
+        }
+      } else {
+        if (onMoveEnd) onMoveEnd();
+      }
+    }
+    // 3. 기존 targetPosition 방식 (하위 호환성)
+    else if (mainGroupRef.current && targetPosition) {
+      const lerpFactor = 0.02;
       const currentX = mainGroupRef.current.position.x
       const currentZ = mainGroupRef.current.position.z
       
       mainGroupRef.current.position.x += (targetPosition[0] - currentX) * lerpFactor
       mainGroupRef.current.position.z += (targetPosition[2] - currentZ) * lerpFactor
       
-      // 이동 방향으로 로봇 회전
       const dx = targetPosition[0] - currentX
       const dz = targetPosition[2] - currentZ
       if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
         const targetRotation = Math.atan2(dx, dz)
         mainGroupRef.current.rotation.y += (targetRotation - mainGroupRef.current.rotation.y) * 0.1
       }
-    }
-    
-    // 로봇만 위아래 떠다니는 애니메이션
-    if (robotGroupRef.current) {
-      robotGroupRef.current.position.y = Math.sin(t * 2) * 0.1 + (hovered ? 0.3 : 0)
     }
     
     if (state.gl.domElement) {
@@ -115,8 +157,27 @@ function GlbRobot3D({
   const isAvailable = status === 'available'
   const statusColor = isAvailable ? '#10b981' : '#3b82f6'
 
+  // 남은 경로 계산
+  const remainingPathPoints = useMemo(() => {
+    if (!activePath || currentPointIndex >= activePath.length || !mainGroupRef.current) return null;
+    const points: [number, number, number][] = [];
+    points.push([mainGroupRef.current.position.x, 0.1, mainGroupRef.current.position.z]);
+    for (let i = currentPointIndex; i < activePath.length; i++) {
+      points.push([activePath[i].x / 10, 0.1, activePath[i].y / 10]);
+    }
+    return points;
+  }, [activePath, currentPointIndex, mainGroupRef.current?.position.x, mainGroupRef.current?.position.z]);
+
   return (
     <>
+      {/* activePath 경로 시각화 */}
+      {remainingPathPoints && remainingPathPoints.length > 1 && (
+        <group>
+          <Line points={remainingPathPoints} color={statusColor} lineWidth={4} opacity={0.6} transparent />
+          <Line points={remainingPathPoints} color="#ffffff" lineWidth={2} opacity={0.3} transparent dashed dashScale={1} position={[0, 0.01, 0]} />
+        </group>
+      )}
+
       {/* 이동한 경로 표시 (Trail) */}
       {showPath && pathHistory.length > 1 && (
         <Line
@@ -129,7 +190,7 @@ function GlbRobot3D({
         />
       )}
 
-      {/* 목표 지점까지의 직선 경로 */}
+      {/* 목표 지점까지의 직선 경로 (targetPosition 사용 시) */}
       {showPath && targetPosition && mainGroupRef.current && (
         <group>
           <Line
@@ -533,7 +594,12 @@ export default function RobotStage({
   robots: any[];
   showDummyIfEmpty?: boolean;
   moveCommands?: Array<{ robotId: string; from: string; to: string }>;
-  sseMovements?: Array<{ robotCode: string; x: number; y: number }>;
+  sseMovements?: Array<{ 
+    robotCode: string; 
+    x?: number; 
+    y?: number;
+    callLocationName?: string;
+  }>;
 }) {
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('3d')
   const [selectedRobot, setSelectedRobot] = useState<any | null>(null)
@@ -542,6 +608,22 @@ export default function RobotStage({
   const canvasRef = useRef<any>(null);
 
   const [robotPositions, setRobotPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
+
+  // callLocationName을 목적지로 매핑하는 함수
+  const getDestinationFromCallLocation = (callLocationName: string): { x: number; y: number } | null => {
+    const mapping: Record<string, string> = {
+      'a': 'stop1',
+      'b': 'stop2', 
+      'c': 'gate'
+    };
+    
+    const zoneId = mapping[callLocationName.toLowerCase()];
+    if (zoneId) {
+      return getZonePosition(zoneId);
+    }
+    
+    return null;
+  };
 
   useEffect(() => {
     if (moveCommands.length > 0) {
@@ -561,7 +643,19 @@ export default function RobotStage({
       const newPositions = new Map(robotPositions);
       
       sseMovements.forEach(movement => {
-        newPositions.set(movement.robotCode, { x: movement.x, y: movement.y });
+        // callLocationName이 있으면 해당 위치로 매핑
+        if (movement.callLocationName) {
+          const destination = getDestinationFromCallLocation(movement.callLocationName);
+          if (destination) {
+            newPositions.set(movement.robotCode, destination);
+            return;
+          }
+        }
+        
+        // callLocationName이 없거나 매핑 실패시 x, y 좌표 사용
+        if (movement.x !== undefined && movement.y !== undefined) {
+          newPositions.set(movement.robotCode, { x: movement.x, y: movement.y });
+        }
       });
       
       setRobotPositions(newPositions);
@@ -572,13 +666,16 @@ export default function RobotStage({
     const robotId = robot.robotCode || robot.id;
     const customPos = robotPositions.get(robotId);
     
+    // 이동 중인 경우 목표 위치 반환
     if (customPos) {
       return { x: customPos.x, y: customPos.y };
     }
     
+    // 기본 대기 위치: Main Station (오른쪽 위)
+    // 모든 로봇은 Main Station에서 대기
     return { 
-      x: robot.x ?? -80, 
-      y: robot.y ?? 0 
+      x: 80, 
+      y: -50 
     };
   };
 
@@ -637,6 +734,38 @@ export default function RobotStage({
         </div>
 
         <div className="absolute top-4 right-4 flex gap-2 z-[60]">
+          {/* 🧪 테스트 네비게이션 버튼 */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (robots.length > 0) {
+                const testRobot = robots[0];
+                console.log('🧪 테스트: 로봇을 STOP1(a)로 이동 시작');
+                
+                // 현재 위치에서 STOP1로 가는 경로 가져오기
+                const currentPos = getRobotPosition(testRobot);
+                const destination = getDestinationFromCallLocation('a');
+                
+                if (destination) {
+                  console.log('목적지:', destination);
+                  setRobotPositions(prev => {
+                    const updated = new Map(prev);
+                    updated.set(testRobot.robotCode || testRobot.id, destination);
+                    return updated;
+                  });
+                } else {
+                  console.error('목적지를 찾을 수 없습니다');
+                }
+              } else {
+                console.warn('로봇이 없습니다');
+              }
+            }}
+            className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
+          >
+            🧪 TEST → A
+          </motion.button>
+
           <div className="bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl flex">
             <button onClick={() => setViewMode('2d')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${viewMode === '2d' ? 'bg-cyan-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
               <LayoutGrid size={12} /> 2D
