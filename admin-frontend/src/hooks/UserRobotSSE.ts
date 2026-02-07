@@ -9,6 +9,7 @@ export function useRobotSSE() {
   const setIsConnected = useSseStore(state => state.setIsConnected);
   const setLastMessage = useSseStore(state => state.setLastMessage);
   const updateRobotStatus = useSseStore(state => state.updateRobotStatus);
+  const setAlertEvent = useSseStore(state => state.setAlertEvent);
 
   useEffect(() => {
     // 토큰을 useEffect 내부에서 가져오기 (컴포넌트 마운트 시 한 번만)
@@ -93,12 +94,14 @@ export function useRobotSSE() {
 
           // heartbeat는 로그만 표시하고 상태 변경은 하지 않음
           if (msg.event === 'heartbeat') {
+            setAlertEvent("heartbeat");
             return;
           }
 
           try {
             // JSON 형식이 맞는지 확인하기 위해 파싱 시도
             const parsedData = JSON.parse(msg.data);
+            setAlertEvent(msg.event);
 
             // 이벤트 종류에 따른 로봇 상태 업데이트 로직
             handleServerEvent(msg.event, parsedData);
