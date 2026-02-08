@@ -56,6 +56,8 @@ public class MissionService {
         Mission mission = missionRepository.findByUserIdAndMissionStatus(user.getId(), MissionStatus.STORING)
                 .orElseGet(() -> Mission.createMission(user, location));
 
+
+        mission.updateLocation(location);
         // 새로 생성된 mission 은 save 전까지 id 가 null
         boolean isNew = mission.getId() == null;
         Long createdMissionId = missionRepository.save(mission);
