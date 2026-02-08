@@ -7,12 +7,15 @@ import com.e101.carryporter.domain.mission.event.MissionUnlockedEvent;
 import com.e101.carryporter.domain.mission.repository.MissionRepository;
 import com.e101.carryporter.domain.robot.entity.Robot;
 import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
+import com.e101.carryporter.domain.robot.event.RobotEmergencyEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
 import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotMacMappingRepository;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.robot.service.RobotService;
 import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +75,8 @@ public class MqttSubscriberService {
                 case "unlocked":
                     handleUnlocked(mac, payload);
                     break;
+                case "emergency":
+                    handleEmergency(mac, payload);
                 default:
                     log.warn("알 수 없는 액션: {}", action);
             }
@@ -296,6 +301,34 @@ public class MqttSubscriberService {
             });
         } catch (Exception e) {
             log.error("열림 완료 처리 중 오류 발생 - MAC: {}, Error: {}", mac, e.getMessage());
+        }
+    }
+    /**
+     * 긴급상황처리
+     * Topic: robot/{MAC}/emergency
+     * Payload: {"type": "person_detected", "msg": "1m 이내 사람 감지로 긴급 정지"}
+     */
+    private void handleEmergency(String mac, String payload) {
+        log.info("로봇 긴급 정지 알림 - MAC: {}", mac);
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                try {
+                    JsonNode node = objectMapper.readTree(payload);
+                    String type = node.has("type") ? node.get("type").asText() : "unknown";
+                    String msg = node.has("msg") ? node.get("msg").asText() : "긴급 정지";
+
+                    log.info("로봇 긴급 멈춤 이벤트 발행 - MAC: {}, Type: {}, Message: {}", mac, type, msg);
+
+                    eventPublisher.publishEvent(new RobotEmergencyEvent(
+                            msg
+                    ));
+                } catch (JsonProcessingException e) {
+                    log.error("긴급 정지 페이로드 파싱 실패 - MAC: {}, payload: {}", mac, payload, e);
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (Exception e) {
+            log.error("긴급 정지 알림 처리 실패 - MAC: {}, error: {}", mac, e.getMessage(), e);
         }
     }
 }
