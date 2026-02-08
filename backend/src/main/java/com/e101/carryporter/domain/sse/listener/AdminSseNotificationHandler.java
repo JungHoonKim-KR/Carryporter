@@ -1,10 +1,7 @@
 package com.e101.carryporter.domain.sse.listener;
 
 import com.e101.carryporter.domain.mission.event.*;
-import com.e101.carryporter.domain.robot.event.RobotArrivalEvent;
-import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
-import com.e101.carryporter.domain.robot.event.RobotReturnedAdminEvent;
-import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
+import com.e101.carryporter.domain.robot.event.*;
 import com.e101.carryporter.domain.sse.service.SseService;
 import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import lombok.RequiredArgsConstructor;
@@ -99,7 +96,7 @@ public class AdminSseNotificationHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMissionFinalizedEvent(MissionFinalizedEvent event) {
         log.debug("[AdminSseNotificationHandler] mission 종료: missionId = {}, message = {}", event.missionId(), event.message());
-        sseService.broadcastToAdmins("MissionFailedEvent", event);
+        sseService.broadcastToAdmins("MissionFinalizedEvent", event);
     }
 
     /**
@@ -120,6 +117,14 @@ public class AdminSseNotificationHandler {
     public void handleMissionFailedEvent(MissionFailedEvent event) {
         log.debug("[AdminSseNotificationHandler] mission 생성 실패: missionId = {}, userId = {}, message = {}", event.missionId(), event.userId(), event.message());
         sseService.broadcastToAdmins("MissionFailedEvent", event);
+    }
+
+    /**
+     * 11. 로봇 긴급 멈춤 알림
+     */
+    public void handleRobotEmergencyEvent(RobotEmergencyEvent event){
+        log.debug("[AdminSseEmergencyEventHandler] mission 생성 실패:");
+        sseService.broadcastToAdmins("RobotEmergencyEvent", event.msg());
     }
 
 }
