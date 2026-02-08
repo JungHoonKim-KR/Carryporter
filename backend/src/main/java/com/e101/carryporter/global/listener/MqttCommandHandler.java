@@ -103,4 +103,5 @@ public class MqttCommandHandler {
                 event.missionId(), event.robotMacAddress(), event.homeX(), event.homeY());
         mqttPublisherService.sendReturnCommand(event.robotMacAddress());
     }
+
 }
