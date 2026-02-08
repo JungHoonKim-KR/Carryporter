@@ -23,6 +23,8 @@
 | **React Hook Form** | 7.71.1 | 2024년 | ✅ 최신 |
 | **Zod** | 4.3.6 | 2024년 | ✅ 최신 |
 | **react-webcam** | 7.2.0 | 2024년 | ✅ 최신 |
+| **@microsoft/fetch-event-source** | 2.0.1 | 2024년 | ✅ 최신 |
+| **event-source-polyfill** | 1.0.31 | 2024년 | ✅ 최신 |
 
 **결론**: 모든 라이브러리가 최신 버전입니다! 🎉
 
@@ -144,13 +146,16 @@ npx shadcn@latest add card
 npx shadcn@latest add button dialog card input
 ```
 
-### 프로젝트에 설치된 컴포넌트
+### 프로젝트에 설치된 컴포넌트 (6개)
 
 ```
 src/components/ui/
-├── button.tsx        # Button 컴포넌트
-├── dialog.tsx        # Dialog/Modal 컴포넌트
-└── (추가 가능)
+├── button.tsx       # Button 컴포넌트
+├── card.tsx         # Card 레이아웃
+├── input.tsx        # Input 필드
+├── checkbox.tsx     # Checkbox (Radix UI 기반)
+├── badge.tsx        # Badge/Tag
+└── tabs.tsx         # Tabs 네비게이션 (Radix UI 기반)
 ```
 
 ### 사용 예시
@@ -193,9 +198,11 @@ const buttonVariants = cva(
 ### 우리 프로젝트에서 사용
 
 - ✅ **Button**: 로그인, 스캔, 호출 등 모든 버튼
-- ✅ **Dialog**: 모달 (성공, 에러, 확인)
-- ⏳ **Card**: 티켓 카드, 미션 카드 (추가 예정)
-- ⏳ **Input**: 폼 입력 (추가 예정)
+- ✅ **Card**: 티켓 카드, 미션 카드, 상태 카드
+- ✅ **Input**: 폼 입력 (로그인, PIN 입력 등)
+- ✅ **Checkbox**: 약관 동의 체크박스
+- ✅ **Badge**: SSE 연결 상태, 미션 상태 표시
+- ✅ **Tabs**: 보관/반납 탭 네비게이션
 
 ### 장점
 
@@ -585,9 +592,13 @@ const data = await response.json(); // 수동 JSON 파싱
 
 **우리 선택**: React Query (더 많은 기능)
 
+**우리 프로젝트**: ⏳ 설치되어 있지만 아직 미사용
+- 현재: Zustand로 상태 관리, SSE로 실시간 통신
+- 향후: API 캐싱 및 서버 상태 관리 시 도입 예정
+
 ---
 
-### 주요 기능
+### 주요 기능 (참고)
 
 **캐싱**:
 ```typescript
