@@ -12,6 +12,7 @@ import com.e101.carryporter.domain.robot.event.RobotReturnedEvent;
 import com.e101.carryporter.domain.robot.repository.RobotMacMappingRepository;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
 import com.e101.carryporter.domain.robot.service.RobotService;
+import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -280,9 +281,9 @@ public class MqttSubscriberService {
         log.info("로봇 열림(Unlock) 완료 응답 수신 - MAC: {}", mac);
         try {
             transactionTemplate.executeWithoutResult(status -> {
-                // 1. MAC 주소로 ARRIVED 상태 미션 조회 (도착 후 잠금 해제 요청)
-                Mission mission = missionRepository.findByMacAddressAndStatus(mac, MissionStatus.ARRIVED)
-                        .orElseThrow(() -> new RuntimeException("도착 상태의 미션을 찾을 수 없습니다. MAC: " + mac));
+                // 1. MAC 주소로 ARRIVED 또는 RETURNED 상태 미션 조회 (도착 후 잠금 해제 요청)
+                Mission mission = missionRepository.findByMacAddressAndStatusIn(mac, List.of(MissionStatus.ARRIVED, MissionStatus.RETURNED))
+                        .orElseThrow(() -> new RuntimeException("도착/복귀 상태의 미션을 찾을 수 없습니다. MAC: " + mac));
 
                 log.info("로봇 잠금 해제 성공 - MAC: {}, MissionId: {}, UserId: {}", mac, mission.getId(), mission.getUser().getId());
 
