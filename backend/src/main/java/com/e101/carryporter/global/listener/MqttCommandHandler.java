@@ -25,16 +25,7 @@ public class MqttCommandHandler {
      * fallbackExecution = true : 트랜잭션이 없는 환경에서 테스트 위함
      */
 
-    /**
-     * 관리자 잠금해제 요청 → 로봇에게 UNLOCK 명령 전송
-     */
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    public void handleAdminUnlockRequest(AdminUnlockRequestEvent event) {
-        log.info("[MQTT] 관리자 잠금해제 요청 - missionId: {}, robotMacAddress: {}",
-                event.missionId(), event.robotMacAddress());
-        mqttPublisherService.sendCommand(event.robotMacAddress(), "unlock", "{}");
-    }
+
 
     /**
      * 관리자 잠금 요청 → 로봇에게 LOCK 명령 전송
@@ -66,6 +57,17 @@ public class MqttCommandHandler {
     public void handleUserAuthSuccess(UserAuthSuccessEvent event) {
         log.info("[MQTT] 사용자 인증 성공 - missionId: {}, userId: {}, robotMacAddress: {}",
                 event.missionId(), event.userId(), event.robotMacAddress());
+        mqttPublisherService.sendCommand(event.robotMacAddress(), "unlock", "{}");
+    }
+
+    /**
+     * 관리자 잠금해제 요청 → 로봇에게 UNLOCK 명령 전송
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void handleAdminUnlockRequest(AdminUnlockRequestEvent event) {
+        log.info("[MQTT] 관리자 잠금해제 요청 - missionId: {}, robotMacAddress: {}",
+                event.missionId(), event.robotMacAddress());
         mqttPublisherService.sendCommand(event.robotMacAddress(), "unlock", "{}");
     }
 
