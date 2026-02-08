@@ -33,7 +33,7 @@ public class SseTestController {
         eventData.put("userId", 1004L);
         eventData.put("missionId", "1770000506127");
         eventData.put("robotCode", robotCode);
-        eventData.put("callLocationName", "1층 로비");
+        eventData.put("callLocationName", "a");
         eventData.put("locker_code", null); // FIRST는 사물함이 아직 없음
         eventData.put("requestType", "FIRST");
 
