@@ -29,7 +29,7 @@ export default function MissionReturnModal({ data, onClose, onComplete }: Props)
   const handleUnlockRobot = async () => {
     setIsProcessing(true);
     try {
-      await api.post(`/api/admin/missions/${data.missionId}/unlock`, {});
+      await api.post(`/api/auth/unlock`, {});
       // (테스트용 주석: 실제 API 호출 시 주석 해제)
       // await new Promise(resolve => setTimeout(resolve, 500)); 
 
