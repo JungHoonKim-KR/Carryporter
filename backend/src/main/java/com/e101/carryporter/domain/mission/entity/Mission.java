@@ -148,4 +148,8 @@ public class Mission extends BaseEntity {
     public void returning() {
         this.missionStatus = MissionStatus.RETURNING;
     }
+
+    public void updateLocation(Location newLocation) {
+        this.callLocation = newLocation;
+    }
 }
