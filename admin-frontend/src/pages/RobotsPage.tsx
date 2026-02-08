@@ -372,25 +372,8 @@ export default function RobotsPage() {
         </div>
         
         <div className="flex items-center gap-4">
-             {/* 🧪 테스트 버튼 */}
-             <motion.button 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                    const testRobot = mergedRobots[0];
-                    if (testRobot) {
-                        setSseMovements(prev => [...prev, {
-                            robotCode: testRobot.robotCode,
-                            callLocationName: 'STOP1',
-                            eventName: 'MissionStartedEvent'
-                        }]);
-                        toast.info('🧪 테스트: STOP1으로 이동 명령', { position: 'top-right' });
-                    }
-                }}
-                className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1"
-            >
-                🧪 TEST CALL
-            </motion.button>
+           
+             
 
             <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 border border-cyan-300">
                 <Radio className="w-3 h-3 text-cyan-600" />

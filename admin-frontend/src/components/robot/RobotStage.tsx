@@ -17,8 +17,8 @@ const MAP_WIDTH = 24
 const MAP_HEIGHT = 16
 
 const MAP_ZONES = [
-  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#10b981', label: 'STOP2' },
-  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#fbbf24', label: 'Main station' },
+  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#000000', label: 'STOP2' },
+  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#10b981', label: 'Main station' },
   { id: 'stop1', type: 'stop', x: -8, y: 5, w: 4, h: 3, color: '#ef4444', label: 'STOP1' },
   { id: 'gate', type: 'gate', x: 8, y: 5, w: 4, h: 3, color: '#3b82f6', label: 'GATE' },
 ]
@@ -821,7 +821,7 @@ export default function RobotStage({
 
         <div className="absolute top-4 right-4 flex gap-2 z-[60]">
           {/* 🧪 테스트 네비게이션 버튼 */}
-          <motion.button 
+          {/* <motion.button 
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -848,10 +848,10 @@ export default function RobotStage({
             className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
           >
             🧪 TEST → A
-          </motion.button>
+          </motion.button> */}
 
           {/* 🔙 복귀 테스트 버튼 */}
-          <motion.button 
+          {/* <motion.button 
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -886,7 +886,7 @@ export default function RobotStage({
             className="px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md text-[10px] font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1 pointer-events-auto"
           >
             🔙 복귀
-          </motion.button>
+          </motion.button> */}
 
           {/* 🔄 위치 초기화 버튼 */}
           <motion.button 
