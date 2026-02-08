@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Box, Lock, Send, CheckCircle, AlertCircle, RefreshCw, ChevronRight
+  User, Box, Lock, Send, CheckCircle, AlertCircle, RefreshCw, ChevronRight, MapPin
 } from 'lucide-react';
 import { api } from '@/api/axiosConfig';
 import { RobotAssignedEvent } from '@/types/robotEvents';
@@ -20,19 +20,32 @@ interface MissionProcessModalProps {
 
 type ProcessStep = 'LOCKER_SELECT' | 'LOCK_ROBOT' | 'READY_TO_START';
 
+// 🎯 호출 위치별 목적지 매핑
+const LOCATION_DESTINATIONS: Record<string, { name: string; color: string; bgColor: string; textColor: string }> = {
+  'a': { name: 'Stop1', color: 'bg-red-500', bgColor: 'bg-red-50', textColor: 'text-red-600' },
+  'b': { name: 'Stop2', color: 'bg-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-600' },
+  'c': { name: 'Gate', color: 'bg-blue-500', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
+};
+
 export default function MissionProcessModal({ data, onClose, onMissionStart }: MissionProcessModalProps) {
   const [step, setStep] = useState<ProcessStep>(
     data.requestType === 'RECALL' ? 'READY_TO_START' : 'LOCKER_SELECT'
   );
 
-  // 실제 배정된 사물함 코드
   const [selectedLockerCode, setSelectedLockerCode] = useState<string | null>(data.locker_code);
-  // 선택 단계에서 일시적으로 클릭한 사물함 정보
   const [tempSelectedLocker, setTempSelectedLocker] = useState<LockerResponse | null>(null);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [lockers, setLockers] = useState<LockerResponse[]>([]);
   const [isLoadingLockers, setIsLoadingLockers] = useState(false);
+
+  // 🎯 callLocationName으로 목적지 정보 가져오기
+  const destination = LOCATION_DESTINATIONS[data.callLocationName.toLowerCase()] || { 
+    name: 'Unknown', 
+    color: 'bg-gray-500',
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-600'
+  };
 
   useEffect(() => {
     if (data.requestType === 'FIRST') {
@@ -55,18 +68,15 @@ export default function MissionProcessModal({ data, onClose, onMissionStart }: M
     }
   };
 
-  // handleAssignLocker 함수 내 성공 로직 부분 수정
-const handleAssignLocker = async () => {
-  if (!tempSelectedLocker) return;
-  setIsProcessing(true);
-  try {
-    await api.post(`/api/admin/missions/${data.missionId}/lockers/${tempSelectedLocker.lockerId}`);
-
-    // ✅ 성공 시 알림을 띄우거나 바로 다음 단계로 전환
-    console.log("✅ 배정 성공");
-    setSelectedLockerCode(tempSelectedLocker.lockerCode);
-    setStep('READY_TO_START'); 
-  } catch (err) {
+  const handleAssignLocker = async () => {
+    if (!tempSelectedLocker) return;
+    setIsProcessing(true);
+    try {
+      await api.post(`/api/admin/missions/${data.missionId}/lockers/${tempSelectedLocker.lockerId}`);
+      console.log("✅ 배정 성공");
+      setSelectedLockerCode(tempSelectedLocker.lockerCode);
+      setStep('READY_TO_START'); 
+    } catch (err) {
       console.error("❌ 사물함 배정 실패:", err);
       alert("사물함 배정에 실패했습니다. 다시 시도해주세요.");
     } finally {
@@ -74,20 +84,6 @@ const handleAssignLocker = async () => {
     }
   };
 
-  // // 2. 로봇 잠금 요청
-  // const handleLockRobot = async () => {
-  //   setIsProcessing(true);
-  //   try {
-  //     await api.post(`/api/admin/missions/${data.missionId}/lock`, {});
-  //     setStep('READY_TO_START'); 
-  //   } catch (err) {
-  //     console.error("❌ 잠금 요청 실패:", err);
-  //   } finally {
-  //     setIsProcessing(false);
-  //   }
-  // };
-
-  // 3. 미션 출발 요청
   const handleStartMission = async () => {
     setIsProcessing(true);
     try {
@@ -122,9 +118,18 @@ const handleAssignLocker = async () => {
             </span>
             <span className="text-slate-400 font-mono text-xs">Mission #{data.missionId}</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">
-             {data.callLocationName} <span className="font-normal text-slate-500">호출 처리</span>
+          
+          <h2 className="text-xl font-bold text-slate-800 mb-3">
+            <span className={`${destination.textColor} font-bold`}>{destination.name}</span>
+            <span className="font-normal text-slate-500"> 호출 처리</span>
           </h2>
+
+          {/* 🎯 목적지 표시 */}
+          <div className={`flex items-center gap-2 mt-3 p-3 ${destination.bgColor} rounded-lg border border-slate-200`}>
+            <MapPin size={18} className={destination.textColor} />
+            <span className="text-slate-600 text-sm font-medium">목적지:</span>
+            <span className={`${destination.textColor} font-bold text-lg`}>{destination.name}</span>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6">
@@ -168,7 +173,7 @@ const handleAssignLocker = async () => {
                 )}
               </div>
 
-              {/* 배정 확정 버튼 (선택 시에만 노출) */}
+              {/* 배정 확정 버튼 */}
               <AnimatePresence>
                 {tempSelectedLocker && (
                   <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}>
@@ -185,51 +190,32 @@ const handleAssignLocker = async () => {
             </div>
           )}
 
-          {/* --- [STEP 2] 로봇 잠금 ---
-          {step === 'LOCK_ROBOT' && (
-            <div className="text-center py-4">
-               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                 <Box size={32} />
-               </div>
-               <h3 className="text-lg font-bold text-slate-800">
-                  {data.requestType === 'RECALL' ? '물품 적재 확인' : '사물함 배정 완료'}
-               </h3>
-               <p className="text-slate-600 mt-2 mb-8">
-                 <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-lg">
-                    {selectedLockerCode}
-                 </span>
-                 {data.requestType === 'RECALL' 
-                   ? ' 번 사물함의 물건을 적재했습니다.'
-                   : ' 번 사물함으로 이동을 시작합니다.'}
-               </p>
-
-               <button 
-                 onClick={handleLockRobot}
-                 disabled={isProcessing}
-                 className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 disabled:opacity-50"
-               >
-                 {isProcessing ? '처리 중...' : <> <Lock size={18} /> 로봇 잠금 (DOOR LOCK) </>}
-               </button>
-            </div>
-          )} */}
-
           {/* --- [STEP 3] 최종 출발 --- */}
           {step === 'READY_TO_START' && (
-            <div className="text-center py-4">
-               <div className="mb-6 bg-green-50 p-6 rounded-2xl border border-green-100">
-                  <div className="flex flex-col items-center gap-2 text-green-700">
-                    <CheckCircle size={40} className="mb-2" />
-                    <span className="font-bold text-lg">준비 완료</span>
-                  </div>
-               </div>
+            <div className="text-center py-4 space-y-6">
+              <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                <div className="flex flex-col items-center gap-2 text-green-700">
+                  <CheckCircle size={40} className="mb-2" />
+                  <span className="font-bold text-lg">준비 완료</span>
+                </div>
+              </div>
 
-               <button 
-                 onClick={handleStartMission}
-                 disabled={isProcessing}
-                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-500 shadow-lg shadow-blue-200"
-               >
-                 {isProcessing ? '전송 중...' : <> <Send size={18} /> 미션 출발 (START) </>}
-               </button>
+              {/* 🎯 출발 전 목적지 재확인 */}
+              <div className={`${destination.bgColor} p-4 rounded-xl border border-slate-200`}>
+                <div className="flex items-center justify-center gap-3">
+                  <MapPin size={20} className={destination.textColor} />
+                  <span className="text-slate-600 font-medium">출발 목적지:</span>
+                  <span className={`${destination.textColor} font-bold text-xl`}>{destination.name}</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleStartMission}
+                disabled={isProcessing}
+                className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-500 shadow-lg shadow-blue-200"
+              >
+                {isProcessing ? '전송 중...' : <><Send size={18} /> 미션 출발 (START)</>}
+              </button>
             </div>
           )}
         </div>
