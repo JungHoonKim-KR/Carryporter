@@ -17,8 +17,8 @@ const MAP_WIDTH = 24
 const MAP_HEIGHT = 16
 
 const MAP_ZONES = [
-  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#10b981', label: 'STOP2' },
-  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#fbbf24', label: 'Main station' },
+  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#000000', label: 'STOP2' },
+  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#10b981', label: 'Main station' },
   { id: 'stop1', type: 'stop', x: -8, y: 5, w: 4, h: 3, color: '#ef4444', label: 'STOP1' },
   { id: 'gate', type: 'gate', x: 8, y: 5, w: 4, h: 3, color: '#3b82f6', label: 'GATE' },
 ]
