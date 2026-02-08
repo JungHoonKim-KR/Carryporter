@@ -1,32 +1,17 @@
-import { useState, useEffect } from 'react';
 import { useTicketStore } from '@/store/ticketStore';
-import { getLatestTicket } from '@/api/ticket.api';
 
+/**
+ * 티켓 데이터 훅
+ *
+ * localStorage에서 티켓 정보를 즉시 복원합니다.
+ * ticketStore 초기화 시 자동으로 localStorage에서 로드되므로
+ * API 호출이 필요 없습니다.
+ *
+ * @returns {currentTicket, isLoading} 티켓 정보와 로딩 상태
+ */
 export const useTicketData = () => {
-  const { currentTicket, setTicket } = useTicketStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const { currentTicket } = useTicketStore();
 
-  useEffect(() => {
-    const loadTicket = async () => {
-      if (currentTicket) return;
-
-      const ticketId = localStorage.getItem('ticketId');
-      if (!ticketId) return;
-
-      try {
-        setIsLoading(true);
-        const ticketData = await getLatestTicket();
-        setTicket(ticketData);
-      } catch (error) {
-        console.error('티켓 정보 조회 실패:', error);
-        localStorage.removeItem('ticketId');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTicket();
-  }, [currentTicket, setTicket]);
-
-  return { currentTicket, isLoading };
+  // localStorage에서 즉시 로드되므로 isLoading은 항상 false
+  return { currentTicket, isLoading: false };
 };

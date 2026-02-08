@@ -36,7 +36,10 @@ export const scanTicket = async (imageFile: File): Promise<TicketInfo> => {
 
 /**
  * 최신 티켓 정보 조회 API
- * localStorage에서 ticketId를 읽어 백엔드에서 티켓 정보를 조회
+ *
+ * @deprecated 더 이상 사용되지 않음
+ * 이유: 백엔드 scanTicket API가 ticketId를 반환하지 않아 localStorage에 저장 불가
+ * 대안: localStorage에 전체 TicketInfo 객체를 저장하여 즉시 복원
  *
  * @returns 최신 티켓 정보
  * @throws {Error} ticketId가 없을 경우 에러 발생
@@ -49,13 +52,10 @@ export const getLatestTicket = async (): Promise<TicketInfo> => {
     throw new Error('티켓 ID가 없습니다. 먼저 티켓을 스캔해주세요.');
   }
 
-  // GET 요청에 body 포함 (백엔드 요구사항)
-  // 주의: HTTP 표준과 맞지 않지만, 백엔드 스펙에 따름
+  // GET 요청에 PathVariable로 ticketId 전달 (백엔드 스펙에 맞춤)
+  // 엔드포인트: GET /me/tickets/{ticketId}
   const { data } = await apiClient.get<any>(
-    '/api/me/tickets/latest',
-    {
-      data: { ticketId: Number(ticketId) }
-    }
+    `/api/me/tickets/${ticketId}`
   );
 
   // 백엔드 응답이 snake_case일 경우를 대비하여 camelCase로 변환

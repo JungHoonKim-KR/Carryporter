@@ -1,10 +1,11 @@
 import type { Location } from "../types/mission.types";
 
 /**
- * 픽업 장소 목록 (3개)
+ * 픽업 장소 목록 (2개)
  *
  * 각 장소는 고유한 SVG 아이콘을 가지며, 백엔드 API와 통신 시 code 값을 사용합니다.
  * MAIN은 중앙 사물함이므로 픽업 장소에서 제외됩니다.
+ * STOP 2는 시연 공간 변경으로 제거되었습니다 (2026-02-09).
  */
 export const PICKUP_LOCATIONS: Location[] = [
     {
@@ -13,13 +14,6 @@ export const PICKUP_LOCATIONS: Location[] = [
         code: "2",
         type: "pickup",
         icon: "/images/STOP1.svg"
-    },
-    {
-        id: 3,
-        name: "STOP 2",
-        code: "3",
-        type: "pickup",
-        icon: "/images/STOP2.svg"
     },
     {
         id: 4,

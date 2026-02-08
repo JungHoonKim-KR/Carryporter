@@ -12,23 +12,21 @@ interface TicketState {
 }
 
 export const useTicketStore = create<TicketState>((set) => ({
-  // 초기 상태
-  currentTicket: null,
+  // 초기 상태: localStorage에서 티켓 복원 시도
+  currentTicket: ticketStorage.getTicket(),
 
-  // 티켓 정보 설정 + ticketId localStorage 저장
+  // 티켓 정보 설정 + localStorage 저장
   setTicket: (ticket: TicketInfo) => {
-    // ticketId를 localStorage에 영구 저장 (서비스 레이어 사용)
-    if (ticket.ticketId) {
-      ticketStorage.saveTicketId(ticket.ticketId);
-    }
+    // 전체 티켓 객체를 localStorage에 영구 저장
+    ticketStorage.saveTicket(ticket);
 
     set({ currentTicket: ticket });
   },
 
-  // 티켓 정보 초기화 + ticketId localStorage 제거
+  // 티켓 정보 초기화 + localStorage 제거
   clearTicket: () => {
-    // localStorage에서 ticketId 제거 (서비스 레이어 사용)
-    ticketStorage.clearTicketId();
+    // localStorage에서 티켓 정보 제거
+    ticketStorage.clearTicket();
 
     set({ currentTicket: null });
   },
