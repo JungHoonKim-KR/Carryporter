@@ -17,6 +17,7 @@ import com.e101.carryporter.domain.robot.event.RobotAssignedEvent;
 import com.e101.carryporter.domain.robot.event.RobotAvailabilityChangedEvent;
 import com.e101.carryporter.domain.robot.exception.RobotErrorCode;
 import com.e101.carryporter.domain.robot.repository.RobotRepository;
+import com.e101.carryporter.domain.user.event.UserAuthSuccessEvent;
 import com.e101.carryporter.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -170,7 +171,11 @@ public class RobotService {
                 .orElseThrow(() -> new EntityNotFoundException("Mission not found"));
 
         Robot robot = mission.getRobot();
-        eventPublisher.publishEvent(new AdminUnlockRequestEvent(missionId, robot.getMacAddress()));
+        eventPublisher.publishEvent(new UserAuthSuccessEvent(
+                missionId,
+                mission.getUser().getId(),
+                robot.getMacAddress()
+        ));
     }
 
     @Transactional
