@@ -4,10 +4,35 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] Admin Locker Status Update">
+    <list default="true" id="2eb6de12-aa40-4230-adef-201cd8c96b85" name="변경" comment="[BE] 재호출 로케이션 업데이트">
+      <change afterPath="$PROJECT_DIR$/exec/carryporter_dump.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-10.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-11.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-12.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-13.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-14.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-15.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-16.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-17.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-18.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-19.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-20.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-21.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-22.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-23.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-24.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-4.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-5.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-6.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-7.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-8.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/images/image-9.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/사용 매뉴얼.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/exec/시연 시나리오.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/com/e101/carryporter/domain/robot/repository/RobotAvailableQueueRepositoryTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,7 +138,7 @@
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;Spring Boot.CarryporterApplication.executor&quot;: &quot;Run&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/backend/mqtt&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/backend/robot&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/SSAFY/projects/S14P11E101&quot;,
@@ -308,6 +333,9 @@
       <workItem from="1769588173564" duration="14727000" />
       <workItem from="1769670842921" duration="14198000" />
       <workItem from="1769989400565" duration="28872000" />
+      <workItem from="1770532334441" duration="6318000" />
+      <workItem from="1770547525753" duration="669000" />
+      <workItem from="1770565383413" duration="811000" />
     </task>
     <task id="LOCAL-00001" summary="[BE] MQTT pub 구현">
       <option name="closed" value="true" />
@@ -509,7 +537,39 @@
       <option name="project" value="LOCAL" />
       <updated>1770018558392</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="[FE] 테스트">
+      <option name="closed" value="true" />
+      <created>1770521453289</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1770521453291</updated>
+    </task>
+    <task id="LOCAL-00027" summary="[BE] unlock 조건 변경">
+      <option name="closed" value="true" />
+      <created>1770522202064</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1770522202064</updated>
+    </task>
+    <task id="LOCAL-00028" summary="[BE] 재호출 로케이션 업데이트">
+      <option name="closed" value="true" />
+      <created>1770535941341</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1770535941341</updated>
+    </task>
+    <task id="LOCAL-00029" summary="[BE] 재호출 로케이션 업데이트">
+      <option name="closed" value="true" />
+      <created>1770543530999</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1770543530999</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -544,7 +604,10 @@
     <MESSAGE value="[BE] MQTT 통합테스트(구 버전) 삭제" />
     <MESSAGE value="[BE] MQTT 아키텍처 변경으로 인한 Config 수정" />
     <MESSAGE value="[BE] Admin Locker Status Update" />
-    <option name="LAST_COMMIT_MESSAGE" value="[BE] Admin Locker Status Update" />
+    <MESSAGE value="[FE] 테스트" />
+    <MESSAGE value="[BE] unlock 조건 변경" />
+    <MESSAGE value="[BE] 재호출 로케이션 업데이트" />
+    <option name="LAST_COMMIT_MESSAGE" value="[BE] 재호출 로케이션 업데이트" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
