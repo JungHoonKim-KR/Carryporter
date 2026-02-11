@@ -23,7 +23,6 @@ type ProcessStep = 'LOCKER_SELECT' | 'LOCK_ROBOT' | 'READY_TO_START';
 // 🎯 호출 위치별 목적지 매핑
 const LOCATION_DESTINATIONS: Record<string, { name: string; color: string; bgColor: string; textColor: string }> = {
   'a': { name: 'Stop1', color: 'bg-red-500', bgColor: 'bg-red-50', textColor: 'text-red-600' },
-  'b': { name: 'Stop2', color: 'bg-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-600' },
   'c': { name: 'Gate', color: 'bg-blue-500', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
 };
 

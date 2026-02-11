@@ -17,10 +17,9 @@ const MAP_WIDTH = 24
 const MAP_HEIGHT = 16
 
 const MAP_ZONES = [
-  { id: 'stop2', type: 'stop', x: -8, y: -5, w: 4, h: 3, color: '#000000', label: 'STOP2' },
-  { id: 'main', type: 'station', x: 8, y: -5, w: 4, h: 3, color: '#10b981', label: 'Main station' },
-  { id: 'stop1', type: 'stop', x: -8, y: 5, w: 4, h: 3, color: '#ef4444', label: 'STOP1' },
-  { id: 'gate', type: 'gate', x: 8, y: 5, w: 4, h: 3, color: '#3b82f6', label: 'GATE' },
+  { id: 'main', type: 'station', x: 0, y: -7, w: 4, h: 3, color: '#10b981', label: 'Main station' },
+  { id: 'stop1', type: 'stop', x: -6.1, y: 3.5, w: 4, h: 3, color: '#ef4444', label: 'STOP1' },
+  { id: 'gate', type: 'gate', x: 6.1, y: 3.5, w: 4, h: 3, color: '#3b82f6', label: 'GATE' },
 ]
 
 // Zone ID를 좌표로 변환하는 헬퍼 함수
@@ -29,7 +28,7 @@ const getZonePosition = (zoneId: string): { x: number, y: number } => {
   if (zone) {
     return { x: zone.x * 10, y: zone.y * 10 }; // 10배 스케일
   }
-  return { x: 80, y: -50 }; // 기본값: Main station (오른쪽 위)
+  return { x: 0, y: -70 }; // 기본값: Main station (상단)
 }
 
 // ------------------------------------------------------------------
@@ -65,9 +64,15 @@ function GlbRobot3D({
   const [pathHistory, setPathHistory] = useState<[number, number, number][]>([])
   const [currentPointIndex, setCurrentPointIndex] = useState(0)
   
-  // activePath가 변경되면 인덱스 초기화
+  // activePath가 변경되면 인덱스 초기화 + 2초 출발 딜레이
+  const [moveReady, setMoveReady] = useState(true);
   useEffect(() => {
     setCurrentPointIndex(0);
+    if (activePath && activePath.length > 0) {
+      setMoveReady(false);
+      const timer = setTimeout(() => setMoveReady(true), 2000);
+      return () => clearTimeout(timer);
+    }
   }, [activePath]);
   // 이동 경로 기록
   useEffect(() => {
@@ -98,8 +103,8 @@ function GlbRobot3D({
       robotGroupRef.current.position.y = Math.sin(t * 2) * 0.1 + (hovered ? 0.3 : 0)
     }
 
-    // 2. 웨이포인트 기반 경로 이동 (activePath 사용)
-    if (mainGroupRef.current && activePath && activePath.length > 0) {
+    // 2. 웨이포인트 기반 경로 이동 (activePath 사용, 2초 딜레이 후)
+    if (mainGroupRef.current && activePath && activePath.length > 0 && moveReady) {
       if (currentPointIndex < activePath.length) {
         // 목표 웨이포인트 (1/10 스케일)
         const targetPoint = activePath[currentPointIndex];
@@ -110,7 +115,7 @@ function GlbRobot3D({
         const dx = targetX - currentPos.x;
         const dz = targetZ - currentPos.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
-        const MOVE_SPEED = 4.0; 
+        const MOVE_SPEED = 0.84;
         
         if (distance > 0.05) {
           const moveX = (dx / distance) * MOVE_SPEED * delta;
@@ -684,12 +689,16 @@ export default function RobotStage({
           startNode = 'MAIN STATION';
           
           if (movement.callLocationName) {
-            const map: Record<string, string> = { 
-              'a': 'STOP1', 
-              'b': 'STOP2', 
-              'c': 'GATE' 
+            const map: Record<string, string> = {
+              'a': 'STOP1',
+              'c': 'GATE'
             };
-            targetNode = map[movement.callLocationName.toLowerCase()] || movement.callLocationName.toUpperCase();
+            const mapped = map[movement.callLocationName.toLowerCase()];
+            if (!mapped) {
+              console.warn(`⚠️ 알 수 없는 callLocationName: '${movement.callLocationName}' (무시됨)`);
+              return;
+            }
+            targetNode = mapped;
           }
           console.log(`🚀 미션 시작: [${robotId}] MAIN STATION -> ${targetNode}`);
           
@@ -757,11 +766,11 @@ export default function RobotStage({
       return { x: currentPos.x, y: currentPos.y };
     }
     
-    // 기본 대기 위치: Main Station (오른쪽 위)
-    console.log(`🤖 [${robotId}] getRobotPosition: (80, -50) DEFAULT MAIN STATION`);
-    return { 
-      x: 80, 
-      y: -50 
+    // 기본 대기 위치: Main Station (상단)
+    console.log(`🤖 [${robotId}] getRobotPosition: (0, -70) DEFAULT MAIN STATION`);
+    return {
+      x: 0,
+      y: -70
     };
   };
 
