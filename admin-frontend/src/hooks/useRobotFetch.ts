@@ -99,8 +99,8 @@ export function useRobotFetch() {
           macAddress:  r.macAddress,
           status:      mapStatus(r.robotStatus),
           // 3. 인덱스에 따라 x 좌표 할당 (startX 부터 spacing 만큼 띄움)
-          x: startX + (index * spacing), 
-          y: -50, // 메인 스테이션 위치 (화면 하단)
+          x: startX + (index * spacing),
+          y: -70, // 메인 스테이션 위치 (상단)
         };
       });
 
