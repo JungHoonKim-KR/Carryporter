@@ -70,7 +70,7 @@ function GlbRobot3D({
     setCurrentPointIndex(0);
     if (activePath && activePath.length > 0) {
       setMoveReady(false);
-      const timer = setTimeout(() => setMoveReady(true), 2000);
+      const timer = setTimeout(() => setMoveReady(true), 3500);
       return () => clearTimeout(timer);
     }
   }, [activePath]);
@@ -115,7 +115,7 @@ function GlbRobot3D({
         const dx = targetX - currentPos.x;
         const dz = targetZ - currentPos.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
-        const MOVE_SPEED = 1.2;
+        const MOVE_SPEED = 1.35;
         
         if (distance > 0.05) {
           const moveX = (dx / distance) * MOVE_SPEED * delta;
