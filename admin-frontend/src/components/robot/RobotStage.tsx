@@ -115,7 +115,7 @@ function GlbRobot3D({
         const dx = targetX - currentPos.x;
         const dz = targetZ - currentPos.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
-        const MOVE_SPEED = 1.35;
+        const MOVE_SPEED = 1.25;
         
         if (distance > 0.05) {
           const moveX = (dx / distance) * MOVE_SPEED * delta;
