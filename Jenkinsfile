@@ -167,6 +167,7 @@ pipeline {
 
                                 sleep 5
                                 docker ps | grep ${BACKEND_CONTAINER}
+                                docker exec ${NGINX_CONTAINER} nginx -s reload
                             '''
                         }
                     }
@@ -217,8 +218,9 @@ pipeline {
 
                     # 4. 설정 검증 후 restart
                     echo "Validating and restarting nginx..."
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     # 5. 활성 색상 업데이트
                     echo "$TARGET_COLOR" > /home/ubuntu/frontend/active_color
@@ -247,8 +249,9 @@ pipeline {
                     sed -i "s|__ADMIN_ROOT__|/home/ubuntu/admin-frontend/dist-$ADMIN_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 설정 검증 후 restart
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     echo "Nginx config updated (active: $CURRENT_COLOR, admin: $ADMIN_COLOR)"
                 '''
@@ -303,8 +306,9 @@ pipeline {
                     sed -i "s|__ADMIN_ROOT__|/home/ubuntu/admin-frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 5. nginx restart
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     echo "=== Admin Frontend deployed to $TARGET_COLOR ==="
                 '''
