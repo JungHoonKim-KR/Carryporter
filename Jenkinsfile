@@ -218,6 +218,7 @@ pipeline {
 
                     # 4. 설정 검증 후 restart
                     echo "Validating and restarting nginx..."
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 
@@ -248,6 +249,7 @@ pipeline {
                     sed -i "s|__ADMIN_ROOT__|/home/ubuntu/admin-frontend/dist-$ADMIN_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 설정 검증 후 restart
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 
@@ -304,6 +306,7 @@ pipeline {
                     sed -i "s|__ADMIN_ROOT__|/home/ubuntu/admin-frontend/dist-$TARGET_COLOR|g" /home/ubuntu/frontend/nginx.conf
 
                     # 5. nginx restart
+                    cat /home/ubuntu/frontend/nginx.conf | docker exec -i ${NGINX_CONTAINER} sh -c "cat > /etc/nginx/conf.d/default.conf"
                     docker exec ${NGINX_CONTAINER} nginx -t
                     docker exec ${NGINX_CONTAINER} nginx -s reload
 
