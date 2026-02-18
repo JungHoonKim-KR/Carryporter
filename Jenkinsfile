@@ -167,6 +167,7 @@ pipeline {
 
                                 sleep 5
                                 docker ps | grep ${BACKEND_CONTAINER}
+                                docker exec ${NGINX_CONTAINER} nginx -s reload
                             '''
                         }
                     }
@@ -218,7 +219,7 @@ pipeline {
                     # 4. 설정 검증 후 restart
                     echo "Validating and restarting nginx..."
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     # 5. 활성 색상 업데이트
                     echo "$TARGET_COLOR" > /home/ubuntu/frontend/active_color
@@ -248,7 +249,7 @@ pipeline {
 
                     # 설정 검증 후 restart
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     echo "Nginx config updated (active: $CURRENT_COLOR, admin: $ADMIN_COLOR)"
                 '''
@@ -304,7 +305,7 @@ pipeline {
 
                     # 5. nginx restart
                     docker exec ${NGINX_CONTAINER} nginx -t
-                    docker restart ${NGINX_CONTAINER}
+                    docker exec ${NGINX_CONTAINER} nginx -s reload
 
                     echo "=== Admin Frontend deployed to $TARGET_COLOR ==="
                 '''
