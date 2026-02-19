@@ -188,12 +188,13 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 ---
 
 
-
 # 🎯 주요 기능
 
 사용자 gif
 
 관리자 gif
+
+로봇 gif
 
 ---
 
@@ -511,12 +512,22 @@ src/
 
 **🖼️ 화면 설계서**
 
+사용자
 <details>
 <summary>자세히</summary>
+<img width="1374" height="870" alt="image" src="https://github.com/user-attachments/assets/eb942dc2-6268-49bb-b455-bef42c45ec62" />
 
-피그마 - 와이어 프레임, 목업
 
 </details>
+
+관리자
+<details>
+<summary>자세히</summary>
+<img width="1541" height="776" alt="image" src="https://github.com/user-attachments/assets/c8640f77-fff3-492b-a988-cea3c3757931" />
+
+
+</details>
+
 ---
 
 **🗄️ ERD**
@@ -527,6 +538,7 @@ src/
 <img width="1850" height="1042" alt="ERD" src="https://github.com/user-attachments/assets/f2377254-f759-400f-a894-025a2eb07652" />
 
 </details>
+
 ---
 
 **📅 Jira Issues**
