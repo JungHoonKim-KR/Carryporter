@@ -190,21 +190,30 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 
 # 🎯 주요 기능
 
-사용자 gif
+**🔀 유저 플로우**
+
+![유저플로우](https://github.com/user-attachments/assets/1997f12f-0e20-4b6f-aab5-c82b51bf5061)
+
+---
+
+**📱 사용자** 
 
 
 | <img src="https://github.com/user-attachments/assets/55cfd51e-ae75-4bde-ad80-e7de674adab7" width="250" height="600"> | <img src="https://github.com/user-attachments/assets/9e4e4a54-3f82-4fe9-a40b-0761e8fe9eb0" width="250" height="600"> | <img src="https://github.com/user-attachments/assets/314d5cd0-b132-44ff-90f3-1e38a4874c79" width="250" height="600"> |
 |:---:|:---:|:---:|
 | **호출** | **잠금 해제** | **반납** |
 
+---
 
-관리자 gif
+**💻 관리자**
 
 | <img src="https://github.com/user-attachments/assets/d53137ad-fc7b-44df-9fcb-99b2dc7a907e" width="400" height="250"> | <img src="https://github.com/user-attachments/assets/5668b659-04ff-4ebe-843c-9ed98601ff71" width="400" height="250"> | <img src="https://github.com/user-attachments/assets/b79b75bf-2ddd-4716-9016-8741eeeffc27" width="400" height="250"> |
 |:---:|:---:|:---:|
 | **로봇 3D** | **사물함 배정** | **주행 모니터링** |
 
-로봇 gif
+---
+
+**🤖 로봇** 
 
 | <img src="https://github.com/user-attachments/assets/b9fe61b2-5d98-490b-804b-bebfe7327d71" width="400" height="250"> |
 |:---:|
@@ -221,7 +230,7 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 # 📁 프로젝트 디렉토리 구조
 
 <details>
-<summary>🖥️ Frontend (User)</summary>
+<summary>📱 Frontend (User)</summary>
 
 ```
 src/
@@ -333,7 +342,7 @@ src/
 </details>
 
 <details>
-<summary>🛠️ Frontend (Admin)</summary>
+<summary>💻 Frontend (Admin)</summary>
 
 ```
 src/
