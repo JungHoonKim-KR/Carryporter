@@ -546,7 +546,11 @@ src/
 <details>
 <summary>자세히</summary>
 
-> 이미지를 추가해주세요
+
+<img width="1842" height="1472" alt="s14p11e101____2026-02-19_11 10pm" src="https://github.com/user-attachments/assets/30b546a1-fca8-4d22-90b0-3f92bbaac656" />
+
+
+
 
 </details>
 
@@ -556,8 +560,9 @@ src/
 
 <details>
 <summary>자세히</summary>
+  
+<img width="638" height="1124" alt="image" src="https://github.com/user-attachments/assets/f013ca36-4add-4508-b0d3-1ded6342a39a" />
 
-<img width="1119" height="932" alt="image" src="https://github.com/user-attachments/assets/e784fa05-6fcc-43a5-86f1-31f731841b5f" />
 
 </details>
 
@@ -567,7 +572,8 @@ src/
 
 <details>
 <summary>자세히</summary>
+  
+<img width="1119" height="932" alt="image" src="https://github.com/user-attachments/assets/e784fa05-6fcc-43a5-86f1-31f731841b5f" />
 
-<img width="638" height="1124" alt="image" src="https://github.com/user-attachments/assets/f013ca36-4add-4508-b0d3-1ded6342a39a" />
 
 </details>
