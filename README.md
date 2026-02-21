@@ -32,19 +32,19 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 
 | ![](https://github.com/user-attachments/assets/88fc8c78-a2fb-4447-b670-6b81ba2f188a) | ![](https://github.com/user-attachments/assets/8eef5d47-483e-488a-9a71-e3d517afb06f) | ![](https://github.com/user-attachments/assets/5d1b393e-fd2e-4696-af8c-f533976e1a6b) |
 |:---:|:---:|:---:|
-| **서기현** | **강희정** | **정승현** |
-| Backend & Leader | Backend & DevOps | Backend & JiraOps |
-| 대기방/초대코드 API 구현 | 인프라 및 CI/CD 파이프라인 구축 | Security, OAuth2, SMTP 인증 API |
-| WebSocket/STOMP 채팅 API | OpenVidu 세션/Release API 구현 | 마이페이지/세션 락 API 구현 |
-| Spring: AWS S3, MongoDB 연동 | FastAPI Webhook Handler 서버 구현 | OpenAI STT, TTS API 구현 |
+| **서기현** | **강희정(팀장)** | **정승현** |
+| AI & EMB | FE & BE & EMB | EMB Leader |
+| LiDAR & YOLO 기반 Safety Logic 구현 | Three.js 기반 3D 관리자 대시보드 개발 | ROS2 기반 Robot Control Logic 구현 |
+| EasyOCR 기반 데이터 자동 추출 시스템 구현 | 백엔드 SSE 및 관리자 서비스 로직 개발 | Multi-Sensor & Actuator Interface 통합 |
+| ROS2 기반 Multi-Sensor 주행 로직 구현 | Tinkercad를 활용한 로봇 디자인 | 로봇 구조 설계 및 제작 |
 
 | ![](https://github.com/user-attachments/assets/d7bde38e-7d53-402b-9760-0ee547c2a2fc) | ![](https://github.com/user-attachments/assets/7ce61a8b-d5a2-46db-a4da-4a0b82d76738) | ![](https://github.com/user-attachments/assets/2b2ede2c-5209-4958-9bf6-440e017d96eb) |
 |:---:|:---:|:---:|
 | **박승찬** | **김정훈** | **전준완** |
-| Backend & AI | Frontend & Design | Frontend & Docs |
-| Lip Reading 모델 학습 및 최적화 | OpenVidu 음성 연결, Signaling 채팅 | LiveRoom 오버레이 창, 단축키 매핑 |
-| 구화 인식/번역/TTS 파이프라인 | STT/Lip Reading 결과 음성 세션 연동 | 공식 웹사이트 다운로드 페이지 구현 |
-| FastAPI 기반 Lip Model 서버 | STOMP 기반 실시간 채팅 구현 | 로그인/회원가입/마이페이지 구현 |
+| FE Leader | INFRA & BE | BE Leader & EMB |
+| EventSource SSE 실시간 미션 추적 시스템 구현 | 인프라 및 CI/CD 파이프라인 구축·운영 | ERD 및 요구사항 명세 설계 |
+| Axios 인터셉터 토큰 갱신 및 대기열 관리 | MQTT 통신 구현 및 연동 | Redis 활용한 로봇 가용 큐 관리 |
+| React TS 상태 머신 기반 미션 플로우 설계 | SSE 구독 연결 안정화 작업 | ROS2 기반 주행 로직 안정화 작업 |
 
 ---
 
