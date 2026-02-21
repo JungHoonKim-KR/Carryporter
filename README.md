@@ -1,9 +1,9 @@
 # ✨ carryporter
 
 <div align="center">
-  
+
 **한 걸음이 무거운 순간, 짐 걱정은 여기까지**
-  
+
 **교통 약자를 위한 호출형 짐 운반 서비스**
 
 <img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/505a5330-5f40-41f7-aa64-03e773280b31" />
@@ -50,140 +50,99 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 
 # 🛠️ 기술 스택
 
-### 📟 Embedded & IoT
+### 🤖 Embedded & Robot
 
-<img src="https://img.shields.io/badge/C-A8B9CC?style=for-the-badge&logo=c&logoColor=black"> <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/Visual%20Studio%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white"> <img src="https://img.shields.io/badge/Arduino%20IDE-00979D?style=for-the-badge&logo=arduino&logoColor=white"> <img src="https://img.shields.io/badge/Isaac%20SIM-76B900?style=for-the-badge&logo=nvidia&logoColor=white"> <img src="https://img.shields.io/badge/Isaac%20Lab-76B900?style=for-the-badge&logo=nvidia&logoColor=white"> <img src="https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white"> <img src="https://img.shields.io/badge/Raspberry%20Pi%205-A22846?style=for-the-badge&logo=raspberrypi&logoColor=white"> <img src="https://img.shields.io/badge/STM32-03234B?style=for-the-badge&logo=stmicroelectronics&logoColor=white"> <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white">
-
-| 구분 | 사용 기술 |
-|------|----------|
-| Language | C/C++, Python |
-| Development Tools | Visual Studio Code, Arduino IDE, Isaac Sim, Isaac Lab |
-| Microcontroller | STM32 (Cortex-M), ESP32 (Dual-core Xtensa LX6, WiFi 802.11 b/g/n) |
-| SBC | Raspberry Pi (Python 3.11, Python 3.13, Picamera2, libcamera) |
-| Hardware & Robotics | DOFBOT 6-DOF Robot Arm x2, Servo Motors (ESP32Servo, PWM Control) |
-| Arduino Libs | FastLED, PubSubClient, ArduinoJson, ESP32Servo |
-| Python Libs | OpenCV, Arm_Lib, PySerial |
-| Communication | MQTT over WiFi (JSON payload), Serial (UART/USB) |
-| Features | Servo Control, LED Facial Expression, Dual Robot Arm Control, Face Tracking |
-
----
-
-### 🕹️ Control Systems
-
-<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/asyncio-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/aiomqtt-660066?style=for-the-badge&logo=mqtt&logoColor=white">
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white"> <img src="https://img.shields.io/badge/Jetson%20Nano-76B900?style=for-the-badge&logo=nvidia&logoColor=white"> <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/YOLOv8-FF6F00?style=for-the-badge&logo=yolo&logoColor=white"> <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"> <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"> <img src="https://img.shields.io/badge/Adafruit-000000?style=for-the-badge&logo=adafruit&logoColor=white">
 
 | 구분 | 사용 기술 |
 |------|----------|
-| PID Controller | Face Tracking Servo Control, Stable Position Control |
-| Easing Functions | Smooth Motion Animation, Natural Movement |
-| State Machine | JRobot Action Flow Control, Command Preemption |
-| Async Processing | Python asyncio, aiomqtt, Threading, Subprocess |
+| Language | Python |
+| Framework | ROS2 (rclpy) |
+| Hardware | Jetson Nano (Jetson.GPIO) |
+| Sensor | TCS34725 컬러 센서 (adafruit_tcs34725, board, busio) |
+| Vision | YOLOv8 (ultralytics), PyTorch, OpenCV (cv2), cv_bridge |
+| Communication | Paho MQTT |
+| Features | 라인 트레이싱, 장애물 감지, 모터/서보 제어 (PCA9685), MQTT 명령 수신 |
 
 ---
 
-### 🧠 AI & CV
+### 🍃 Backend
 
-<img src="https://img.shields.io/badge/Python%203.12-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white"> <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"> <img src="https://img.shields.io/badge/MediaPipe-0097A7?style=for-the-badge&logo=google&logoColor=white"> <img src="https://img.shields.io/badge/OpenAI%20Whisper-412991?style=for-the-badge&logo=openai&logoColor=white"> <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white"> <img src="https://img.shields.io/badge/RunPod-673AB7?style=for-the-badge&logo=linuxcontainers&logoColor=white">
-
-| 구분 | 사용 기술 |
-|------|----------|
-| Language | Python 3.12 |
-| Vision | OpenCV (cv2), MediaPipe |
-| AI API | OpenAI Whisper (STT), OpenAI TTS, Porcupine (Wake Word Detection) |
-| Video Processing | aiortc (WebRTC), PyAV (FFmpeg Binding) |
-| Detection | Haar Cascade Face Detection, MediaPipe Face Landmarker, Gesture Recognition |
-| Features | Real-time Face Tracking, Gesture Recognition, Speech-to-Text, Text-to-Speech, Wake Word Detection |
-| RunPod | GPU: RTX 4500 (20GB VRAM), RAM: 54GB, CPU: 12 vCPU, SSD: 80GB |
-
----
-
-### 📡 Communication Protocols
-
-<img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white"> <img src="https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white"> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"> <img src="https://img.shields.io/badge/OAuth%202.0-EB5424?style=for-the-badge&logo=auth0&logoColor=white">
-
-| 구분 | 사용 기술 |
-|------|----------|
-| Protocols | HTTP/HTTPS, WebSocket, MQTT (QoS 0), WebRTC |
-| Data Formats | JSON, Base64, JPEG, MP4/WebM |
-| Security | JWT, OAuth 2.0, CORS, TLS/HTTPS |
-
----
-
-### ⚡ Backend - FastAPI
-
-<img src="https://img.shields.io/badge/Python%203.12-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/FastAPI%200.120.3-009688?style=for-the-badge&logo=fastapi&logoColor=white"> <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white"> <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white"> <img src="https://img.shields.io/badge/Uvicorn-499848?style=for-the-badge&logo=gunicorn&logoColor=white"> <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white">
-
-| 구분 | 사용 기술 |
-|------|----------|
-| Language | Python 3.12 |
-| Framework | FastAPI 0.120.3 |
-| Library | Pydantic, SQLAlchemy, PyJWT, dependency-injector, aiomqtt, boto3, OpenAI |
-| Runtime | Uvicorn (ASGI Server) |
-| Features | STT/TTS (OpenAI Whisper), MQTT Messaging, S3 File Management, JWT Auth |
-
----
-
-### 🍃 Backend - Spring Boot
-
-<img src="https://img.shields.io/badge/Java%2017-007396?style=for-the-badge&logo=openjdk&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Boot%203.5.6-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white"> <img src="https://img.shields.io/badge/OAuth2-EB5424?style=for-the-badge&logo=auth0&logoColor=white"> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"> <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white">
+<img src="https://img.shields.io/badge/Java%2017-007396?style=for-the-badge&logo=openjdk&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Boot%203.5.10-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Data%20Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white"> <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"> <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white">
 
 | 구분 | 사용 기술 |
 |------|----------|
 | Language | Java 17 |
-| IDE | IntelliJ IDEA 2025.2.4 (Ultimate Edition) |
-| Framework | Spring Boot 3.5.6 |
-| Library | Spring Security, Spring Data JPA, OAuth2, JWT |
+| Framework | Spring Boot 3.5.10 |
+| Library | Spring Data JPA, Spring Data Redis, Spring Integration MQTT, Spring WebFlux, Spring AOP, Spring Retry, Lombok, jBCrypt, JJWT 0.11.5, spring-dotenv |
+| MQTT | Spring Integration MQTT + Eclipse Paho 1.2.5 |
 | Build Tool | Gradle |
-| Feature | Member Management, OAuth2 Social Login, Channel & Media Management, JWT Auth |
+| Features | JWT 인증, 이메일 인증번호 (Mattermost 웹훅), 미션 이벤트 기반 처리, SSE 실시간 알림, MQTT 로봇 제어, Redis 로봇 상태 관리 |
 
 ---
 
-### 💾 Database & Storage
+### 🔍 OCR Service
 
-<img src="https://img.shields.io/badge/MySQL%208.4.6-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/Redis%207.4.5-DC382D?style=for-the-badge&logo=redis&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white">
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"> <img src="https://img.shields.io/badge/Uvicorn-499848?style=for-the-badge&logo=gunicorn&logoColor=white"> <img src="https://img.shields.io/badge/EasyOCR-FF6B6B?style=for-the-badge&logo=python&logoColor=white"> <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"> <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white">
 
 | 구분 | 사용 기술 |
 |------|----------|
-| RDBMS | MySQL 8.4.6 |
-| Cache | Redis 7.4.5 (jemalloc-5.3.0) |
-| Storage | AWS S3 |
+| Language | Python |
+| Framework | FastAPI, Uvicorn |
+| OCR Engine | EasyOCR |
+| Library | OpenCV, NumPy |
+| Features | 탑승권 이미지 텍스트 추출 |
 
 ---
 
-### 🖥️ Frontend
+### 🖥️ Frontend (사용자)
 
-<img src="https://img.shields.io/badge/TypeScript%20v5-3178C6?style=for-the-badge&logo=typescript&logoColor=white"> <img src="https://img.shields.io/badge/Node.js%20v22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white"> <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black"> <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white"> <img src="https://img.shields.io/badge/Vite%20v5-646CFF?style=for-the-badge&logo=vite&logoColor=white"> <img src="https://img.shields.io/badge/Tailwind%20CSS%20v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white"> <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white"> <img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white">
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"> <img src="https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black"> <img src="https://img.shields.io/badge/Vite%207-646CFF?style=for-the-badge&logo=vite&logoColor=white"> <img src="https://img.shields.io/badge/Tailwind%20CSS%20v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white"> <img src="https://img.shields.io/badge/Radix%20UI-161618?style=for-the-badge&logo=radixui&logoColor=white"> <img src="https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white"> <img src="https://img.shields.io/badge/TanStack%20Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white"> <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white"> <img src="https://img.shields.io/badge/React%20Hook%20Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white"> <img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white"> <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white"> <img src="https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white">
 
 | 구분 | 사용 기술 |
 |------|----------|
-| Language | TypeScript v5 |
-| Runtime Environment | Node.js v22 |
-| Framework | React v18/19 |
-| Library | React Router DOM, React Three Fiber, @react-three/drei, MQTT.js, @stomp/stompjs, Axios, JWT-decode |
-| Build Tool | Vite v5 |
-| Styling | TailwindCSS v4 |
-| 3D Graphics | Three.js, React Three Fiber, Postprocessing |
-| PWA | vite-plugin-pwa, Workbox |
-| Features | Mobile PWA App, 3D Robot Visualization Dashboard, Real-time MQTT/WebSocket Communication |
+| Language | TypeScript 5 |
+| Framework | React 19, Vite 7 |
+| 라우팅 | React Router DOM 7 |
+| 상태 관리 | Zustand 5, TanStack Query 5 |
+| 폼/검증 | React Hook Form, Zod |
+| UI | Tailwind CSS v4, Radix UI, Framer Motion, lucide-react, sonner |
+| 통신 | Axios, @microsoft/fetch-event-source, event-source-polyfill (SSE) |
+| 기타 | jwt-decode, react-webcam |
 
 ---
 
-### ♾️ DevOps & Infra
+### 🖥️ Admin Frontend (관리자)
 
-<img src="https://img.shields.io/badge/Ubuntu%2022.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white"> <img src="https://img.shields.io/badge/Docker%20v28.5.1-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Docker%20Compose%20v2.40.2-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Jenkins%202.528.1-D24939?style=for-the-badge&logo=jenkins&logoColor=white"> <img src="https://img.shields.io/badge/Nginx%201.27-009639?style=for-the-badge&logo=nginx&logoColor=white"> <img src="https://img.shields.io/badge/AWS%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white">
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"> <img src="https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black"> <img src="https://img.shields.io/badge/Vite%206-646CFF?style=for-the-badge&logo=vite&logoColor=white"> <img src="https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=threedotjs&logoColor=white"> <img src="https://img.shields.io/badge/React%20Three%20Fiber-000000?style=for-the-badge&logo=threedotjs&logoColor=white"> <img src="https://img.shields.io/badge/Tailwind%20CSS%20v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white"> <img src="https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white"> <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white"> <img src="https://img.shields.io/badge/React%20Hook%20Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white"> <img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white"> <img src="https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white"> <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white">
 
 | 구분 | 사용 기술 |
 |------|----------|
-| Instance Type | T2.XLARGE |
-| CPU | 4 vCPUs |
-| RAM | 16GB |
-| Storage (Disk) | SSD: 310GB |
+| Language | TypeScript 5 |
+| Framework | React 19, Vite 6 |
+| 3D | Three.js, @react-three/fiber, @react-three/drei |
+| 라우팅 | React Router DOM 7 |
+| 상태 관리 | Zustand 5 |
+| 폼/검증 | React Hook Form, Zod |
+| UI | Tailwind CSS v4, Framer Motion, lucide-react, react-toastify |
+| 통신 | Axios, @microsoft/fetch-event-source (SSE) |
+
+---
+
+### 💾 Database & Infra
+
+<img src="https://img.shields.io/badge/MySQL%208-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/Redis%207-DC382D?style=for-the-badge&logo=redis&logoColor=white"> <img src="https://img.shields.io/badge/Mosquitto-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/Ubuntu%2022.04-E95420?style=for-the-badge&logo=ubuntu&logoColor=white"> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white"> <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white"> <img src="https://img.shields.io/badge/AWS%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white">
+
+| 구분 | 사용 기술 |
+|------|----------|
+| RDBMS | MySQL 8 |
+| Cache / 세션 | Redis 7-alpine |
+| MQTT 브로커 | Eclipse Mosquitto 2 |
 | OS | Ubuntu 22.04.5 LTS |
-| Kernel | Linux 6.8.0-1040-aws x86_64 |
-| Docker | v28.5.1 |
-| Docker Compose | v2.40.2 |
-| Jenkins | 2.528.1 |
-| Nginx | nginx/1.27 |
+| Container | Docker, Docker Compose |
+| CI/CD | Jenkins |
+| Reverse Proxy | Nginx |
+| Cloud | AWS EC2 |
 
 ---
 
@@ -196,7 +155,7 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 
 ---
 
-**📱 사용자** 
+**📱 사용자**
 
 
 | <img src="https://github.com/user-attachments/assets/55cfd51e-ae75-4bde-ad80-e7de674adab7" width="250" height="600"> | <img src="https://github.com/user-attachments/assets/9e4e4a54-3f82-4fe9-a40b-0761e8fe9eb0" width="250" height="600"> | <img src="https://github.com/user-attachments/assets/314d5cd0-b132-44ff-90f3-1e38a4874c79" width="250" height="600"> |
@@ -213,7 +172,7 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 
 ---
 
-**🤖 로봇** 
+**🤖 로봇**
 
 | <img src="https://github.com/user-attachments/assets/b9fe61b2-5d98-490b-804b-bebfe7327d71" width="400" height="250"> |
 |:---:|
@@ -557,7 +516,7 @@ src/
 
 <details>
 <summary>자세히</summary>
-  
+
 <img width="1850" height="1042" alt="ERD" src="https://github.com/user-attachments/assets/f2377254-f759-400f-a894-025a2eb07652" />
 
 </details>
@@ -583,7 +542,7 @@ src/
 
 <details>
 <summary>자세히</summary>
-  
+
 <img width="638" height="1124" alt="image" src="https://github.com/user-attachments/assets/f013ca36-4add-4508-b0d3-1ded6342a39a" />
 
 
@@ -595,7 +554,7 @@ src/
 
 <details>
 <summary>자세히</summary>
-  
+
 <img width="1119" height="932" alt="image" src="https://github.com/user-attachments/assets/e784fa05-6fcc-43a5-86f1-31f731841b5f" />
 
 
