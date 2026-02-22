@@ -49,20 +49,22 @@ Carry Porter는 공항 내 지정된 경로(Line)를 따라 수하물을 인수�
 ---
 
 # 🛠️ 기술 스택
+### 📟 Embedded & IoT
 
-### 🤖 Embedded & Robot
-
-<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white"> <img src="https://img.shields.io/badge/Jetson%20Nano-76B900?style=for-the-badge&logo=nvidia&logoColor=white"> <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/YOLOv8-FF6F00?style=for-the-badge&logo=yolo&logoColor=white"> <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"> <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"> <img src="https://img.shields.io/badge/Adafruit-000000?style=for-the-badge&logo=adafruit&logoColor=white">
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=FFD43B"> <img src="https://img.shields.io/badge/Visual%20Studio%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white"> <img src="https://img.shields.io/badge/Jetson%20Orin%20Nano-76B900?style=for-the-badge&logo=nvidia&logoColor=white"> <img src="https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white"> <img src="https://img.shields.io/badge/ROS2-22314E?style=for-the-badge&logo=ros&logoColor=white"> <img src="https://img.shields.io/badge/YOLOv8-00FFFF?style=for-the-badge&logo=yolo&logoColor=black">
 
 | 구분 | 사용 기술 |
 |------|----------|
-| Language | Python |
-| Framework | ROS2 (rclpy) |
-| Hardware | Jetson Nano (Jetson.GPIO) |
-| Sensor | TCS34725 컬러 센서 (adafruit_tcs34725, board, busio) |
-| Vision | YOLOv8 (ultralytics), PyTorch, OpenCV (cv2), cv_bridge |
-| Communication | Paho MQTT |
-| Features | 라인 트레이싱, 장애물 감지, 모터/서보 제어 (PCA9685), MQTT 명령 수신 |
+| Language | Python 3.10.12 |
+| Development Tools | Vim, Visual Studio Code |
+| SBC | Jetson Orin Nano board Jetpack 6.2 |
+| OS | Ubuntu 22.04.5 LTS |
+| Hardware & Robotics | LiDAR (YDLiDAR X4 pro), Camera (Logitech Brio 100), Motor Driver (PCA 9685, PWM Control), DC Motor (JGA25-371), Servo Motor (MG996R), Encoder, IMU (MPU6050), Solenoid, LED, Photo Sensor, Color Sensor (TCS34725) |
+| Python Libs | OpenCV 4.10.0, Pytorch 2.3.0, torchvision 0.18.0, Ultralytics (YOLOv8n) 8.2.84, Numpy 1.26.4, ROS2 humble |
+| Communication | MQTT |
+| Features | Servo Control, Line Tracking, Obstacle Detection, YOLO Person Detection, LED Warning Expression, Solenoid Lock |
+
+---
 
 ---
 
