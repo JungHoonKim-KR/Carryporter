@@ -487,7 +487,7 @@ src/
 
 **📹 Video Portfolio**
 
-- [carryporter_14기 공통PJT 영상 포트폴리오 E101](https://youtu.be/zutxE7PEOgU)
+- [carryporter_14기 공통PJT 영상 포트폴리오 E101](https://www.youtube.com/watch?v=1BnPYwBv0Mg)
 - [공통PJT_carryporter발표](https://youtu.be/zutxE7PEOgU)
 - [carryporter_기획배경(AI)](https://youtu.be/Lsbg-lAFVb0)
 - [carryporter_교통약자시연영상(in SSAFY)](https://youtu.be/EMQk7KcneSM)
